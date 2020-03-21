@@ -177,7 +177,7 @@ body {
   margin: 0;
   padding: 0;
   background: #fefefe;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: 'Montserrat', "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
   font-weight: normal;
   line-height: 1.5;
   color: #0a0a0a;
@@ -344,6 +344,10 @@ label {
   label.middle {
     margin: 0 0 1rem;
     padding: 0.5625rem 0; }
+
+.blog-post {
+    padding: 2rem 1rem;
+}
 
 .help-text {
   margin-top: -0.5rem;
@@ -571,7 +575,7 @@ h3, .h3,
 h4, .h4,
 h5, .h5,
 h6, .h6 {
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: 'Lobster', cursive;
   font-style: normal;
   font-weight: normal;
   color: inherit;
@@ -3203,6 +3207,19 @@ table.hover:not(.unstriped) tr:nth-of-type(even):hover {
   .callout.alert {
     background-color: #f7e4e1;
     color: #0a0a0a; }
+  .callout.crossdots {
+    background:
+    radial-gradient(black 3px, transparent 4px),
+    radial-gradient(black 3px, transparent 4px),
+    linear-gradient(#fff 4px, transparent 0),
+    linear-gradient(45deg, transparent 74px, transparent 75px, #a4a4a4 75px, #a4a4a4 76px, transparent 77px, transparent 109px),
+    linear-gradient(-45deg, transparent 75px, transparent 76px, #a4a4a4 76px, #a4a4a4 77px, transparent 78px, transparent 109px),
+    #fff;
+    background-size: 109px 109px, 109px 109px,100% 6px, 109px 109px, 109px 109px;
+    background-position: 54px 55px, 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
+  .callout.paper {
+    color: #333;
+  background: repeating-linear-gradient(90deg, #f0f0f0 0, #f0f0f0 5%, transparent 0, transparent 50%) 0 / 15px 15px, repeating-linear-gradient(180deg, #f0f0f0 0, #f0f0f0 5%, transparent 0, transparent 50%) 0 / 15px 15px;}
   .callout.small {
     padding-top: 0.5rem;
     padding-right: 0.5rem;
