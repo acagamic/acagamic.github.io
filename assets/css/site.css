@@ -1,0 +1,85 @@
+/* site.css — light custom styling on top of Foundation (app.css).
+   Safe to edit; does not touch the Foundation framework file. */
+
+:root {
+  --site-max-width: 46rem;
+  --site-accent: #1779ba; /* matches Foundation's primary */
+  --site-muted: #6b6f76;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Hero */
+.site-hero {
+  padding: 3.5rem 0 2rem;
+  border-bottom: 1px solid #ececec;
+  margin-bottom: 2.5rem;
+}
+
+.site-hero__title {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.site-hero__tagline {
+  margin: 0.35rem 0 0;
+  font-size: 1.25rem;
+  color: var(--site-muted);
+}
+
+/* Readable prose column */
+.site-prose {
+  max-width: var(--site-max-width);
+  margin: 0 auto;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.site-prose h2 {
+  margin-top: 2.25rem;
+  font-weight: 600;
+}
+
+.site-prose a {
+  color: var(--site-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+/* Links section */
+.site-links {
+  max-width: var(--site-max-width);
+  margin: 2.5rem auto 0;
+}
+
+.site-links__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.site-links__list .button {
+  margin: 0;
+}
+
+/* Footer pinned to bottom */
+.site-footer {
+  margin-top: auto;
+  padding: 2.5rem 0;
+  color: var(--site-muted);
+  font-size: 0.9rem;
+}

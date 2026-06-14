@@ -1,0 +1,22 @@
+# Site settings — edit these, commit, and push to update the live site.
+title: "Lennart Nacke"
+tagline: "Professor of Human-Computer Interaction & Games"
+description: "Personal site of Lennart Nacke — HCI and games research, teaching, and writing."
+author: "Lennart Nacke"
+
+# Links shown in the footer / links section of the landing page.
+# Add, remove, or reorder these freely.
+links:
+  - label: "DEI 626 — UX Fundamentals"
+    url: "/dei626/"
+  - label: "Email"
+    url: "mailto:lennart@nacke.ca"
+
+# Build settings
+markdown: kramdown
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - .gitignore
+  - .DS_Store

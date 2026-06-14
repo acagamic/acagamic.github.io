@@ -1,0 +1,45 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page.title and page.title != "Home" %}{{ page.title }} &middot; {% endif %}{{ site.title }}</title>
+    <meta name="description" content="{{ page.description | default: site.description }}">
+    <link rel="icon" href="{{ '/assets/img/onlinelearning.ico' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/app.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}">
+  </head>
+  <body>
+    <header class="site-hero">
+      <div class="grid-container">
+        <h1 class="site-hero__title">{{ site.title }}</h1>
+        {% if site.tagline %}<p class="site-hero__tagline">{{ site.tagline }}</p>{% endif %}
+      </div>
+    </header>
+
+    <main class="grid-container">
+      <article class="site-prose">
+        {{ content }}
+      </article>
+
+      {% if site.links and site.links.size > 0 %}
+      <nav class="site-links" aria-label="Links">
+        <ul class="site-links__list">
+          {% for link in site.links %}
+          <li><a class="button" href="{{ link.url | relative_url }}">{{ link.label }}</a></li>
+          {% endfor %}
+        </ul>
+      </nav>
+      {% endif %}
+    </main>
+
+    <footer class="site-footer">
+      <div class="grid-container">
+        <p>&copy; {{ 'now' | date: "%Y" }} {{ site.author | default: site.title }}</p>
+      </div>
+    </footer>
+
+    <script src="{{ '/assets/js/app.js' | relative_url }}"></script>
+  </body>
+</html>
