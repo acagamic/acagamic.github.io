@@ -10,24 +10,18 @@ cv:
         position: Professor of Human-Computer Interaction and Games (tenured)
         location: Stratford, Ontario
         start_date: 2023-07
-        highlights:
-          - University Research Chair since 2024
-          - Director, HCI Games Group, Games Institute
 
       - company: Stratford School of Interaction Design and Business, University of Waterloo
         position: Associate Director, Graduate Studies
         location: Stratford, Ontario
         start_date: 2020-07
         end_date: 2025-06
-        summary: Oversaw the Master of Digital Experience Innovation program and worked on the UX Research and Design graduate program proposal.
 
       - company: Stratford School of Interaction Design and Business and Department of Communication Arts, University of Waterloo
         position: Associate Professor of Human-Computer Interaction and Games
         location: Stratford, Ontario
         start_date: 2018-07
         end_date: 2023-06
-        highlights:
-          - Tenured in 2019
 
       - company: Stratford School of Interaction Design and Business, University of Waterloo
         position: Associate Director, Graduate Studies
@@ -49,7 +43,7 @@ cv:
 
       - company: Department of Computer Science, University of Saskatchewan
         position: Postdoctoral Research Associate
-        location: Saskatoon, Saskatchewan
+        location: Saskatoon,<br>Saskatchewan
         start_date: 2010-03
         end_date: 2011-07
 
@@ -60,46 +54,41 @@ cv:
         studyType: PhD
         start_date: 2006-08
         end_date: 2010-01
-        highlights:
-          - "Dissertation: Affective Ludology: Scientific Measurement of User Experience in Interactive Entertainment"
-          - "Supervisor: Craig A. Lindley"
 
       - institution: Otto-von-Guericke-University Magdeburg
         location: Germany
         area: Computervisualistik
         studyType: Diplom (Master's)
-        start_date: 2005-01
-        end_date: 2005-12
-        highlights:
-          - "Supervisor: Maic Masuch"
+        start_date: 2000
+        end_date: 2005
 
       - institution: Otto-von-Guericke-University Magdeburg
         location: Germany
         area: Computervisualistik
         studyType: Bakkalaureat (Bachelor's)
-        start_date: 2004-01
-        end_date: 2004-07
+        start_date: 2000
+        end_date: 2004
 
     Awards:
-      - title: Best Paper Award, ACM DIS 2026, for "Rushed by Discomfort, Trapped by Immersion"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award, ACM DIS 2026, for "Rushed by Discomfort, Trapped by Immersion"'
         date: 2026-06
         awarder: ACM SIGCHI
-      - title: Best Paper Honourable Mention, ACM DIS 2026, for "Conceptualizing How to Design for AI Literacy through Game Artifacts"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM DIS 2026, for "Conceptualizing How to Design for AI Literacy through Game Artifacts"'
         date: 2026-06
         awarder: ACM SIGCHI
-      - title: Best Paper Award, IEEE VR 2025, for "Seeing Is Not Thinking"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award, IEEE VR 2025, for "Seeing Is Not Thinking"'
         date: 2025-03
         awarder: IEEE VR
       - title: University Research Chair
         date: 2024-07
         awarder: University of Waterloo
-      - title: Best Paper Honourable Mention, ACM CHI PLAY 2024, for "The Jade Gateway to Exergaming"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM CHI PLAY 2024, for "The Jade Gateway to Exergaming"'
         date: 2024-10
         awarder: ACM SIGCHI
       - title: Excellence in Reviewing Recognition (honourable mention), ACM CHI PLAY 2024, Tampere
         date: 2024-10
         awarder: ACM SIGCHI
-      - title: Best Paper Award, ACM CHI PLAY 2022, for "Communication Sequences Indicate Team Cohesion"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award, ACM CHI PLAY 2022, for "Communication Sequences Indicate Team Cohesion"'
         date: 2022-10
         awarder: ACM SIGCHI
       - title: Most Influential Scholar Award (top 10 most cited HCI researchers, 2011 to 2020)
@@ -111,13 +100,13 @@ cv:
       - title: Recognition of Excellent Service for chairing CHI PLAY twice
         date: 2020-10
         awarder: ACM SIGCHI
-      - title: Best Paper Award 2020, International Journal of Human-Computer Studies, for "Development and Validation of the Player Experience Inventory"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award 2020, International Journal of Human-Computer Studies, for "Development and Validation of the Player Experience Inventory"'
         date: 2021-09
         awarder: International Journal of Human-Computer Studies
-      - title: Best Paper Honourable Mention, ACM CHI 2020, for "Food Literacy While Shopping"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM CHI 2020, for "Food Literacy While Shopping"'
         date: 2020-04
         awarder: ACM SIGCHI
-      - title: Best Paper Honourable Mention, ACM CHI PLAY 2019, for "It Started as a Joke"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM CHI PLAY 2019, for "It Started as a Joke"'
         date: 2019-10
         awarder: ACM SIGCHI
       - title: Arts Excellence in Research Award
@@ -126,13 +115,13 @@ cv:
       - title: Outstanding Performance Award
         date: 2018-05
         awarder: Department of Drama and Speech Communication, University of Waterloo
-      - title: Best Paper Honourable Mention, ACM CHI PLAY 2016, for "The Collecting Itself Feels Good"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM CHI PLAY 2016, for "The Collecting Itself Feels Good"'
         date: 2016-10
         awarder: ACM SIGCHI
-      - title: Best Paper Award, ACM CSCW 2012, for "I'm Just Here to Play Games"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award, ACM CSCW 2012, for "I''m Just Here to Play Games"'
         date: 2012-02
         awarder: ACM SIGCHI
-      - title: Best Paper Honourable Mention, ACM CHI 2011, for "Biofeedback Game Design"
+      - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM CHI 2011, for "Biofeedback Game Design"'
         date: 2011-05
         awarder: ACM SIGCHI
 

@@ -81,3 +81,20 @@ html[data-theme="dark"] {
 .social .contact-icons {
   font-size: 2.25rem;
 }
+
+// Award icons (best paper, honourable mention) sit in the publication list's left column,
+// supplied as each award paper's `preview` in papers.bib.
+.publications .abbr .preview,
+.publications .abbr figure {
+  width: 2rem;
+  margin: 0.15rem 0 0 auto;
+  box-shadow: none !important;
+  pointer-events: none; // no zoom on a 32px icon
+}
+// The same icons inline in CV award titles.
+.award-icon {
+  height: 1.1em;
+  width: auto;
+  margin-right: 0.35em;
+  vertical-align: -0.15em;
+}
