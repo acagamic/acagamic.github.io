@@ -125,3 +125,5 @@ Cited 51,863 times, with an h-index of 75 and an i10-index of 213, according to 
 {% bibliography --query @*[workshop=true] --group_by none %}
 
 </div>
+
+<script src="{{ '/assets/js/bibtex-copy.js' | relative_url }}" defer></script>

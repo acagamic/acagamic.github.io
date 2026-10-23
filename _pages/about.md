@@ -32,3 +32,5 @@ Lennart Nacke is a full professor at the University of Waterloo's Stratford Scho
 His current work covers responsible AI, deceptive design and games that encourage physical activity. He studies the opportunities these technologies create and the problems they cause, especially when engagement comes at the cost of people's autonomy.
 
 He also teaches research methods and academic writing. Students and researchers learn from him how to turn an interesting idea into a clear question, a well-designed study and a paper that makes a useful contribution. He writes about academic writing in his newsletter, [The Write Insight](https://lennartnacke.substack.com/).
+
+<script src="{{ '/assets/js/bibtex-copy.js' | relative_url }}" defer></script>
