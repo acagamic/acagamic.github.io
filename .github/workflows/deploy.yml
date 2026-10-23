@@ -87,20 +87,19 @@ jobs:
           valueFile: "_config.yml"
           propertyPath: "giscus.repo"
           value: ${{ github.repository }}
-      # Substack rejects the Ruby HTTP client from CI runners, so fetch the feed with curl
-      # and serve it locally; if that fails too, build without newsletter posts.
+      # Substack blocks GitHub's runners, so try the live feed and fall back to the committed
+      # snapshot in .github/feeds/ (refresh it by saving https://lennartnacke.substack.com/feed there).
       - name: Fetch Substack feed 📰
         run: |
           mkdir -p /tmp/feed
-          if curl -fsSL -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36" \
-              https://lennartnacke.substack.com/feed -o /tmp/feed/feed.xml && grep -q "<rss" /tmp/feed/feed.xml; then
-            (cd /tmp/feed && nohup python3 -m http.server 8765 >/dev/null 2>&1 &)
-            sleep 1
-            printf 'external_sources:\n  - name: The Write Insight\n    rss_url: http://127.0.0.1:8765/feed.xml\n    categories: [newsletter]\n' > /tmp/feed/ci.yml
-          else
-            echo "::warning::Could not fetch the Substack feed; building without newsletter posts."
-            printf 'external_sources: []\n' > /tmp/feed/ci.yml
+          if ! { curl -fsSL -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36" \
+              https://lennartnacke.substack.com/feed -o /tmp/feed/feed.xml && grep -q "<rss" /tmp/feed/feed.xml; }; then
+            echo "::warning::Substack refused the live feed; using the snapshot in .github/feeds/."
+            cp .github/feeds/write-insight.xml /tmp/feed/feed.xml
           fi
+          (cd /tmp/feed && nohup python3 -m http.server 8765 >/dev/null 2>&1 &)
+          sleep 1
+          printf 'external_sources:\n  - name: The Write Insight\n    rss_url: http://127.0.0.1:8765/feed.xml\n    categories: [newsletter]\n' > /tmp/feed/ci.yml
       - name: Install and Build 🔧
         run: |
           sudo apt-get update && sudo apt-get install -y imagemagick
