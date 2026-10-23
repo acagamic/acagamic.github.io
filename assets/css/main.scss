@@ -98,3 +98,104 @@ html[data-theme="dark"] {
   margin-right: 0.35em;
   vertical-align: -0.15em;
 }
+
+// CV entries (experience, education, awards): the theme leaves them as bulleted <ul>s with
+// boxed date tags. Render them as a two-column list: plain accent dates, hairline dividers.
+.cv {
+  ul.list-group {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+
+  .list-group-item {
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--global-divider-color);
+    padding: 0.85rem 0;
+
+    &:first-child {
+      border-top: 0;
+      padding-top: 0.25rem;
+    }
+
+    &::marker {
+      content: none;
+    }
+
+    > .row {
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+
+  .date-column {
+    text-align: left !important;
+  }
+
+  table.table-cv,
+  table.table-cv td {
+    border: 0 !important;
+    padding: 0;
+  }
+
+  .card .list-group-item .badge {
+    background: none !important;
+    color: var(--global-theme-color) !important;
+    padding: 0;
+    min-width: 0 !important;
+    font-size: 0.85rem;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em;
+    text-transform: none !important;
+  }
+
+  p.location {
+    margin: 0.2rem 0 0;
+    color: var(--global-text-color-light);
+    white-space: normal;
+  }
+
+  h6.title {
+    margin-bottom: 0.2rem;
+  }
+}
+
+// Typography: Inter for headings and UI chrome, Merriweather for body text
+// (loaded through third_party_libraries.google_fonts in _config.yml).
+body {
+  font-family: "Merriweather", Georgia, serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.navbar,
+.post-title,
+.card-title,
+.badge,
+.btn,
+.abbr,
+.post-meta,
+.periodical,
+.author,
+.links,
+.contact-note,
+.cv p.location,
+footer {
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+// Award icons switch to the pale Highlight versions on the dark background.
+// ponytail: content:url() swaps the image in Chromium and Safari; other browsers keep the accent icon.
+html[data-theme="dark"] {
+  img[src$="publication_preview/best-paper.svg"] {
+    content: url("/assets/img/publication_preview/best-paper-dark.svg");
+  }
+  img[src$="publication_preview/honourable-mention.svg"] {
+    content: url("/assets/img/publication_preview/honourable-mention-dark.svg");
+  }
+}
