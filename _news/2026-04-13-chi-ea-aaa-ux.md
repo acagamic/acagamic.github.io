@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-Our [CHI 2026 extended abstract](https://doi.org/10.1145/3772363.3799318) examines how senior UX leaders at AAA game studios combine theory, experience and instinct during pre-production.
+Our CHI extended abstract examines how senior UX leaders at AAA game studios combine theory, experience and instinct during pre-production. [Paper](https://uwspace.uwaterloo.ca/items/bca09266-def6-4f35-b33a-16b6eda30a37)

@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-I was named a University Research Chair at the University of Waterloo.
+I began a seven-year appointment as University Research Chair at the University of Waterloo. [Appointment](https://uwaterloo.ca/stratford-school-of-interaction-design-and-business/news/dr-lennart-nacke-appointed-university-research-chair)

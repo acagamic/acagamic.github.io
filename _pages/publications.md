@@ -2,7 +2,7 @@
 layout: page
 permalink: /publications/
 title: publications
-description: Peer-reviewed papers, chapters and edited volumes, newest first.
+description: Papers, chapters and edited volumes, newest first, followed by workshop papers.
 nav: true
 nav_order: 2
 chart:
@@ -114,6 +114,14 @@ Cited 51,863 times, with an h-index of 75 and an i10-index of 213, according to 
 
 <div class="publications">
 
-{% bibliography %}
+{% bibliography --query @*[workshop!=true] %}
+
+</div>
+
+## workshop papers
+
+<div class="publications">
+
+{% bibliography --query @*[workshop=true] --group_by none %}
 
 </div>
