@@ -1,0 +1,40 @@
+# Social and profile links, shown in this order. Keys: https://github.com/george-gca/jekyll-socials
+email: contact@lennartnacke.com
+scholar_userid: i-y5S2AAAAAJ
+orcid_id: 0000-0003-4290-8829
+github_username: acagamic
+newsletter:
+  logo: fa-solid fa-envelope-open-text
+  title: The Write Insight
+  url: https://lennartnacke.substack.com/
+linkedin:
+  logo: fa-brands fa-linkedin
+  title: LinkedIn
+  url: https://go.lennartnacke.com/linkedin
+youtube:
+  logo: fa-brands fa-youtube
+  title: YouTube
+  url: https://youtube.com/acagamic
+bluesky:
+  logo: fa-brands fa-bluesky
+  title: Bluesky
+  url: https://go.lennartnacke.com/bluesky
+x:
+  logo: fa-brands fa-x-twitter
+  title: X
+  url: https://go.lennartnacke.com/twitter
+threads:
+  logo: fa-brands fa-threads
+  title: Threads
+  url: https://go.lennartnacke.com/threads
+instagram:
+  logo: fa-brands fa-instagram
+  title: Instagram
+  url: https://go.lennartnacke.com/instagram
+tiktok:
+  logo: fa-brands fa-tiktok
+  title: TikTok
+  url: https://go.lennartnacke.com/tiktok
+medium_username: acagamic
+work_url: https://hcigames.com
+rss_icon: true
