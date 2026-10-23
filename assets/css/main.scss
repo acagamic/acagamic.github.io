@@ -1,0 +1,83 @@
+---
+# Only the main Sass file needs front matter (the dashes are enough)
+---
+@charset "utf-8";
+
+/* Built-in Sass modules you’ll likely use across partials */
+@use "sass:math";
+@use "sass:string";
+
+/* Configure your design tokens BEFORE loading any of your partials.
+   Make sure `_sass/_variables.scss` declares `$max-content-width: 72rem !default;` */
+@use "variables" with (
+  $max-content-width: {{ site.max_width | default:  "930px" }}
+);
+
+/* Your project partials — convert these files to `@use "variables";`
+   (or `@use "variables" as *;`) inside each file and qualify variables if needed. */
+@use "themes";
+@use "layout";
+
+// Core styles organized by usage
+@use "typography";
+@use "navbar";
+@use "footer";
+@use "blog";
+@use "publications";
+@use "components";
+@use "utilities";
+
+// Other specialized styles
+@use "tabs";
+@use "teachings";
+@use "typograms";
+
+/*******************************************************************************
+ * Site palette (local addition; everything above is al_folio_core 1.0.15's main.scss)
+ * Primary #1B3B5A · Secondary #345F80 · Accent #1E4FC2 · Paper #F3F5F9
+ * Border #DBE1EB · Muted #8492A6 · Highlight #DBE5FA
+ ******************************************************************************/
+:root {
+  --global-bg-color: #f3f5f9; // paper
+  --global-card-bg-color: #ffffff;
+  --global-text-color: #1b3b5a; // primary
+  --global-text-color-light: #345f80; // secondary; muted #8492a6 is too faint for small text on paper
+  --global-theme-color: #1e4fc2; // accent: links, active nav, badges
+  --global-hover-color: #1b3b5a;
+  --global-hover-text-color: #ffffff;
+  --global-highlight-color: #1e4fc2;
+  --global-code-bg-color: #dbe5fa; // highlight
+  --global-divider-color: #dbe1eb; // border
+  --global-footer-bg-color: #1b3b5a;
+  --global-footer-text-color: #dbe5fa;
+  --global-footer-link-color: #ffffff;
+  --global-distill-app-color: #8492a6; // muted
+  --global-back-to-top-bg-color: rgba(52, 95, 128, 0.6);
+  --global-newsletter-bg-color: #ffffff;
+  --global-newsletter-text-color: #1b3b5a;
+}
+
+// ponytail: the palette has no dark variant; these are derived from it (accent lightened for contrast).
+html[data-theme="dark"] {
+  --global-bg-color: #0f1e2d;
+  --global-card-bg-color: #1b3b5a; // primary
+  --global-text-color: #f3f5f9; // paper
+  --global-text-color-light: #8492a6; // muted
+  --global-theme-color: #8aa8f0; // accent, lightened
+  --global-hover-color: #dbe5fa; // highlight
+  --global-hover-text-color: #0f1e2d;
+  --global-highlight-color: #8aa8f0;
+  --global-code-bg-color: #1b3b5a;
+  --global-divider-color: #345f80; // secondary
+  --global-footer-bg-color: #1b3b5a;
+  --global-footer-text-color: #dbe1eb;
+  --global-footer-link-color: #ffffff;
+  --global-distill-app-color: #8492a6;
+  --global-newsletter-bg-color: #1b3b5a;
+  --global-newsletter-text-color: #f3f5f9;
+}
+
+// 16 social links at the theme's 4rem fill two rows; 2.25rem fits one.
+.social .contact-icons {
+  font-size: 2.25rem;
+}
