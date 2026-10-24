@@ -211,3 +211,167 @@ footer {
   display: block;
   margin: 0 auto;
 }
+
+// Publications chart (assets/js/scholar-chart.js). Bar colours pass the dataviz validator:
+// #1e4fc2 on paper, #6a8be0 on the dark surface (lightness band and 3:1 contrast).
+:root {
+  --chart-bar: #1e4fc2;
+  --chart-grid: rgba(27, 59, 90, 0.12);
+}
+html[data-theme="dark"] {
+  --chart-bar: #6a8be0;
+  --chart-grid: rgba(243, 245, 249, 0.12);
+}
+.scholar-chart {
+  position: relative;
+  font-family: "Inter", system-ui, sans-serif;
+  margin-bottom: 2.5rem;
+  .sc-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    div {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+  .sc-num {
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--global-text-color);
+  }
+  .sc-label,
+  .sc-source,
+  .sc-table-wrap summary {
+    font-size: 0.85rem;
+    color: var(--global-text-color-light);
+  }
+  .sc-figure {
+    margin: 0;
+  }
+  .sc-title,
+  .sc-detail-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--global-text-color);
+    margin-bottom: 0.25rem;
+  }
+  svg {
+    display: block;
+    overflow: visible;
+  }
+  .sc-bar,
+  .sc-dot {
+    fill: var(--chart-bar);
+    transition: opacity 0.15s;
+  }
+  .sc-partial {
+    fill: transparent;
+    stroke: var(--chart-bar);
+    stroke-width: 2px;
+  }
+  .sc-dim {
+    opacity: 0.45;
+  }
+  html[data-theme="dark"] & .sc-dim {
+    opacity: 0.6;
+  }
+  .sc-dot {
+    stroke: var(--global-bg-color);
+    stroke-width: 2px;
+  }
+  .sc-hit,
+  .sc-dot-hit {
+    fill: transparent;
+    cursor: pointer;
+    outline: none;
+  }
+  .sc-hit:focus-visible,
+  .sc-dot-g:focus-visible .sc-dot-hit {
+    stroke: var(--global-theme-color);
+    stroke-width: 2px;
+  }
+  .sc-dot-g {
+    outline: none;
+  }
+  .sc-dot-g:hover .sc-dot {
+    r: 7px;
+  }
+  .sc-grid {
+    stroke: var(--chart-grid);
+  }
+  .sc-base {
+    stroke: var(--global-text-color-light);
+  }
+  .sc-tick {
+    fill: var(--global-text-color-light);
+    font-size: 11px;
+  }
+  .sc-panel,
+  .sc-venue,
+  .sc-value {
+    fill: var(--global-text-color);
+    font-size: 12px;
+  }
+  .sc-panel {
+    font-weight: 600;
+  }
+  .sc-detail {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--global-divider-color);
+  }
+  .sc-detail-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .sc-close {
+    background: none;
+    border: 1px solid var(--global-divider-color);
+    border-radius: 4px;
+    color: var(--global-text-color);
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 0.2rem 0.55rem;
+    cursor: pointer;
+  }
+  .sc-table-wrap {
+    margin-top: 1rem;
+  }
+  .sc-table {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    font-variant-numeric: tabular-nums;
+    th,
+    td {
+      padding: 0.15rem 1rem 0.15rem 0;
+      text-align: right;
+    }
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+    thead th {
+      border-bottom: 1px solid var(--global-text-color-light);
+    }
+  }
+  .sc-tip {
+    position: absolute;
+    z-index: 5;
+    max-width: 320px;
+    pointer-events: none;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    border-radius: 6px;
+    background: var(--global-card-bg-color);
+    color: var(--global-text-color);
+    border: 1px solid var(--global-divider-color);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  }
+}
