@@ -2,7 +2,7 @@
 """Build the feeds behind the articles page.
 
 Sources are read in priority order (lennartnacke.com, Substack, and Medium), and every post gets
-the category "article". Two kinds of item are dropped: podcast episodes such as Cortex Compute
+the category "article" in place of the feed's own categories. Two kinds of item are dropped: podcast episodes such as Cortex Compute
 (items with an audio enclosure), and cross-posts an earlier source already covers, matched by URL
 slug, by title, or by a publish date within CROSSPOST_DAYS of an article kept from an earlier source,
 since cross-posts often get a new title. Each feed is fetched live; if that fails (Substack blocks CI
@@ -71,6 +71,7 @@ def main(out, port):
             if "audio/" in item or duplicate:
                 text = text.replace(item, "")
                 continue
+            text = text.replace(item, re.sub(r"<category[^>]*>.*?</category>", "", item, flags=re.S))  # "article" is the only category
             mine.append((slug, title, date))
             count += 1
         kept += mine
