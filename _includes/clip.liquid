@@ -1,0 +1,5 @@
+{%- comment -%} A looping, muted game clip (converted from the old GIFs); controls let readers pause it. {%- endcomment -%}
+<figure>
+  <video src="{{ include.src | relative_url }}" class="img-fluid rounded" autoplay loop muted playsinline controls preload="metadata" aria-label="{{ include.alt | default: include.caption }}"></video>
+  {% if include.caption %}<figcaption class="caption">{{ include.caption }}</figcaption>{% endif %}
+</figure>

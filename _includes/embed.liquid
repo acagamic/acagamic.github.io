@@ -1,0 +1,5 @@
+{%- comment -%} A 16:9 YouTube, Vimeo, or Google Slides embed. {%- endcomment -%}
+<figure>
+  <iframe src="{{ include.src }}" title="{{ include.title }}" class="rounded" style="width: 100%; aspect-ratio: 16 / 9; border: 0" allow="encrypted-media; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+  {% if include.caption %}<figcaption class="caption">{{ include.caption }}</figcaption>{% endif %}
+</figure>
