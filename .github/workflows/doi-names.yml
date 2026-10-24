@@ -1,0 +1,10 @@
+name: DOI author names (one-off)
+on:
+  pull_request:
+    paths: [".github/scripts/doi_names.py", ".github/scripts/doi_lookup.json"]
+jobs:
+  lookup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/scripts/doi_names.py .github/scripts/doi_lookup.json
