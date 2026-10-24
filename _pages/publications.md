@@ -2,7 +2,7 @@
 layout: page
 permalink: /publications/
 title: publications
-description: Papers, chapters and edited volumes, newest first, followed by workshop papers.
+description: Papers, chapters, and edited volumes, newest first, followed by workshop papers.
 nav: true
 nav_order: 2
 chart:
