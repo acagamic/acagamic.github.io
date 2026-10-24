@@ -59,25 +59,44 @@ Cited 51,863 times, with an h-index of 75 and an i10-index of 213, according to 
           5844
         ],
         "backgroundColor": [
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.85)",
-          "rgba(30,79,194,0.35)"
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "#1e4fc2",
+          "transparent"
         ],
-        "borderWidth": 0
+        "borderWidth": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ],
+        "borderColor": "#1e4fc2"
       }
     ]
   },
@@ -88,19 +107,26 @@ Cited 51,863 times, with an h-index of 75 and an i10-index of 213, according to 
       },
       "title": {
         "display": true,
-        "text": "Google Scholar citations per year"
+        "text": "Google Scholar citations per year",
+        "color": "#1b3b5a"
       }
     },
     "scales": {
       "x": {
         "grid": {
           "display": false
+        },
+        "ticks": {
+          "color": "#1b3b5a"
         }
       },
       "y": {
         "beginAtZero": true,
         "grid": {
-          "color": "rgba(128,128,128,0.15)"
+          "color": "rgba(27, 59, 90, 0.15)"
+        },
+        "ticks": {
+          "color": "#1b3b5a"
         }
       }
     }
@@ -127,3 +153,4 @@ Cited 51,863 times, with an h-index of 75 and an i10-index of 213, according to 
 </div>
 
 <script src="{{ '/assets/js/bibtex-copy.js' | relative_url }}" defer></script>
+<script src="{{ '/assets/js/chart-theme.js' | relative_url }}" defer></script>
