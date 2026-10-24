@@ -189,13 +189,18 @@ footer {
   font-family: "Inter", system-ui, sans-serif;
 }
 
-// Award icons switch to the pale Highlight versions on the dark background.
-// ponytail: content:url() swaps the image in Chromium and Safari; other browsers keep the accent icon.
-html[data-theme="dark"] {
-  img[src$="publication_preview/best-paper.svg"] {
-    content: url("/assets/img/publication_preview/best-paper-dark.svg");
-  }
-  img[src$="publication_preview/honourable-mention.svg"] {
-    content: url("/assets/img/publication_preview/honourable-mention-dark.svg");
-  }
+// Animated award icons (assets/js/award-anim.js swaps them in for the static SVGs).
+// The Lottie canvas is 1400px square with sparkles around a glyph, so boxes run larger than the SVGs.
+.publications .abbr .award-anim {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -0.3rem -0.35rem 0 auto;
+}
+.award-icon.award-anim {
+  display: inline-block;
+  width: 1.6em;
+  height: 1.6em;
+  margin: 0 0.15em 0 -0.25em;
+  vertical-align: -0.45em;
 }

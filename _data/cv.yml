@@ -71,24 +71,29 @@ cv:
 
     Awards:
       - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award, ACM DIS 2026, for "Rushed by Discomfort, Trapped by Immersion"'
+        url: https://doi.org/10.1145/3800645.3812990
         date: 2026-06
         awarder: ACM SIGCHI
       - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM DIS 2026, for "Conceptualizing How to Design for AI Literacy through Game Artifacts"'
+        url: https://doi.org/10.1145/3800645.3812865
         date: 2026-06
         awarder: ACM SIGCHI
       - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award, IEEE VR 2025, for "Seeing Is Not Thinking"'
+        url: https://doi.org/10.1109/tvcg.2025.3549137
         date: 2025-03
         awarder: IEEE VR
       - title: University Research Chair
         date: 2024-07
         awarder: University of Waterloo
       - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM CHI PLAY 2024, for "The Jade Gateway to Exergaming"'
+        url: https://doi.org/10.1145/3677106
         date: 2024-10
         awarder: ACM SIGCHI
       - title: Excellence in Reviewing Recognition (honourable mention), ACM CHI PLAY 2024, Tampere
         date: 2024-10
         awarder: ACM SIGCHI
       - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award, ACM CHI PLAY 2022, for "Communication Sequences Indicate Team Cohesion"'
+        url: https://doi.org/10.1145/3549488
         date: 2022-10
         awarder: ACM SIGCHI
       - title: Most Influential Scholar Award (top 10 most cited HCI researchers, 2011 to 2020)
@@ -101,12 +106,15 @@ cv:
         date: 2020-10
         awarder: ACM SIGCHI
       - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award 2020, International Journal of Human-Computer Studies, for "Development and Validation of the Player Experience Inventory"'
+        url: https://doi.org/10.1016/j.ijhcs.2019.102370
         date: 2021-09
         awarder: International Journal of Human-Computer Studies
       - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM CHI 2020, for "Food Literacy While Shopping"'
+        url: https://doi.org/10.1145/3313831.3376801
         date: 2020-04
         awarder: ACM SIGCHI
       - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM CHI PLAY 2019, for "It Started as a Joke"'
+        url: https://doi.org/10.1145/3311350.3347180
         date: 2019-10
         awarder: ACM SIGCHI
       - title: Arts Excellence in Research Award
@@ -116,12 +124,15 @@ cv:
         date: 2018-05
         awarder: Department of Drama and Speech Communication, University of Waterloo
       - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM CHI PLAY 2016, for "The Collecting Itself Feels Good"'
+        url: https://doi.org/10.1145/2967934.2968088
         date: 2016-10
         awarder: ACM SIGCHI
       - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award, ACM CSCW 2012, for "I''m Just Here to Play Games"'
+        url: https://doi.org/10.1145/2145204.2145289
         date: 2012-02
         awarder: ACM SIGCHI
       - title: '<img class="award-icon" src="/assets/img/publication_preview/honourable-mention.svg" alt="">Best Paper Honourable Mention, ACM CHI 2011, for "Biofeedback Game Design"'
+        url: https://doi.org/10.1145/1978942.1978958
         date: 2011-05
         awarder: ACM SIGCHI
 
@@ -132,4 +143,4 @@ cv:
       - bullet: Full papers co-chair, IFIP INTERACT 2019
       - bullet: Subcommittee chair (Games and Play), CHI 2017 and CHI 2018; communications chair, CHI 2018; associate chair, CHI 2013 to 2016
       - bullet: Member, ACM SIGCHI Communications Committee (2015 to 2017) and SIGCHI Council of Steering Committee Chairs (2014 to 2018)
-      - bullet: Grant reviewer for NSERC, NSF, NWO and the Singapore Ministry of Education
+      - bullet: Grant reviewer for NSERC, NSF, NWO, and the Singapore Ministry of Education

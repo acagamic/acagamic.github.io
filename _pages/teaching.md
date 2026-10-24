@@ -7,7 +7,7 @@ nav: true
 nav_order: 6
 ---
 
-Lennart teaches user experience research, game design and research writing in the [Master of Digital Experience Innovation](https://uwaterloo.ca/stratford-school-of-interaction-design-and-business/) and the Global Business and Digital Arts programs at the Stratford School, plus graduate seminars in Systems Design Engineering and Computer Science.
+Lennart teaches user experience research, game design, and research writing in the [Master of Digital Experience Innovation](https://uwaterloo.ca/stratford-school-of-interaction-design-and-business/) and the Global Business and Digital Arts programs at the Stratford School, plus graduate seminars in Systems Design Engineering and Computer Science.
 
 ## Graduate courses
 
