@@ -2,7 +2,7 @@
 layout: about
 title: about
 permalink: /
-subtitle: Professor of Human-Computer Interaction and Games · University Research Chair · <a href='https://uwaterloo.ca/stratford-school-of-interaction-design-and-business/'>Stratford School of Interaction Design and Business</a>, University of Waterloo
+subtitle: Professor of Human-Computer Interaction (AI and Games) · University Research Chair · <a href='https://uwaterloo.ca/stratford-school-of-interaction-design-and-business/'>Stratford School of Interaction Design and Business</a>, University of Waterloo
 
 profile:
   align: right
@@ -27,7 +27,7 @@ latest_posts:
   limit: 3 # leave blank to include all the blog posts
 ---
 
-Lennart Nacke is a full professor at the University of Waterloo's Stratford School of Interaction Design and Business, where he leads the HCI Games Group. For about 20 years he has studied how people interact with technology, focusing on games, user experience, and gamification. His research asks what makes digital experiences engaging, how they shape behaviour, and how to tell whether a design helps the people who use it.
+Dr. Lennart Nacke is a full professor at the University of Waterloo's Stratford School of Interaction Design and Business, where he leads the HCI Games Group. For about 20 years he has studied how people interact with technology, focusing on games, user experience, and gamification. His research asks what makes digital experiences engaging, how they shape behaviour, and how to tell whether a design helps the people who use it.
 
 His current work covers responsible AI, deceptive design, and games that encourage physical activity. He studies the opportunities these technologies create and the problems they cause, especially when engagement comes at the cost of people's autonomy.
 

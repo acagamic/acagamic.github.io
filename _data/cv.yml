@@ -1,13 +1,13 @@
 # CV data for the /cv/ page (RenderCV format). Parsed from Lennart's CV; no PDF is published.
 cv:
   name: Lennart Nacke
-  label: Professor of Human-Computer Interaction and Games, University Research Chair
+  label: Professor of Human-Computer Interaction (AI and Games), University Research Chair
   location: Stratford, Ontario, Canada
 
   sections:
     Experience:
       - company: Stratford School of Interaction Design and Business, University of Waterloo
-        position: Professor of Human-Computer Interaction and Games (tenured)
+        position: Professor of Human-Computer Interaction (AI and Games), tenured
         location: Stratford, Ontario
         start_date: 2023-07
 

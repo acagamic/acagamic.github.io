@@ -185,6 +185,7 @@ h6,
 .links,
 .contact-note,
 .cv p.location,
+.toc-sidebar,
 footer {
   font-family: "Inter", system-ui, sans-serif;
 }
@@ -203,4 +204,10 @@ footer {
   height: 1.6em;
   margin: 0 0.15em 0 -0.25em;
   vertical-align: -0.45em;
+}
+
+// Ported acagamic.com clips: centre them over their captions
+.post figure video {
+  display: block;
+  margin: 0 auto;
 }

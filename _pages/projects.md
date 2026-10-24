@@ -2,10 +2,10 @@
 layout: page
 title: projects
 permalink: /projects/
-description: Funded research projects, current and past.
+description: Funded research projects, current and past, plus research tools and resources.
 nav: true
 nav_order: 3
-display_categories: [current, past]
+display_categories: [current, past, resources]
 horizontal: true
 ---
 
