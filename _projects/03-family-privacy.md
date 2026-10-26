@@ -10,4 +10,4 @@ Game consoles sit in family rooms and collect data from everyone who plays, incl
 
 - **Role:** Co-applicant
 - **Funder:** UW/SSHRC Robert Harding & Lois Claxton Humanities and Social Sciences Grant
-- **Duration:** July 1, 2026, to June 30, 2028
+- **Years:** July 1, 2026, to June 30, 2028
