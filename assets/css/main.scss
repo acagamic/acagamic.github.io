@@ -262,6 +262,8 @@ html[data-theme="dark"] {
   svg {
     display: block;
     overflow: visible;
+    touch-action: pan-y; // vertical swipes scroll the page instead of hitting a year
+    -webkit-tap-highlight-color: transparent;
   }
   .sc-bar,
   .sc-dot {
@@ -305,6 +307,11 @@ html[data-theme="dark"] {
   }
   .sc-base {
     stroke: var(--global-text-color-light);
+  }
+  .sc-break {
+    fill: none;
+    stroke: var(--global-text-color-light);
+    stroke-width: 1.5px;
   }
   .sc-tick {
     fill: var(--global-text-color-light);
