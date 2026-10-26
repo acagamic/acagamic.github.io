@@ -26,6 +26,15 @@
     tip.style.top = `${y + 14}px`;
   };
   const hideTip = () => (tip.hidden = true);
+  // Phones have no hover: touch never fires pointerleave, and a tap focuses the target, so hover and focus
+  // tooltips would stick. Hover only reacts to mice and pens, focus only to keyboards, and scrolling clears the tip.
+  const hovers = (event) => event.pointerType !== "touch";
+  const byKeyboard = (event) => event.target.matches(":focus-visible");
+  let armed = null; // on touch, the first tap on a dot shows its title; a second tap opens the entry
+  addEventListener("scroll", () => { hideTip(); armed = null; }, { passive: true });
+  document.addEventListener("pointerdown", (event) => {
+    if (!event.target.closest?.(".sc-hit, .sc-dot-g")) { hideTip(); armed = null; }
+  });
 
   fetch(root.dataset.src)
     .then((r) => r.json())
@@ -136,11 +145,12 @@
           .attr("tabindex", 0).attr("role", "button")
           .attr("aria-label", (d) => `${d.year}: ${fmt(d.citations)} citations received, ${d.papers} papers published. Show papers.`)
           .on("pointermove focus", (event, d) => {
+            if (event.type === "focus" ? !byKeyboard(event) : !hovers(event)) return;
             highlight(d.year);
             showTip(event, [[d.year + (d.partial ? " (to date)" : ""), ""], [fmt(d.citations), "citations received"], [d.papers, "papers published"]]);
           })
           .on("pointerleave blur", () => { highlight(selected); hideTip(); })
-          .on("click", (event, d) => select(d.year))
+          .on("click", (event, d) => { if (event.pointerType === "touch") event.currentTarget.blur(); select(d.year); })
           .on("keydown", (event, d) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(d.year); } });
 
         const highlight = (year) =>
@@ -157,6 +167,7 @@
         panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
       };
 
+      const tipLines = (p) => [[p.title, ""], [fmt(p.cites), `citations · ${p.venue}`]];
       const drawPapers = (year) => {
         const all = data.papers.filter((p) => p.year === year);
         const papers = all.filter((p) => p.cites !== null);
@@ -164,9 +175,7 @@
         const venues = [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a) || a.localeCompare(b));
         const top = d3.greatest(papers, (p) => p.cites);
         const h = root.querySelector(".sc-detail-title");
-        const missing = all.length - papers.length;
-        h.textContent = `${year}: ${all.length} papers` + (top ? `. The most cited, “${top.title}”, has ${fmt(top.cites)} citations.` : ".") +
-          (missing ? ` ${missing} ${missing === 1 ? "paper has" : "papers have"} no Scholar count and ${missing === 1 ? "is" : "are"} not shown.` : "");
+        h.textContent = `${year}: ${all.length} papers` + (top ? `. The most cited, “${top.title}”, has ${fmt(top.cites)} citations.` : ".");
 
         const svgEl = root.querySelector(".sc-papers");
         const W = svgEl.clientWidth || 700;
@@ -176,18 +185,29 @@
         const svg = d3.select(svgEl).attr("viewBox", `0 0 ${W} ${H}`).attr("height", H);
         svg.selectAll("*").remove();
 
+        // A true log10 scale: every decade (1-10, 10-100, 100-1,000) gets the same width.
+        // Log scales cannot show zero, so uncited papers sit in their own column, set off by an axis break.
         const maxC = d3.max(papers, (p) => p.cites) || 1;
-        const x = d3.scaleSymlog([0, maxC], [m.left, W - m.right]).constant(1).nice();
+        const decades = Math.max(1, Math.ceil(Math.log10(maxC + 1)));
+        const zeroX = m.left + 10, logStart = m.left + 44;
+        const x = d3.scaleLog([1, 10 ** decades], [logStart, W - m.right]);
+        const xOf = (c) => (c === 0 ? zeroX : x(c));
         const y = d3.scaleBand(venues, [m.top, m.top + venues.length * row]).padding(0.2);
-        const ticks = [0, 1, 10, 100, 1000, 10000, 100000].filter((t) => t <= x.domain()[1]);
+        const plotBottom = m.top + venues.length * row;
 
-        svg.append("g").attr("transform", `translate(0,${m.top + venues.length * row})`)
-          .call(d3.axisBottom(x).tickValues(ticks).tickFormat(d3.format("~s")).tickSize(-(venues.length * row)))
+        svg.append("g").attr("transform", `translate(0,${plotBottom})`)
+          .call(d3.axisBottom(x).tickValues(d3.range(decades + 1).map((d) => 10 ** d)).tickFormat(d3.format("~s"))
+            .tickSize(-(venues.length * row)))
           .call((g) => g.select(".domain").remove())
           .call((g) => g.selectAll(".tick line").attr("class", "sc-grid"))
           .call((g) => g.selectAll("text").attr("class", "sc-tick"));
+        svg.append("line").attr("class", "sc-grid").attr("x1", zeroX).attr("x2", zeroX).attr("y1", m.top).attr("y2", plotBottom);
+        svg.append("text").attr("class", "sc-tick").attr("x", zeroX).attr("y", plotBottom + 14).attr("text-anchor", "middle").text("0");
+        const brk = (logStart + zeroX) / 2; // axis break between the zero column and the log scale
+        svg.append("path").attr("class", "sc-break")
+          .attr("d", `M${brk - 5},${plotBottom + 9} l4,-8 M${brk + 1},${plotBottom + 9} l4,-8`);
         svg.append("text").attr("class", "sc-tick").attr("x", W - m.right).attr("y", H - 4).attr("text-anchor", "end")
-          .text("Citations per paper (log scale)");
+          .text(W < 560 ? "Citations, log scale (×10 per gridline)" : "Citations per paper, log scale: each gridline is 10 times the one before");
         svg.append("g").selectAll("text").data(venues).join("text")
           .attr("class", "sc-venue").attr("x", m.left - 10).attr("y", (v) => y(v) + y.bandwidth() / 2)
           .attr("dy", "0.32em").attr("text-anchor", "end").text((v) => v)
@@ -197,7 +217,7 @@
           });
 
         // Spread papers with similar counts inside their venue row so dots don't stack
-        const placed = papers.map((p) => ({ ...p, cx: x(p.cites) }));
+        const placed = papers.map((p) => ({ ...p, cx: xOf(p.cites) }));
         for (const v of venues) {
           const inRow = placed.filter((p) => p.venue === v).sort((a, b) => a.cx - b.cx);
           inRow.forEach((p, i) => {
@@ -211,10 +231,19 @@
         dots.append("circle").attr("class", "sc-dot-hit").attr("cx", (p) => p.cx).attr("cy", (p) => p.cy).attr("r", 12);
         dots.append("circle").attr("class", "sc-dot").attr("cx", (p) => p.cx).attr("cy", (p) => p.cy).attr("r", 5.5);
         dots
-          .on("pointermove focus", (event, p) => showTip(event, [[p.title, ""], [fmt(p.cites), `citations · ${p.venue}`]]))
+          .on("pointermove focus", (event, p) => {
+            if (event.type === "focus" ? byKeyboard(event) : hovers(event)) showTip(event, tipLines(p));
+          })
           .on("pointerleave blur", hideTip)
           .on("click keydown", (event, p) => {
             if (event.type === "keydown" && event.key !== "Enter") return;
+            if (event.pointerType === "touch" && armed !== p.key) { // first tap: show the title, don't jump
+              armed = p.key;
+              showTip(event, tipLines(p));
+              return;
+            }
+            armed = null;
+            hideTip();
             const target = document.getElementById(p.key);
             if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
           });
