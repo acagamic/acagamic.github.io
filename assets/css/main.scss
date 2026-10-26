@@ -382,3 +382,8 @@ html[data-theme="dark"] {
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   }
 }
+
+// Profile photo on the about page: no drop shadow
+.profile img.z-depth-1 {
+  box-shadow: none;
+}
