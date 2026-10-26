@@ -1,0 +1,21 @@
+---
+layout: null
+sitemap: false
+---
+{%- comment -%} Small index of articles, projects, and main pages for the 404 page's search (assets/js/not-found.js). {%- endcomment -%}
+[
+{%- assign first = true -%}
+{%- for p in site.posts -%}
+{%- unless first -%},{%- endunless -%}{%- assign first = false -%}
+{"kind":"Article","title":{{ p.title | jsonify }},"url":{{ p.redirect | default: p.url | relative_url | jsonify }},"year":{{ p.date | date: "%Y" | jsonify }},"source":{{ p.external_source | default: "acagamic.com" | jsonify }},"text":{{ p.description | append: " " | append: p.content | strip_html | strip_newlines | truncate: 500 | jsonify }}}
+{%- endfor -%}
+{%- for p in site.projects -%}
+,{"kind":"Project","title":{{ p.title | jsonify }},"url":{{ p.url | relative_url | jsonify }},"year":"","source":"","text":{{ p.description | strip_html | truncate: 220 | jsonify }}}
+{%- endfor -%}
+{%- for p in site.pages -%}
+{%- if p.url contains '/page/' -%}{%- continue -%}{%- endif -%}
+{%- if p.nav and p.title -%}
+,{"kind":"Page","title":{{ p.title | jsonify }},"url":{{ p.url | replace: "index.html", "" | relative_url | jsonify }},"year":"","source":"","text":{{ p.description | strip_html | truncate: 220 | jsonify }}}
+{%- endif -%}
+{%- endfor -%}
+]
