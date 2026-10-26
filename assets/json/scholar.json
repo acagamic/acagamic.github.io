@@ -2447,6 +2447,22 @@
    "venue": "Other conferences",
    "cites": 7,
    "workshop": false
+  },
+  {
+   "key": "smith2026practice",
+   "title": "The Practice Paradox: How Practice Negatively Impacts Players' Time-to-Quit and Frustration in Challenging Game Sections",
+   "year": 2026,
+   "venue": "PACM HCI (CHI PLAY)",
+   "cites": null,
+   "workshop": false
+  },
+  {
+   "key": "randelshofer2026glimpse",
+   "title": "Theory, Experience, and Instinct: A Glimpse Into AAA Game Processes and How UX Leaders Navigate Pre-Production",
+   "year": 2026,
+   "venue": "PACM HCI (CHI PLAY)",
+   "cites": null,
+   "workshop": false
   }
  ]
 }
