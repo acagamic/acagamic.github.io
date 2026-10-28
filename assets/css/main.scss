@@ -518,3 +518,28 @@ html[data-theme="dark"] {
     border-top: 1px solid var(--global-divider-color);
   }
 }
+
+// Year and category headings used the divider colour (1.2:1 on paper), so the page's
+// own navigation was nearly invisible. Use the secondary text colour instead.
+.publications h2.bibliography,
+.projects h2.category {
+  color: var(--global-text-color-light);
+}
+
+// Publication link buttons (DOI, BibTeX, award) were 10px, below a legible floor.
+.publications ol.bibliography li .links a.btn {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.7rem;
+}
+
+// Balanced headings and no one-word last lines.
+h1,
+h2,
+h3,
+.card-title {
+  text-wrap: balance;
+}
+.card-text,
+.post-header .desc {
+  text-wrap: pretty;
+}
