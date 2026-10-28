@@ -2,7 +2,7 @@
 layout: about
 title: about
 permalink: /
-subtitle: Professor of Human-Computer Interaction (AI and Games) · University Research Chair · <a href='https://uwaterloo.ca/stratford-school-of-interaction-design-and-business/'>Stratford School of Interaction Design and Business</a>, University of Waterloo
+subtitle: <span class="role">Professor of Human-Computer Interaction (AI and Games) · University Research Chair</span><span class="affil"><a href='https://uwaterloo.ca/stratford-school-of-interaction-design-and-business/'>Stratford School of Interaction Design and Business</a>, University of Waterloo</span>
 
 profile:
   align: right
@@ -10,8 +10,6 @@ profile:
   image_circular: false # the photo is already a circular cut-out
   more_info: >
     <p>Director, <a href="https://hcigames.com">HCI Games Group</a></p>
-    <p>Stratford School of Interaction Design and Business</p>
-    <p>University of Waterloo</p>
 
 selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true # includes social icons at the bottom of the page
