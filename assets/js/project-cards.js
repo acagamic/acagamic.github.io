@@ -1,0 +1,1 @@
+document.querySelectorAll(".projects .card").forEach(e=>{e.addEventListener("pointermove",t=>{const o=e.getBoundingClientRect();e.style.setProperty("--mx",(t.clientX-o.left)/o.width*100+"%"),e.style.setProperty("--my",(t.clientY-o.top)/o.height*100+"%")})});
