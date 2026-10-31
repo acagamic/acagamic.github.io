@@ -543,3 +543,119 @@ h3,
 .post-header .desc {
   text-wrap: pretty;
 }
+
+// Project cards: on hover (or keyboard focus) a coloured glow follows the cursor, a dot grid
+// lights up around it, a gradient rule sweeps across the top, and an arrow slides in.
+// Accent hues rotate per card; they are decoration only, text colours do not change.
+// --mx/--my come from assets/js/project-cards.js; without it the glow sits at the top centre.
+.projects .card {
+  --pc: #1e4fc2;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  &::before {
+    background:
+      radial-gradient(
+        22rem circle at var(--mx, 50%) var(--my, 0%),
+        color-mix(in srgb, var(--pc) 30%, transparent),
+        transparent 65%
+      ),
+      linear-gradient(90deg, var(--pc), color-mix(in srgb, var(--pc) 40%, #ffffff)) top / 0% 3px no-repeat;
+    transition:
+      opacity 0.3s ease,
+      background-size 0.45s ease;
+  }
+  &::after {
+    background-image: radial-gradient(color-mix(in srgb, var(--pc) 55%, transparent) 1px, transparent 1.5px);
+    background-size: 12px 12px;
+    -webkit-mask-image: radial-gradient(11rem circle at var(--mx, 50%) var(--my, 0%), #000, transparent 70%);
+    mask-image: radial-gradient(11rem circle at var(--mx, 50%) var(--my, 0%), #000, transparent 70%);
+  }
+  .card-body {
+    position: relative;
+    &::after {
+      content: "↗";
+      position: absolute;
+      top: 0.7rem;
+      right: 0.9rem;
+      font-family: "Inter", sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--pc);
+      opacity: 0;
+      transform: translate(-6px, 6px);
+      transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+    }
+  }
+  .card-title {
+    padding-right: 1.5rem;
+  }
+}
+.projects .col:nth-child(4n + 2) .card {
+  --pc: #d9695a;
+}
+.projects .col:nth-child(4n + 3) .card {
+  --pc: #1f9e8e;
+}
+.projects .col:nth-child(4n + 4) .card {
+  --pc: #d99a1e;
+}
+html[data-theme="dark"] .projects .card {
+  --pc: #8aa8f0;
+}
+html[data-theme="dark"] .projects .col:nth-child(4n + 2) .card {
+  --pc: #f08c7e;
+}
+html[data-theme="dark"] .projects .col:nth-child(4n + 3) .card {
+  --pc: #4fd1bd;
+}
+html[data-theme="dark"] .projects .col:nth-child(4n + 4) .card {
+  --pc: #f0be4a;
+}
+@media (hover: hover) {
+  .projects a:hover .card,
+  .projects a:focus-visible .card {
+    &::before,
+    &::after {
+      opacity: 1;
+    }
+    &::before {
+      background-size:
+        auto,
+        100% 3px;
+    }
+    .card-body::after {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+.projects a:focus-visible .card {
+  &::before,
+  &::after {
+    opacity: 1;
+  }
+  .card-body::after {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .projects .card::before,
+  .projects .card::after,
+  .projects .card .card-body::after {
+    transition: none;
+  }
+}

@@ -26,3 +26,5 @@ horizontal: true
   </div>
 {% endfor %}
 </div>
+
+<script src="{{ '/assets/js/project-cards.js' | relative_url }}" defer></script>
