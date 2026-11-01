@@ -652,6 +652,33 @@ html[data-theme="dark"] .projects .col:nth-child(4n + 4) .card {
     transform: none;
   }
 }
+// Touch screens have no hover, so the effect rests on: glow and dots sit at the top right,
+// the rule and arrow stay visible, and pressing a card brightens it.
+@media (hover: none) {
+  .projects .card {
+    --mx: 88%;
+    --my: 0%;
+    &::before,
+    &::after {
+      opacity: 0.7;
+    }
+    &::before {
+      background-size:
+        auto,
+        100% 3px;
+    }
+    .card-body::after {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .projects a:active .card {
+    &::before,
+    &::after {
+      opacity: 1;
+    }
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .projects .card::before,
   .projects .card::after,
