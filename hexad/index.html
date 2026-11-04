@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hexad at Ten</title>
+<meta name="description" content="Ten years of citations to the Gamification User Types Hexad Scale (CHI PLAY 2016), with an explorable citation network.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Wix+Madefor+Display:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hexad.css">
+<script>document.documentElement.classList.add('js');</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 16px; }
+  section { padding: 120px 0 8px; }
+  h2 { font-size: clamp(30px, 4.4vw, 54px); max-width: 22ch; }
+  .lede { font-size: 19px; max-width: 64ch; color: var(--muted); margin: 0 0 28px; }
+  .viz svg { width: 100%; height: auto; display: block; }
+
+  /* progress */
+  .progress { position: fixed; top: 0; left: 0; height: 3px; width: 100%; z-index: 20; transform-origin: 0 50%; transform: scaleX(0);
+    background: linear-gradient(90deg, var(--brand-cyan), var(--brand-pink), var(--brand-magenta)); }
+
+  /* hero stage */
+  .hero { min-height: 100svh; display: flex; align-items: center; overflow: hidden; background: var(--bg); color: var(--ink); }
+  .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+  .hero .wrap { position: relative; z-index: 2; width: 100%; pointer-events: none; }
+  .hero h1 { font-size: clamp(42px, 6vw, 84px); font-weight: 800; letter-spacing: -0.035em; max-width: 12ch; margin-bottom: 28px; }
+  .hero h1 .n { display: block; font-variant-numeric: tabular-nums; }
+  .hero p { font-size: clamp(17px, 1.6vw, 21px); max-width: 44ch; color: var(--muted); margin: 0 0 36px; }
+  .cue { pointer-events: auto; display: inline-flex; gap: 10px; align-items: center; color: var(--ink); font-weight: 600; text-decoration: none;
+    border: 1.5px solid var(--grid); border-radius: 999px; padding: 12px 22px; transition: border-color .3s, background .3s; }
+  .cue:hover { border-color: var(--brand-cyan); background: rgb(0 179 235 / .08); }
+  .cue svg { transition: transform .4s var(--ease-out); } .cue:hover svg { transform: translateY(3px); }
+  @media (max-width: 900px) { .hero canvas { opacity: .55; } }
+
+  /* heading reveal: visible by default, masked only when JS runs */
+  .js .reveal h2 { clip-path: inset(0 0 100% 0); transform: translateY(0.35em); transition: clip-path 1s var(--ease-out), transform 1s var(--ease-out); }
+  .js .reveal.in h2 { clip-path: inset(0 0 -0.2em 0); transform: none; }
+  .js .reveal .lede, .js .reveal .viz, .js .reveal .legend, .js .reveal .langs, .js .reveal .steps, .js .reveal table { opacity: 0; transition: opacity .9s .25s var(--ease-out); }
+  .js .reveal.in .lede, .js .reveal.in .viz, .js .reveal.in .legend, .js .reveal.in .langs, .js .reveal.in .steps, .js .reveal.in table { opacity: 1; }
+
+  .ticker { font: 800 clamp(40px, 6vw, 72px)/1 var(--display); color: var(--grid); font-variant-numeric: tabular-nums; }
+
+  /* explorer stage */
+  .stage-band { background: var(--bg); color: var(--ink); padding: 110px 0 90px; margin-top: 120px; }
+  .stage-band section { padding: 0; }
+  .explorer { position: relative; height: min(86vh, 900px); border: 1px solid var(--grid); border-radius: 18px; overflow: hidden; margin-top: 8px;
+    background: radial-gradient(ellipse at 50% 50%, rgb(26 156 203 / .10), transparent 65%); }
+  #net { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  .controls { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; pointer-events: none; z-index: 2; }
+  .controls > * { pointer-events: auto; }
+  button, input[type=search] { font: 600 15px var(--sans); color: var(--ink); background: var(--panel); border: 1px solid var(--grid); border-radius: 999px; padding: 9px 16px; }
+  button { cursor: pointer; transition: border-color .25s, transform .25s var(--ease-out); }
+  button:hover { border-color: var(--brand-cyan); } button:active { transform: scale(.97); }
+  button:disabled { opacity: .55; cursor: progress; }
+  button[aria-pressed="true"] { border-color: var(--series-2); }
+  input[type=search] { width: min(320px, 100%); font-weight: 500; }
+  input::placeholder { color: var(--muted); }
+  .depth { font: 700 15px var(--sans); background: var(--panel); border: 1px solid var(--grid); border-radius: 999px; padding: 9px 16px; }
+  .panel { position: absolute; right: 14px; bottom: 14px; width: min(390px, calc(100% - 28px)); max-height: 60%; overflow: auto; background: var(--panel);
+    border: 1px solid var(--grid); border-radius: 16px; padding: 18px 20px; font-size: 15px; box-shadow: 0 18px 50px rgb(0 0 0 / .35); z-index: 2; }
+  .panel[hidden] { display: none; }
+  .panel .yr { font-weight: 700; color: var(--series-1); margin: 0; font-size: 14px; }
+  .panel h3 { font-size: 20px; margin: 4px 0 8px; }
+  .panel .meta { color: var(--muted); margin: 0 0 10px; }
+  .panel ol { padding-left: 20px; margin: 8px 0; color: var(--muted); font-size: 14px; }
+  .panel .acts { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  .help { font-size: 15px; color: var(--muted); margin-top: 12px; }
+
+  .langs { display: flex; flex-wrap: wrap; gap: 12px 28px; font: 700 clamp(22px, 2.6vw, 32px) var(--display); letter-spacing: -0.02em; }
+  .langs .en { color: var(--muted); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px; margin: 8px 0 32px; }
+  .facts b { display: block; font: 800 clamp(44px, 5vw, 64px)/1 var(--display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--text-2); }
+  .facts p { margin: 10px 0 0; color: var(--muted); font-size: 16px; }
+  .js .reveal .facts { opacity: 0; transition: opacity .9s .25s var(--ease-out); } .js .reveal.in .facts { opacity: 1; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px; }
+  .steps div { border-top: 3px solid var(--series-1); padding-top: 16px; }
+  .steps b { font: 800 34px var(--display); display: block; } .steps p { margin: 6px 0 0; color: var(--muted); font-size: 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); }
+  th, td { text-align: left; padding: 8px 10px 8px 0; } td.n, th.n { text-align: right; }
+  thead tr { border-bottom: 1px solid var(--ink); }
+  details { margin-top: 14px; color: var(--muted); } summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+  footer { padding: 90px 0 60px; color: var(--muted); font-size: 15px; }
+  .theme { position: fixed; top: 14px; right: 14px; z-index: 21; }
+
+  /* scroll-scrubbed network: the canvas sticks while the page scrolls past */
+  .stage-band { padding-top: 0; }
+  .stage-band section#explore { padding-top: 90px; }
+  .scrolly { height: 340vh; position: relative; }
+  .sticky { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+  .sticky canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .cap { position: relative; z-index: 2; padding-top: 12vh; pointer-events: none; }
+  .cap h2 { max-width: 13ch; transition: opacity .4s; }
+  .cap .lede { max-width: 34ch; }
+  .cap .ticker { color: var(--muted); margin-top: 24px; }
+  @media (max-width: 900px) { .cap { padding-top: 7vh; } .cap h2 { font-size: 30px; } .cap .lede { font-size: 16px; max-width: 28ch; } }
+
+  /* step navigator */
+  .stepper { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 22; display: flex; align-items: center; gap: 6px;
+    background: var(--panel); color: var(--ink); border: 1px solid var(--grid); border-radius: 999px; padding: 6px; box-shadow: 0 10px 30px rgb(10 37 48 / .18);
+    max-width: calc(100vw - 32px); }
+  .stepper button { width: 40px; height: 40px; padding: 0; display: grid; place-items: center; }
+  .s-lab { font: 600 14px var(--sans); padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: min(46ch, 60vw); }
+  .s-lab b { color: var(--series-1); margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<nav class="stepper" aria-label="Step through the visualizations">
+  <button id="s-prev" aria-label="Previous visualization"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <span class="s-lab" id="s-lab" aria-live="polite"></span>
+  <button id="s-next" aria-label="Next visualization"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</nav>
+<button class="theme" id="theme" aria-label="Switch between light and dark theme">Light or dark</button>
+
+<header class="hero stage grain" id="top">
+  <canvas id="hero" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <h1><span class="n" id="big">1,073</span> citations for a 24-item questionnaire</h1>
+    <p>The Gamification User Types Hexad Scale turned ten at CHI PLAY 2026. Each point here is one of the 594 papers that OpenAlex links to it, coloured from 2016 in cyan to 2026 in magenta.</p>
+    <a class="cue" href="#start">Follow the citations
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v11M3 8.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <section class="reveal" data-run="hexagon" id="start">
+    <h2>Twenty-four items score six motivations, and one person can score high on several</h2>
+    <p class="lede">Gustavo Tondello, Rina Wehbe, Lisa Diamond, Marc Busch, Andrzej Marczewski, and Lennart Nacke turned Marczewski’s practitioner framework into a survey instrument. The first study tested it with 133 respondents and retested 40.</p>
+    <div class="viz hexad" id="v-hex" style="max-width:720px;margin:auto"></div>
+  </section>
+
+  <section class="reveal" data-run="retest">
+    <h2>Cutting six items strengthened the retest for five of six types</h2>
+    <p class="lede">Test–retest reliability (Pearson r, 40 people) for the 30-item draft and the final 24 items. The Player scale fell to .357, and a 2019 revision replaced its items.</p>
+    <div class="viz" id="v-rt"></div>
+  </section>
+
+  <section class="reveal" data-run="crowd">
+    <h2>One respondent in 133 scored highest as a Disruptor</h2>
+    <p class="lede">Each dot is one person, placed by their highest-scoring type. Disruptor scores averaged 14.9 of 28, while every other type averaged 20 to 22 (Table 5).</p>
+    <div class="viz" id="v-crowd"></div>
+  </section>
+
+  <section class="reveal" data-run="elements">
+    <h2>The data moved 14 of 31 game elements out of the framework’s grouping</h2>
+    <p class="lede">Correlations between each type score and each game-element rating in the 2016 study, significant cells only. Regroup the rows by what the data showed; orange rows changed group.</p>
+    <p><button id="b-regroup">Regroup by the data</button></p>
+    <div class="viz" id="v-hm"></div>
+  </section>
+
+  <section class="reveal" data-run="phil">
+    <h2>The most reliable scale matched none of its game elements</h2>
+    <p class="lede">The Philanthropist scale reached α = .893, the highest of the six, yet correlated at τ = .039 with its suggested elements. Kendall’s τ for each type, framework grouping to improved grouping; the improved grouping gained 9% overall (Tables 1 and 7).</p>
+    <div class="viz" id="v-t7"></div>
+  </section>
+
+  <section class="reveal" data-run="years1">
+    <h2>Direct citations climbed to about 75 a year by 2021 and held there</h2>
+    <p class="lede">Papers citing the Hexad paper each year, from OpenAlex. The 2026 bar runs to November 4.</p>
+    <div class="ticker" id="t-y1" aria-hidden="true"></div>
+    <div class="viz" id="v-y1"></div>
+  </section>
+
+  <section class="reveal" data-run="years2">
+    <h2>The second ring kept growing every year through 2025</h2>
+    <p class="lede">6,870 papers cite at least one of the 594 papers that cite the Hexad paper. In 2025 alone, 1,431 of them appeared.</p>
+    <div class="legend"><span><i style="background:var(--series-1)"></i>cite the Hexad paper</span><span><i style="background:var(--series-2)"></i>cite those papers</span></div>
+    <div class="viz" id="v-y2"></div>
+  </section>
+
+  <section class="reveal" data-run="milestones">
+    <h2>The most-cited follow-ups became citation engines of their own</h2>
+    <p class="lede">The 10 most-cited papers that cite the Hexad paper. Each bar splits by the year its citations arrived, from cyan in 2016 to magenta in 2026: a long magenta tail means the paper is still gaining. Hover a segment for the year; click a bar to open the paper.</p>
+    <div class="viz" id="v-ms"></div>
+  </section>
+</div>
+
+<div class="stage-band stage grain">
+  <div class="scrolly" id="scrolly">
+    <div class="sticky">
+      <canvas id="net-s" aria-hidden="true"></canvas>
+      <div class="wrap cap">
+        <h2 id="sc-h">594 papers cite the Hexad paper directly</h2>
+        <p class="lede" id="sc-p">Scroll to run the clock. Each dot is a paper, placed clockwise by publication date from 2016; bigger dots have more citations.</p>
+        <div class="ticker" id="sc-y" aria-live="off">2016</div>
+      </div>
+    </div>
+  </div>
+  <div class="wrap">
+    <section id="explore">
+      <h2>Explore the network as deep as it goes</h2>
+      <p class="lede">The Hexad paper sits in the centre. Cyan dots cite it, magenta dots cite those, and amber dots sit three or more steps out. Time runs clockwise from 2016. Click a dot to see the paper, then load the papers that cite it.</p>
+      <div class="explorer">
+        <canvas id="net" aria-label="Interactive radial citation network. Use the search box to find a paper by title or author."></canvas>
+        <div class="controls">
+          <input type="search" id="q" placeholder="Search title or author" aria-label="Search papers by title or author" list="qlist">
+          <datalist id="qlist"></datalist>
+          <button id="b-ring2" aria-pressed="true">Second ring</button>
+          <button id="b-play">Replay time</button>
+          <button id="b-dive">Dive nine deep</button>
+          <button id="b-reset">Reset view</button>
+          <span class="depth" id="depth">Deepest ring: 2</span>
+        </div>
+        <div class="panel" id="panel" hidden></div>
+      </div>
+      <p class="help">Scroll or pinch to zoom, drag to pan. Rings past the second load live from OpenAlex, 30 most-cited papers at a time.</p>
+    </section>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="reveal" data-run="chain">
+    <h2>Follow the most-cited descendant and the line runs nine generations to a 2026 museum study in Tashkent</h2>
+    <p class="lede">Each step picks the most-cited paper, published in or after its parent’s year, that cites the step before. The line ends at a 2026 paper nobody has cited yet.</p>
+    <div class="viz" id="v-chain"></div>
+  </section>
+
+  <section class="reveal" data-run="countries">
+    <h2>Authors in 65 countries cite the paper</h2>
+    <p class="lede">Citing papers with at least one author affiliated in each country, top 15. Germany, Canada, and Brazil lead.</p>
+    <div class="viz" id="v-co"></div>
+  </section>
+
+  <section class="reveal">
+    <h2>The questionnaire exists in at least 17 languages</h2>
+    <p class="lede">The long questionnaire covers 16 languages including English. A Persian adaptation of Hexad-12 adds the 17th. Translation and validation are separate questions, and several versions report weaker fit.</p>
+    <div class="langs" id="v-langs"></div>
+  </section>
+
+  <section class="reveal" data-run="lineage">
+    <h2>Gustavo Tondello and Lennart Nacke kept rebuilding the scale, and Jeanine Krath made it shorter and stronger</h2>
+    <p class="lede">Two threads run unbroken from the 2016 paper to Hexad-12. Jeanine Krath’s thread starts in 2021 with a study comparing player typologies with the Hexad and a review of theory in gamification research that 956 papers now cite, two generations below the Hexad paper in the descent chain. In 2023 she led the short form with Maximilian Altmeyer, Gustavo, and Lennart.</p>
+    <div class="viz" id="v-lin"></div>
+  </section>
+
+  <section class="reveal" data-run="hexfacts">
+    <h2>Hexad‑12 halved the questionnaire and fit the data better than the original</h2>
+    <div class="facts">
+      <div><b data-to="12">12</b><p>items instead of 24, because long questionnaires raise dropout and screen fatigue inside bigger surveys</p></div>
+      <div><b data-to="882">882</b><p>responses used to choose the items through exploratory factor analysis</p></div>
+      <div><b data-to="1101">1,101</b><p>new responses used to confirm the six-factor structure</p></div>
+      <div><b data-to="23196">23,196</b><p>valid responses on the public Hexad-12 data page by October 26, 2026</p></div>
+    </div>
+    <p class="lede">Krath, Altmeyer, Tondello, and Nacke (CHI 2023) report better model fit, reliability, and convergent and discriminant validity than the 24-item scale. Better fit in development samples does not prove fewer dropouts, and independent teams keep testing it: a Hong Kong study validated it with 1,610 young gamers, a German validation recommended five dimensions after the Disruptor scale failed its criteria, and a Chinese 12-item form shares only 10 of its items. <a href="https://doi.org/10.1145/3544548.3580968">Read the Hexad-12 paper</a>.</p>
+  </section>
+
+  <section class="reveal" data-run="live1">
+    <h2>Twenty-three thousand Hexad‑12 tests later, the Disruptor is still rare</h2>
+    <p class="lede">Share of people whose single top type is each type, in the 2016 study (133 people) and the public Hexad-12 test (12,454 people). Another 47% of the 23,502 valid test takers tie on two or more types, so a single label misdescribes almost half of them. Grey dots show 2016; cyan dots rose since then and magenta dots fell.</p>
+    <div class="viz" id="v-live1"></div>
+  </section>
+
+  <section class="reveal" data-run="live2">
+    <h2>Player motivation falls in every age band, while Philanthropist rises</h2>
+    <p class="lede">Mean proportional Hexad-12 scores by age for the 18,423 test takers who shared their age; scores sum to 100% per person. The lines cross in the 21–29 band. These are self-selected visitors to a public test, not a population sample. Source: live data at <a href="https://hexad.gamified.uk/data/">hexad.gamified.uk/data</a> (Andrzej Marczewski), retrieved November 4, 2026.</p>
+    <div class="viz" id="v-live2"></div>
+  </section>
+
+  <section class="reveal">
+    <h2>Each database counts a different number of citations</h2>
+    <p class="lede">The charts use OpenAlex because it records who cites whom, which a network needs. Google Scholar indexes more theses, preprints, and non-English venues.</p>
+    <table>
+      <thead><tr><th>Source</th><th class="n">Citations</th><th>Checked</th></tr></thead>
+      <tbody>
+        <tr><td>Google Scholar</td><td class="n">1,073</td><td>October 26, 2026</td></tr>
+        <tr><td>OpenAlex</td><td class="n" id="oa-n">594</td><td>November 4, 2026</td></tr>
+        <tr><td>Semantic Scholar</td><td class="n">558</td><td>October 26, 2026</td></tr>
+        <tr><td>Crossref</td><td class="n">423</td><td>October 26, 2026</td></tr>
+      </tbody>
+    </table>
+    <details><summary>Method</summary>
+      <p>Direct citers come from the OpenAlex filter <code>cites:W2530695086</code>, fetched year by year and checked against the OpenAlex total. The second ring is every work citing at least one direct citer, minus the direct citers themselves. Country counts use author affiliations recorded by OpenAlex. OpenAlex metadata contains errors, such as books dated before the papers they cite, so the descent chain skips any paper published before its parent. Study figures come from the published tables of Tondello et al. (2016) and summary statistics of its data; no individual responses appear on this page.</p>
+    </details>
+  </section>
+
+  <footer>
+    Tondello, G. F., Wehbe, R. R., Diamond, L., Busch, M., Marczewski, A., and Nacke, L. E. (2016). The Gamification User Types Hexad Scale. <i>Proceedings of CHI PLAY 2016</i>, 229–233. <a href="https://doi.org/10.1145/2967934.2968082">doi.org/10.1145/2967934.2968082</a>. Data: <a href="https://openalex.org">OpenAlex</a>. Questionnaire downloads: <a href="https://hcigames.com/user-types-hexad/">hcigames.com/user-types-hexad</a>.
+  </footer>
+</div>
+</main>
+
+<script src="viz.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+try { const t = localStorage.getItem('hx-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
+let net;
+$('theme').onclick = () => {
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches, cur = document.documentElement.dataset.theme || (dark ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('hx-theme', next); } catch {}
+  net?.draw();
+};
+// Reading progress
+addEventListener('scroll', () => { const h = document.documentElement; $('progress').style.transform = `scaleX(${h.scrollTop / (h.scrollHeight - h.clientHeight || 1)})`; }, { passive: true });
+
+Promise.all([HX.load(), HX.loadStudy(), HX.loadLive()]).then(([data, study, live]) => {
+  HX.heroField($('hero'), data);
+  HX.countUp($('big'), data.counts.google_scholar, 2400);
+  $('oa-n').textContent = HX.fmt(data.counts.openalex);
+  $('v-langs').innerHTML = ['English', 'Arabic', 'Catalan', 'Chinese', 'Dutch', 'French', 'German', 'Hungarian', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Persian', 'Portuguese', 'Spanish', 'Swedish', 'Turkish']
+    .map((l, i) => `<span class="${i ? '' : 'en'}">${l}</span>`).join('');
+
+  const top = [...data.nodes].sort((a, b) => b[3] - a[3]).slice(0, 10);
+  const charts = {
+    hexagon: HX.hexagon($('v-hex')),
+    retest: HX.dumbbell($('v-rt'), study.retest.rows, { W: 1100, rowH: 60, domain: [0.3, 0.9] }),
+    crowd: HX.crowd($('v-crowd'), study.dominant, { W: 1400, H: 470 }),
+    elements: HX.heatmap($('v-hm'), study.elements, study.types, { W: 1400, rowH: 24 }),
+    phil: HX.dumbbell($('v-t7'), study.table7.rows, { W: 1100, rowH: 60, domain: [0, 0.5] }),
+    years1: HX.yearBars($('v-y1'), data, { ticker: $('t-y1') }),
+    years2: HX.yearBars($('v-y2'), data, { series: ['d1', 'd2'], stagger: 180 }),
+    milestones: HX.timeBars($('v-ms'), top, { W: 1000, label: r => `${r[4]} ${r[2]}`, total: r => r[3], years: r => r[9] }),
+    chain: HX.chain($('v-chain'), data, { W: 1100, H: 640 }),
+    countries: HX.hbars($('v-co'), data.countries.slice(0, 15), { W: 1000, label: r => HX.country(r[0]) }),
+    lineage: HX.lineage($('v-lin'), { W: 1400 }),
+    live1: HX.dumbbell($('v-live1'), live.singleType.rows.map(([t, v], i) => [t, live.study2016.rows[i][1], v]), { W: 1100, rowH: 60, domain: [0, 30], fmtV: v => v.toFixed(1) + '%' }),
+    live2: HX.lines($('v-live2'), live.age.bands, { Philanthropist: live.age.Philanthropist, Player: live.age.Player }, { W: 1300, H: 520, domain: [15, 20], note: j => ` · ${HX.fmt(live.age.n[j])} people` }),
+    hexfacts: { play: () => document.querySelectorAll('.facts [data-to]').forEach((el, i) => setTimeout(() => HX.countUp(el, +el.dataset.to, 1600), i * 220)) },
+  };
+  $('b-regroup').onclick = () => charts.elements.regroup();
+  d3.select('#v-ms').selectAll('g.b').style('cursor', 'pointer').on('click', (ev, r) => r[6] && open('https://doi.org/' + r[6], '_blank'));
+
+  // Play each chart the first time it scrolls into view.
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('in'); charts[e.target.dataset.run]?.play(); io.unobserve(e.target);
+  }), { threshold: 0.2 });
+  document.querySelectorAll('.reveal').forEach(s => io.observe(s));
+
+  // Network explorer
+  const panel = $('panel');
+  const show = n => {
+    if (!n) { panel.hidden = true; return; }
+    const ring = n.deg === 0 ? 'the centre' : `ring ${n.deg}`;
+    const path = net.pathTo(n).slice(1, -1);
+    const known = n.deg === 1 ? n.kids.length : n.expanded ? `${n.kids.length} shown of ${HX.fmt(n.total)}` : null;
+    panel.hidden = false;
+    panel.innerHTML = `<p class="yr">${n.y ?? ''} · ${ring}</p><h3>${esc(n.t)}</h3>
+      <p class="meta">${esc(n.a || '')}${n.v ? ' · ' + esc(n.v) : ''}<br>${HX.fmt(n.c)} citations${known !== null ? ` · ${known} on this map cite it` : ''}</p>
+      ${path.length ? `<div>Path to the Hexad paper:</div><ol>${path.reverse().map(p => `<li>${esc(p.a || '')} ${p.y}: ${esc((p.t || '').slice(0, 70))}</li>`).join('')}</ol>` : ''}
+      <div class="acts">${n.deg >= 2 && !n.expanded ? '<button id="b-exp">Load papers citing this</button>' : ''}
+      ${n.doi ? `<a href="https://doi.org/${esc(n.doi)}" target="_blank" rel="noopener">Open DOI</a>` : `<a href="https://openalex.org/${esc(n.id)}" target="_blank" rel="noopener">Open in OpenAlex</a>`}</div>`;
+    const b = $('b-exp');
+    if (b) b.onclick = async () => {
+      b.disabled = true; b.textContent = 'Loading…';
+      try { const m = await net.expand(n); show(n); if (!m) panel.insertAdjacentHTML('beforeend', '<p class="meta">No new citing papers found.</p>'); }
+      catch (err) { b.disabled = false; b.textContent = 'Retry'; panel.insertAdjacentHTML('beforeend', `<p class="meta">Could not reach OpenAlex: ${esc(err.message)}</p>`); }
+    };
+  };
+  net = new HX.Net($('net'), data, {
+    onSelect: show,
+    onHover: (n, ev) => HX.tooltip(n ? `<b>${esc((n.t || '').slice(0, 110))}</b><br>${esc(n.a || '')} ${n.y ?? ''} · ${HX.fmt(n.c)} citations` : null, ev),
+    onDepth: d => $('depth').textContent = `Deepest ring: ${d}`,
+  });
+  $('b-ring2').onclick = e => { const on = e.target.getAttribute('aria-pressed') !== 'true'; e.target.setAttribute('aria-pressed', on); net.setRing2(on); };
+  $('b-play').onclick = async () => { net.focus = null; net.T = 2016; net.setRing2(false); await net.fit(600); await net.reveal({ dur: 8000 }); await net.reveal({ dur: 6000, ring2: true }); };
+  $('b-reset').onclick = () => { net.focus = null; show(null); net.fit(); };
+  $('b-dive').onclick = async e => {
+    const b = e.target; b.disabled = true; b.textContent = 'Diving…';
+    try { const start = net.focus && net.focus.deg >= 1 ? net.focus : net.d1.reduce((a, n) => n.c > a.c ? n : a); net.focus = start; show(start); await net.zoomTo(start, 1.6, 900); const end = await net.dive(start, 9);
+      panel.insertAdjacentHTML('beforeend', `<p class="meta">${end.deg >= 9 ? 'Nine rings deep.' : 'The line ends here: no later paper cites this one yet.'}</p>`); }
+    catch (err) { panel.hidden = false; panel.insertAdjacentHTML('beforeend', `<p class="meta">Could not reach OpenAlex: ${esc(err.message)}</p>`); }
+    b.disabled = false; b.textContent = 'Dive nine deep';
+  };
+  // Scroll scrubbing: progress through the tall section drives the year reveal, then ring 2, then the zoom-out.
+  const sc = $('scrolly'), netS = new HX.Net($('net-s'), data, { interactive: false });
+  netS.shiftX = innerWidth > 900 ? 0.16 : 0; netS.setRing2(false); netS.T = 2016;
+  const scrub = () => {
+    const r = sc.getBoundingClientRect(), span = sc.offsetHeight - innerHeight, p = Math.min(1, Math.max(0, -r.top / span));
+    const a = Math.min(1, p / 0.45), b = Math.min(1, Math.max(0, (p - 0.5) / 0.4));
+    netS.ring2 = b > 0; netS.T = 2016 + a * 11; netS.T2 = 2016 + b * 11;
+    netS.fit(0, 470 + 330 * b);
+    $('sc-y').textContent = Math.min(2026, Math.floor(b > 0 ? netS.T2 : netS.T));
+    const two = p >= 0.48;
+    $('sc-h').textContent = two ? 'Those papers drew 6,870 more' : '594 papers cite the Hexad paper directly';
+    $('sc-p').textContent = two ? 'Magenta dots cite a paper that cites the Hexad paper. That outer ring kept growing every year through 2025.'
+      : 'Scroll to run the clock. Each dot is a paper, placed clockwise by publication date from 2016; bigger dots have more citations.';
+  };
+  addEventListener('scroll', () => requestAnimationFrame(scrub), { passive: true }); addEventListener('resize', scrub); scrub();
+
+  // Step navigator: every visualization is one step; the scroll scene contributes two.
+  const steps = [{ el: $('top'), label: 'Start' }];
+  document.querySelectorAll('main section').forEach(sec => {
+    if (sec.id === 'explore') {
+      steps.push({ el: sc, at: 0.4, label: 'Ring 1: papers citing the Hexad' }, { el: sc, at: 0.92, label: 'Ring 2: papers citing those' });
+    }
+    steps.push({ el: sec, label: sec.querySelector('h2').textContent, run: sec.dataset.run });
+  });
+  const topOf = s => s.el.getBoundingClientRect().top + scrollY + (s.at != null ? s.at * (s.el.offsetHeight - innerHeight) : 70);
+  const current = () => { let c = 0; steps.forEach((s, i) => { if (topOf(s) <= scrollY + innerHeight * 0.35) c = i; }); return c; };
+  const label = () => { const i = current(); $('s-lab').innerHTML = `<b>${i + 1} / ${steps.length}</b>${esc(steps[i].label)}`; $('s-prev').disabled = i === 0; $('s-next').disabled = i === steps.length - 1; };
+  const goStep = d => {
+    const s = steps[Math.max(0, Math.min(steps.length - 1, current() + d))];
+    scrollTo({ top: topOf(s), behavior: HX.reduced ? 'auto' : 'smooth' });
+    if (s.run && charts[s.run]) { s.el.classList.add('in'); setTimeout(() => charts[s.run].play(), 500); }
+  };
+  $('s-prev').onclick = () => goStep(-1); $('s-next').onclick = () => goStep(1);
+  addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); goStep(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); goStep(-1); }
+  });
+  addEventListener('scroll', () => requestAnimationFrame(label), { passive: true }); label();
+
+  $('qlist').innerHTML = net.d1.slice().sort((a, b) => b.c - a.c).slice(0, 300).map(n => `<option value="${esc(n.t)}">`).join('');
+  $('q').addEventListener('change', e => {
+    const q = e.target.value.toLowerCase().trim(); if (!q) return;
+    const n = net.all.filter(n => net.visible(n) && ((n.t || '').toLowerCase().includes(q) || (n.a || '').toLowerCase().includes(q))).sort((a, b) => a.deg - b.deg || b.c - a.c)[0];
+    if (n) { net.focus = n; show(n); net.zoomTo(n, 3, 1200); }
+  });
+});
+</script>
+</body>
+</html>
