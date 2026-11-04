@@ -68,6 +68,37 @@
     <div class="viz hexad" id="v-hex" style="max-width:720px;margin:auto"></div>
   </section>
 
+  <section class="reveal" data-run="timeline">
+    <h2>Fourteen months took the Hexad from a rating form to the CHI PLAY stage</h2>
+    <p class="lede">Dates of files in the study’s Google Drive folder. Gustavo and Rina rated candidate items in July 2015, and questionnaire version 1 is dated August 15, 2015.</p>
+    <div class="viz" id="v-tl"></div>
+  </section>
+
+  <section class="reveal" data-run="retest">
+    <h2>Cutting six items strengthened the retest for five of six types</h2>
+    <p class="lede">Test–retest reliability (Pearson r, 40 people) for the 30-item draft and the final 24 items. The Player scale fell to .357, and a 2019 revision replaced its items.</p>
+    <div class="viz" id="v-rt"></div>
+  </section>
+
+  <section class="reveal" data-run="crowd">
+    <h2>One respondent in 133 scored highest as a Disruptor</h2>
+    <p class="lede">Each dot is one person, placed by their highest-scoring type. Disruptor scores averaged 14.9 of 28, while every other type averaged 20 to 22 (Table 5).</p>
+    <div class="viz" id="v-crowd"></div>
+  </section>
+
+  <section class="reveal" data-run="elements">
+    <h2>The data moved 14 of 31 game elements out of the framework’s grouping</h2>
+    <p class="lede">Gustavo’s working analysis from March 2016: correlations between each type score and each element rating, significant cells only. Press the button to regroup the rows by what the data showed. Orange rows changed group.</p>
+    <p><button id="b-regroup">Regroup by the data</button></p>
+    <div class="viz" id="v-hm"></div>
+  </section>
+
+  <section class="reveal" data-run="phil">
+    <h2>The most reliable scale matched none of its game elements</h2>
+    <p class="lede">The Philanthropist scale reached α = .893, the highest of the six, yet correlated at τ = .039 with its suggested elements. Kendall’s τ for each type, framework grouping to improved grouping; the improved grouping gained 9% overall (Tables 1 and 7).</p>
+    <div class="viz" id="v-t7"></div>
+  </section>
+
   <section class="reveal" data-run="years1">
     <h2>Direct citations climbed to about 75 a year by 2021 and held there</h2>
     <p class="lede">Papers citing the Hexad paper each year, from OpenAlex. The 2026 bar runs to November 4.</p>
@@ -170,7 +201,7 @@ $('theme').onclick = () => {
 };
 let net;
 
-HX.load().then(data => {
+Promise.all([HX.load(), HX.loadStudy()]).then(([data, study]) => {
   HX.countUp($('big'), data.counts.google_scholar, 2200);
   $('oa-n').textContent = HX.fmt(data.counts.openalex);
   $('v-langs').innerHTML = ['English', 'Arabic', 'Catalan', 'Chinese', 'Dutch', 'French', 'German', 'Hungarian', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Persian', 'Portuguese', 'Spanish', 'Swedish', 'Turkish']
@@ -179,12 +210,18 @@ HX.load().then(data => {
   const top = [...data.nodes].sort((a, b) => b[3] - a[3]).slice(0, 10);
   const charts = {
     hexagon: HX.hexagon($('v-hex')),
+    timeline: HX.timeline($('v-tl'), study.timeline.events, { W: 1400, H: 600, stagger: 250 }),
+    retest: HX.dumbbell($('v-rt'), study.retest.rows, { W: 1100, rowH: 60, domain: [0.3, 0.9] }),
+    crowd: HX.crowd($('v-crowd'), study.dominant, { W: 1400, H: 640 }),
+    elements: HX.heatmap($('v-hm'), study.elements, study.types, { W: 1400, rowH: 24 }),
+    phil: HX.dumbbell($('v-t7'), study.table7.rows, { W: 1100, rowH: 60, domain: [0, 0.5] }),
     years1: HX.yearBars($('v-y1'), data, { ticker: $('t-y1') }),
     years2: HX.yearBars($('v-y2'), data, { series: ['d1', 'd2'], stagger: 180 }),
     milestones: HX.hbars($('v-ms'), top, { W: 1000, label: r => `${r[4]} ${r[2]}`, value: r => r[3], stagger: 110 }),
     chain: HX.chain($('v-chain'), data, { W: 1100, H: 640 }),
     countries: HX.hbars($('v-co'), data.countries.slice(0, 15), { W: 1000, label: r => HX.country(r[0]) }),
   };
+  $('b-regroup').onclick = () => charts.elements.regroup();
   d3.select('#v-ms').selectAll('g').on('pointermove', (ev, r) => HX.tooltip(`<b>${esc(r[1])}</b><br>${esc(r[4])}, ${r[2]} · ${esc(r[5])}`, ev))
     .on('pointerleave', () => HX.tooltip(null)).on('click', (ev, r) => r[6] && open('https://doi.org/' + r[6], '_blank'));
 

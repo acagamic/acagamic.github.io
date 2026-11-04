@@ -72,6 +72,13 @@
   <aside class="notes">Gustavo wanted to study gamification and personalization through work industry could use. Andrzej’s framework. BrainHex with Chris Bateman, Bartle’s player types. Tell the early Gustavo memory here.</aside>
 </section>
 
+<section class="slide" data-run="timeline">
+  <h2>Fourteen months took the Hexad from a rating form to the CHI PLAY stage</h2>
+  <p class="sub">Dates of files in the study’s Google Drive folder</p>
+  <div class="viz" id="v-tl"></div>
+  <aside class="notes">July 2015: Gustavo and Rina rate candidate items for each type. August 15: questionnaire version 1.</aside>
+</section>
+
 <section class="slide" data-run="hexagon">
   <h2>Twenty-four items score six motivations, and one person can score high on several</h2>
   <div class="viz" id="v-hex"></div>
@@ -86,6 +93,33 @@
     <div class="stat"><b data-to="40">0</b><span>retest</span></div>
   </div>
   <p class="foot">Tondello et al. (2016), CHI PLAY, pp. 229–233. doi.org/10.1145/2967934.2968082</p>
+</section>
+
+<section class="slide" data-run="retest">
+  <h2>Cutting six items strengthened the retest for five of six types</h2>
+  <p class="sub">Test–retest reliability (Pearson r, 40 people), 30-item draft to final 24 items</p>
+  <div class="viz" id="v-rt"></div>
+  <p class="foot">Tondello et al. (2016), Table 2. The Player scale fell to .357 and was revised in 2019.</p>
+</section>
+
+<section class="slide" data-run="crowd">
+  <h2>One respondent in 133 scored highest as a Disruptor</h2>
+  <p class="sub">Each dot is one person, placed by their highest-scoring type. Disruptor scores averaged 14.9 of 28; every other type averaged 20 to 22.</p>
+  <div class="viz" id="v-crowd"></div>
+</section>
+
+<section class="slide" data-run="elements" data-step>
+  <h2>The data moved 14 of 31 game elements out of the framework’s grouping</h2>
+  <p class="sub">Working analysis, March 2016: correlations between type scores and element ratings, significant cells only</p>
+  <div class="viz" id="v-hm"></div>
+  <aside class="notes">Press → once to regroup. Orange rows moved. Watch the Philanthropist group disappear.</aside>
+</section>
+
+<section class="slide" data-run="phil">
+  <h2>The most reliable scale matched none of its game elements</h2>
+  <p class="sub">Kendall’s τ between each type and its suggested elements, framework grouping → improved grouping</p>
+  <div class="viz" id="v-t7"></div>
+  <p class="foot">Tondello et al. (2016), Tables 1 and 7. Philanthropist α = .893, τ = .039. The improved grouping gained 9% overall.</p>
 </section>
 
 <section class="slide" data-run="scholar">
@@ -176,11 +210,16 @@
 <script src="viz.js"></script>
 <script>
 const slides = [...document.querySelectorAll('.slide')], stage = document.getElementById('stage');
-let cur = -1, data, net, viz = {};
+let cur = -1, data, study, net, viz = {}, stepped = false;
 function fit() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `scale(${s}) translate(-50%,-50%)`; }
 addEventListener('resize', fit); fit();
 
 const runs = {
+  timeline: () => (viz.tl ??= HX.timeline(document.getElementById('v-tl'), study.timeline.events, { W: 1680, H: 600 })).play(),
+  retest: () => (viz.rt ??= HX.dumbbell(document.getElementById('v-rt'), study.retest.rows, { W: 1600, rowH: 92, domain: [0.3, 0.9] })).play(),
+  crowd: () => (viz.cr ??= HX.crowd(document.getElementById('v-crowd'), study.dominant, { W: 1680, H: 640 })).play(),
+  elements: () => (viz.hm ??= HX.heatmap(document.getElementById('v-hm'), study.elements, study.types, { W: 1680, rowH: 23 })).play(),
+  phil: () => (viz.t7 ??= HX.dumbbell(document.getElementById('v-t7'), study.table7.rows, { W: 1600, rowH: 92, domain: [0, 0.5] })).play(),
   hexagon: () => (viz.hex ??= HX.hexagon(document.getElementById('v-hex'))).play(),
   stats: s => s.querySelectorAll('[data-to]').forEach((el, i) => setTimeout(() => HX.countUp(el, +el.dataset.to, 1200), i * 250)),
   scholar: () => {
@@ -222,24 +261,26 @@ const runs = {
 
 function go(i) {
   i = Math.max(0, Math.min(slides.length - 1, i)); if (i === cur) return;
-  slides[cur]?.classList.remove('on'); cur = i; const s = slides[i]; s.classList.add('on');
+  slides[cur]?.classList.remove('on'); cur = i; stepped = false; const s = slides[i]; s.classList.add('on');
   document.body.classList.toggle('net-on', s.hasAttribute('data-net'));
   document.getElementById('count').textContent = `${i + 1} / ${slides.length}`;
   history.replaceState(null, '', '#' + (i + 1));
   if (data && runs[s.dataset.run]) runs[s.dataset.run](s);
 }
 addEventListener('keydown', e => {
-  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); go(cur + 1); }
+  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
   else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); go(cur - 1); }
   else if (e.key === 'r') { const i = cur; cur = -1; go(i); }            // replay the current animation
   else if (e.key === 'n') document.body.classList.toggle('show-notes');
   else if (e.key === 'f') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
 });
-addEventListener('click', e => { if (e.target.closest('a')) return; go(cur + (e.clientX < innerWidth / 4 ? -1 : 1)); });
+addEventListener('click', e => { if (e.target.closest('a')) return; e.clientX < innerWidth / 4 ? go(cur - 1) : next(); });
+// A slide marked data-step spends its first forward press on a second animation beat.
+function next() { if (slides[cur].hasAttribute('data-step') && !stepped) { stepped = true; viz.hm?.regroup(); } else go(cur + 1); }
 
 addEventListener('hashchange', () => { const i = (+location.hash.slice(1) || 1) - 1; if (i !== cur) go(i); });
-HX.load().then(d => {
-  data = d;
+Promise.all([HX.load(), HX.loadStudy()]).then(([d, st]) => {
+  data = d; study = st;
   net = new HX.Net(document.getElementById("net"), d, { interactive: false });
   net.shiftX = 0.17;  // keep the network clear of the left-hand headline
   go((+location.hash.slice(1) || 1) - 1);

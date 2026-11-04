@@ -332,7 +332,132 @@ const HX = (() => {
     }
   }
 
+  // ---- 2016 study charts (data/study2016.json) ----
+
+  // Dated archive events on one time axis; labels stack in rows so clustered dates never collide.
+  function timeline(host, events, { W = 1600, H = 520, stagger = 380 } = {}) {
+    host.innerHTML = '';
+    const ev = events.map(([d, t]) => ({ d: new Date(d + 'T12:00'), t }));
+    const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Timeline: ' + events.map(e => e.join(' ')).join('; '));
+    const x = d3.scaleTime([d3.timeMonth.offset(ev[0].d, -1), d3.timeMonth.offset(ev.at(-1).d, 1)], [40, W - 40]), base = H - 70;
+    svg.append('line').attr('class', 'hx-axis').attr('x1', 40).attr('x2', W - 40).attr('y1', base).attr('y2', base);
+    svg.append('g').selectAll('text').data(x.ticks(d3.timeMonth.every(2))).join('text').attr('class', 'hx-tick')
+      .attr('x', x).attr('y', base + 34).attr('text-anchor', 'middle').text(d3.timeFormat('%b %Y'));
+    // Greedy row assignment: each label takes the lowest row whose last label ends before it starts.
+    const ends = [], lw = 380;
+    ev.forEach(e => { let r = 0; while (ends[r] > x(e.d) - 8) r++; ends[r] = x(e.d) + lw; e.row = r; });
+    const g = svg.selectAll('g.e').data(ev).join('g').attr('class', 'e').style('opacity', 0);
+    g.append('line').attr('class', 'hx-chain').attr('x1', e => x(e.d)).attr('x2', e => x(e.d)).attr('y1', base).attr('y2', e => base - 50 - e.row * 74);
+    g.append('circle').attr('class', (e, i) => i === ev.length - 1 ? 'hx-node2' : 'hx-node1').attr('cx', e => x(e.d)).attr('cy', base).attr('r', 8);
+    const t = g.append('text').attr('class', 'hx-lab hx-halo').style('font-size', '20px').attr('x', e => x(e.d) + 8).attr('y', e => base - 58 - e.row * 74);
+    t.append('tspan').attr('class', 'hx-strong').text(e => d3.timeFormat('%b %-d, %Y')(e.d));
+    t.append('tspan').attr('x', e => x(e.d) + 8).attr('dy', 25).attr('class', 'hx-muted').style('font-size', '18px').text(e => e.t);
+    function play() { g.interrupt().style('opacity', 0).transition().delay((e, i) => reduced ? 0 : i * stagger).duration(400).style('opacity', 1); }
+    return { play };
+  }
+
+  // Before/after per type: the coloured dot travels from the old value to the new one.
+  function dumbbell(host, rows, { W = 1400, rowH = 64, domain = [0, 1], missing = 'no match' } = {}) {
+    host.innerHTML = '';
+    const lw = 220, H = rows.length * rowH + 40, f = v => d3.format('.3f')(v).replace(/^(-?)0\./, '$1.');  // APA: no leading zero for r, tau, alpha
+    const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+      .attr('aria-label', rows.map(r => `${r[0]}: ${r[1]} to ${r[2] ?? missing}`).join('; '));
+    const x = d3.scaleLinear(domain, [lw, W - 120]);
+    svg.append('g').selectAll('text').data(x.ticks(5)).join('text').attr('class', 'hx-tick').attr('x', x).attr('y', H - 6).attr('text-anchor', 'middle').text(f);
+    const g = svg.selectAll('g.r').data(rows).join('g').attr('class', 'r').attr('transform', (r, i) => `translate(0,${i * rowH + rowH / 2})`);
+    g.append('text').attr('class', 'hx-lab').style('font-size', '22px').attr('x', lw - 24).attr('y', 7).attr('text-anchor', 'end').text(r => r[0]);
+    g.append('line').attr('class', 'hx-axis').attr('x1', lw).attr('x2', W - 120);
+    const link = g.append('line').attr('class', 'hx-chain').attr('x1', r => x(r[1])).attr('x2', r => x(r[1]));
+    g.append('circle').attr('r', 9).attr('cx', r => x(r[1])).attr('fill', 'var(--muted)');
+    const dot = g.filter(r => r[2] != null).append('circle').attr('class', r => r[2] < r[1] ? 'hx-node2' : 'hx-node1').attr('r', 11).attr('cx', r => x(r[1]));
+    const val = g.append('text').attr('class', 'hx-val').style('font-size', '20px').attr('y', 7).attr('x', r => x(Math.max(r[1], r[2] ?? 0)) + 22).style('opacity', 0)
+      .text(r => r[2] == null ? `${f(r[1])} · ${missing}` : `${f(r[1])} → ${f(r[2])}`);
+    function play() {
+      dot.interrupt().attr('cx', r => x(r[1])).transition().delay((r, i) => reduced ? 0 : 400 + i * 250).duration(reduced ? 0 : 1100).ease(d3.easeCubicInOut).attr('cx', r => x(r[2]));
+      link.interrupt().attr('x2', r => x(r[1])).transition().delay((r, i) => reduced ? 0 : 400 + i * 250).duration(reduced ? 0 : 1100).ease(d3.easeCubicInOut).attr('x2', r => x(r[2] ?? r[1]));
+      val.interrupt().style('opacity', 0).transition().delay((r, i) => reduced ? 0 : 1300 + i * 250).duration(400).style('opacity', 1);
+    }
+    return { play };
+  }
+
+  // 133 respondents as dots: they start scattered, then settle into a column for their highest-scoring type.
+  function crowd(host, counts, { W = 1600, H = 640, highlight = 'Disruptor' } = {}) {
+    host.innerHTML = '';
+    const people = counts.flatMap(([t, n]) => d3.range(n).map(i => ({ t, i })));
+    const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+      .attr('aria-label', 'Main user type of 133 respondents: ' + counts.map(c => `${c[0]} ${c[1]}`).join(', '));
+    const x = d3.scaleBand(counts.map(c => c[0]), [40, W - 40]).padding(0.18), cols = 4, s = 26, base = H - 80;
+    const rnd = d3.randomLcg(7);
+    people.forEach(p => { p.sx = 60 + rnd() * (W - 120); p.sy = 40 + rnd() * (base - 80);
+      const k = Math.min(cols, counts.find(c => c[0] === p.t)[1]); p.x = x(p.t) + x.bandwidth() / 2 + ((p.i % cols) - (k - 1) / 2) * s; p.y = base - 14 - Math.floor(p.i / cols) * s; });
+    const dots = svg.selectAll('circle').data(people).join('circle').attr('r', 10).attr('class', p => p.t === highlight ? 'hx-node2' : 'hx-node1');
+    const lab = svg.selectAll('g.l').data(counts).join('g').attr('class', 'l').style('opacity', 0)
+      .attr('transform', c => `translate(${x(c[0]) + x.bandwidth() / 2},${base + 40})`);
+    lab.append('text').attr('class', 'hx-lab hx-strong').style('font-size', '24px').attr('text-anchor', 'middle').text(c => c[0]);
+    lab.append('text').attr('class', 'hx-val').style('font-size', '26px').attr('text-anchor', 'middle').attr('y', c => -(base + 40) + base - 14 - Math.ceil(c[1] / cols) * s - 6).text(c => c[1]);
+    function play() {
+      dots.interrupt().attr('cx', p => p.sx).attr('cy', p => p.sy).style('opacity', 0)
+        .transition().delay((p, i) => reduced ? 0 : i * 6).duration(300).style('opacity', 1)
+        .transition().delay((p, i) => reduced ? 0 : 900 + (p.t === highlight ? 900 : 0)).duration(reduced ? 0 : 1400).ease(d3.easeCubicInOut)
+        .attr('cx', p => p.x).attr('cy', p => p.y);
+      lab.interrupt().style('opacity', 0).transition().delay(reduced ? 0 : 2600).duration(500).style('opacity', 1);
+    }
+    return { play };
+  }
+
+  // Game elements x user types. Rows start in the framework's grouping; regroup() slides them into the data's grouping.
+  function heatmap(host, E, types, { W = 1500, rowH = 24 } = {}) {
+    host.innerHTML = '';
+    const els = Object.keys(E.groupA), lw = 230, gw = 330, cw = (W - lw - gw) / types.length, H = els.length * rowH + 120;
+    const order = g => [...types, 'General'].indexOf(g);
+    const layout = key => {
+      const sorted = [...els].sort((a, b) => order(E[key][a]) - order(E[key][b]) || a.localeCompare(b));
+      const y = {}; let gap = 0, prev;
+      sorted.forEach((e, i) => { if (prev !== undefined && E[key][e] !== prev) gap += 10; prev = E[key][e]; y[e] = 70 + i * rowH + gap; });
+      const groups = d3.groups(sorted, e => E[key][e]).map(([g, v]) => [g, y[v[0]], y[v.at(-1)] + rowH]);
+      return { y, groups };
+    };
+    const A = layout('groupA'), B = layout('groupB');
+    const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+      .attr('aria-label', 'Correlations between 31 game elements and six user types; Philanthropist has almost none');
+    const col = d3.scaleSequential([0.1, 0.42], t => d3.interpolateRgb(css('--bg'), css('--series-1'))(0.3 + 0.7 * t)).clamp(true);
+    svg.append('g').selectAll('text').data(types).join('text').attr('class', 'hx-lab hx-strong').style('font-size', '20px')
+      .attr('x', (t, i) => lw + gw + i * cw + cw / 2).attr('y', 44).attr('text-anchor', 'middle').text(t => t);
+    const rows = svg.selectAll('g.row').data(els).join('g').attr('class', 'row').attr('transform', e => `translate(0,${A.y[e]})`);
+    rows.append('text').attr('class', 'hx-lab').attr('x', lw + gw - 14).attr('y', rowH / 2 + 6).attr('text-anchor', 'end').style('font-size', '18px').text(e => e);
+    const byKey = new Map(E.cells.map(c => [c[0] + '|' + c[1], c]));
+    const cells = rows.selectAll('rect').data(e => types.map((t, i) => ({ e, t, i, c: byKey.get(e + '|' + t) }))).join('rect')
+      .attr('x', d => lw + gw + d.i * cw + 1).attr('y', 1).attr('width', cw - 2).attr('height', rowH - 2).attr('rx', 3)
+      .attr('fill', d => d.c ? col(d.c[2]) : 'var(--grid)').attr('fill-opacity', d => d.c ? 1 : 0.25).style('opacity', 0)
+      .on('pointermove', (ev, d) => tooltip(`<b>${d.e} × ${d.t}</b><br>${d.c ? `r = ${d.c[2].toFixed(3)} (${d.c[3]})` : 'not significant'}`, ev))
+      .on('pointerleave', () => tooltip(null));
+    const gl = svg.append('g');
+    const drawGroups = (L, dur) => {
+      const sel = gl.selectAll('g.grp').data(L.groups, d => d[0]);
+      sel.exit().transition().duration(dur / 2).style('opacity', 0).remove();
+      const en = sel.enter().append('g').attr('class', 'grp').style('opacity', 0);
+      en.append('line').attr('class', 'hx-chain'); en.append('text').attr('class', 'hx-lab hx-strong').style('font-size', '20px').attr('text-anchor', 'end');
+      const all = en.merge(sel);
+      all.transition().duration(dur).style('opacity', 1);
+      all.select('line').transition().duration(dur).attr('x1', lw - 4).attr('x2', lw - 4).attr('y1', d => d[1] + 2).attr('y2', d => d[2] - 2);
+      all.select('text').text(d => d[0] === 'General' ? 'No clear type' : d[0]).transition().duration(dur).attr('x', lw - 16).attr('y', d => (d[1] + d[2]) / 2 + 6);
+    };
+    function play() {
+      rows.interrupt().attr('transform', e => `translate(0,${A.y[e]})`); rows.select('text').classed('hx-moved', false);
+      drawGroups(A, 0);
+      cells.interrupt().style('opacity', 0).transition().delay(d => reduced ? 0 : d.i * 300 + A.y[d.e] * 1.2).duration(400).style('opacity', 1);
+    }
+    function regroup() {
+      drawGroups(B, reduced ? 0 : 1200);
+      rows.interrupt().transition().delay((e, i) => reduced ? 0 : (E.groupA[e] !== E.groupB[e] ? 0 : 200)).duration(reduced ? 0 : 1600).ease(d3.easeCubicInOut)
+        .attr('transform', e => `translate(0,${B.y[e]})`);
+      rows.select('text').classed('hx-moved', e => E.groupA[e] !== E.groupB[e]);
+    }
+    return { play, regroup };
+  }
+
   const region = new Intl.DisplayNames(['en-CA'], { type: 'region' });
   const country = code => { try { return region.of(code); } catch { return code; } };
-  return { load, countUp, tooltip, yearBars, hbars, chain, hexagon, Net, fmt, reduced, country, TYPES };
+  const loadStudy = () => fetch('data/study2016.json').then(r => r.json());
+  return { load, loadStudy, countUp, tooltip, yearBars, hbars, chain, hexagon, timeline, dumbbell, crowd, heatmap, Net, fmt, reduced, country, TYPES };
 })();
