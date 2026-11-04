@@ -1,0 +1,13 @@
+{
+  "src": "Live data from the public Hexad-12 test, hexad.gamified.uk/data (Andrzej Marczewski, CC BY-NC-ND 4.0), retrieved November 4, 2026. Scores are proportional and sum to 100%; bot and uniform-score submissions excluded.",
+  "valid": 23502,
+  "tiedShare": 47,
+  "singleType": { "n": 12454, "rows": [["Philanthropist", 21.1], ["Socialiser", 13.1], ["Free Spirit", 26.0], ["Achiever", 20.7], ["Disruptor", 1.5], ["Player", 17.7]] },
+  "study2016": { "n": 133, "rows": [["Philanthropist", 24.1], ["Socialiser", 19.5], ["Free Spirit", 21.8], ["Achiever", 24.1], ["Disruptor", 0.8], ["Player", 9.8]] },
+  "age": {
+    "bands": ["≤17", "18–20", "21–29", "30–39", "40–49", "50–59", "60+"],
+    "n": [1700, 3655, 7969, 2678, 1620, 646, 155],
+    "Philanthropist": [17.5, 17.9, 18.1, 18.5, 18.8, 19.2, 19.0],
+    "Player": [18.4, 18.3, 17.9, 17.1, 16.2, 16.0, 15.6]
+  }
+}
