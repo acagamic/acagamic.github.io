@@ -33,7 +33,7 @@
     border: 1.5px solid var(--grid); border-radius: 999px; padding: 12px 22px; transition: border-color .3s, background .3s; }
   .cue:hover { border-color: var(--brand-cyan); background: rgb(0 179 235 / .08); }
   .cue svg { transition: transform .4s var(--ease-out); } .cue:hover svg { transform: translateY(3px); }
-  @media (max-width: 900px) { .hero canvas { opacity: .55; } }
+  @media (max-width: 900px) { .hero { align-items: flex-end; padding-bottom: 110px; } }
 
   /* heading reveal: visible by default, masked only when JS runs */
   .js .reveal h2 { clip-path: inset(0 0 100% 0); transform: translateY(0.35em); transition: clip-path 1s var(--ease-out), transform 1s var(--ease-out); }
