@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en-CA" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hexad at Ten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hexad.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  body { background: var(--bg); }
+  #net { position: fixed; inset: 0; width: 100vw; height: 100vh; opacity: 0; transition: opacity .8s; }
+  body.net-on #net { opacity: 1; }
+  .stage { position: fixed; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; pointer-events: none; }
+  .slide { position: absolute; inset: 0; padding: 96px 120px; opacity: 0; transition: opacity .6s; display: flex; flex-direction: column; }
+  .slide.on { opacity: 1; pointer-events: auto; }
+  .slide h1 { font-size: 104px; max-width: 1500px; }
+  .slide h2 { font-size: 64px; max-width: 1600px; }
+  .slide .sub { font-size: 32px; color: var(--muted); max-width: 1400px; margin: 0; }
+  .slide .viz { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; margin-top: 24px; }
+  .slide .viz svg { width: 100%; height: 100%; }
+  .overlay h2 { text-shadow: 0 2px 18px var(--bg), 0 0 6px var(--bg); max-width: 760px; font-size: 58px; }
+  .overlay .sub { max-width: 640px; text-shadow: 0 0 10px var(--bg); }
+  .ticker { position: absolute; right: 120px; bottom: 90px; font: 600 150px var(--mono); color: var(--muted); opacity: .55; }
+  .overlay .ticker { left: 120px; right: auto; }
+  .big { font: 600 260px/1 var(--mono); letter-spacing: -0.04em; }
+  .row { display: flex; gap: 90px; margin-top: 60px; }
+  .row .stat b { display: block; font: 600 150px/1 var(--mono); }
+  .row .stat span { font-size: 30px; color: var(--muted); }
+  .authors { font-size: 40px; line-height: 1.5; margin-top: 50px; }
+  .authors small { display: block; font-size: 26px; color: var(--muted); }
+  .langs { display: flex; flex-wrap: wrap; gap: 22px 46px; margin-top: 60px; font: 500 56px var(--serif); max-width: 1680px; }
+  .langs span { opacity: 0; transform: translateY(18px); transition: opacity .5s, transform .5s; }
+  .langs span.in { opacity: 1; transform: none; }
+  .langs span.en { color: var(--muted); }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; margin-top: 90px; }
+  .steps div { border-top: 4px solid var(--series-1); padding-top: 26px; opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s; }
+  .steps div.in { opacity: 1; transform: none; }
+  .steps b { font: 600 58px var(--mono); display: block; } .steps p { font-size: 28px; margin: 12px 0 0; color: var(--muted); }
+  .steps strong { color: var(--ink); font-size: 32px; display: block; margin-bottom: 6px; }
+  .legend { font-size: 26px; margin-top: 14px; }
+  .legend i { width: 20px; height: 20px; }
+  .foot { margin-top: auto; font-size: 26px; color: var(--muted); }
+  .notes { display: none; }
+  body.show-notes .slide.on .notes { display: block; position: fixed; left: 120px; right: 120px; bottom: 20px; background: var(--panel);
+    border: 1px solid var(--grid); padding: 18px 24px; font-size: 26px; border-radius: 10px; color: var(--ink); }
+  .count { position: fixed; right: 18px; bottom: 12px; font: 14px var(--mono); color: var(--muted); }
+</style>
+</head>
+<body>
+<canvas id="net" aria-label="Radial citation network of the Hexad paper"></canvas>
+<div class="stage" id="stage">
+
+<section class="slide" data-run="title">
+  <p class="sub">CHI PLAY 2026 · ten-year impact award</p>
+  <h1 style="margin-top:auto">The Gamification User Types Hexad Scale, ten years on</h1>
+  <p class="sub" style="margin-bottom:auto">Lennart E. Nacke · University of Waterloo</p>
+  <aside class="notes">Thank the committee. Name Gustavo first.</aside>
+</section>
+
+<section class="slide">
+  <h2>Six authors turned a practitioner’s model into a questionnaire</h2>
+  <div class="authors">
+    Gustavo F. Tondello <small>HCI Games Group, University of Waterloo</small>
+    Rina R. Wehbe <small>HCI Games Group, University of Waterloo</small>
+    Lisa Diamond and Marc Busch <small>AIT Austrian Institute of Technology, Vienna</small>
+    Andrzej Marczewski <small>Gamified UK, who designed the Hexad framework</small>
+    Lennart E. Nacke <small>HCI Games Group, University of Waterloo</small>
+  </div>
+  <aside class="notes">Gustavo wanted to study gamification and personalization through work industry could use. Andrzej’s framework. BrainHex with Chris Bateman, Bartle’s player types. Tell the early Gustavo memory here.</aside>
+</section>
+
+<section class="slide" data-run="hexagon">
+  <h2>Twenty-four items score six motivations, and one person can score high on several</h2>
+  <div class="viz" id="v-hex"></div>
+</section>
+
+<section class="slide" data-run="stats">
+  <h2>The first version rested on 133 people</h2>
+  <div class="row">
+    <div class="stat"><b data-to="24">0</b><span>items</span></div>
+    <div class="stat"><b data-to="6">0</b><span>user types</span></div>
+    <div class="stat"><b data-to="133">0</b><span>respondents</span></div>
+    <div class="stat"><b data-to="40">0</b><span>retest</span></div>
+  </div>
+  <p class="foot">Tondello et al. (2016), CHI PLAY, pp. 229–233. doi.org/10.1145/2967934.2968082</p>
+</section>
+
+<section class="slide" data-run="scholar">
+  <p class="sub">Google Scholar, October 26, 2026</p>
+  <div class="big" id="v-big">0</div>
+  <h2>citations, and every index counts them differently</h2>
+  <div class="viz" id="v-src" style="max-height:330px"></div>
+  <aside class="notes">The next charts use OpenAlex because it records who cites whom. It finds 594 citing papers.</aside>
+</section>
+
+<section class="slide" data-run="years1">
+  <h2>Direct citations climbed to about 75 a year by 2021 and held there</h2>
+  <p class="sub">Papers citing the Hexad paper each year, OpenAlex. 2026 runs to November 4.</p>
+  <div class="viz" id="v-y1"></div>
+  <div class="ticker" id="t-y1"></div>
+</section>
+
+<section class="slide" data-run="milestones">
+  <h2>The most-cited follow-ups became citation engines of their own</h2>
+  <p class="sub">Citations received by the eight most-cited papers that cite the Hexad paper</p>
+  <div class="viz" id="v-ms"></div>
+</section>
+
+<section class="slide overlay" data-run="ring1" data-net>
+  <h2>594 papers cite the Hexad paper directly</h2>
+  <p class="sub">Each dot is a paper. Time runs clockwise from 2016. Bigger dots have more citations.</p>
+  <div class="ticker" id="t-r1"></div>
+</section>
+
+<section class="slide overlay" data-run="ring2" data-net>
+  <h2>Those papers drew 6,870 more</h2>
+  <p class="sub">The orange ring holds papers that cite a paper that cites the Hexad paper.</p>
+  <div class="ticker" id="t-r2"></div>
+</section>
+
+<section class="slide" data-run="years2">
+  <h2>The second ring kept growing every year through 2025</h2>
+  <div class="legend"><span><i style="background:var(--series-1)"></i>cite the Hexad paper</span><span><i style="background:var(--series-2)"></i>cite those papers</span></div>
+  <div class="viz" id="v-y2"></div>
+</section>
+
+<section class="slide overlay" data-run="zoom" data-net>
+  <h2>One 2017 review pulled in 496 citations on its own</h2>
+  <p class="sub">Nacke and Deterding, “The maturing of gamification research,” Computers in Human Behavior</p>
+</section>
+
+<section class="slide" data-run="chain">
+  <h2>Follow the most-cited descendant and the line runs nine generations to a 2026 museum study in Tashkent</h2>
+  <div class="viz" id="v-chain"></div>
+  <aside class="notes">Each step picks the most-cited paper published in or after its parent’s year. The line ends at a 2026 paper nobody has cited yet.</aside>
+</section>
+
+<section class="slide" data-run="countries">
+  <h2>Authors in 65 countries cite the paper</h2>
+  <p class="sub">Citing papers with at least one author affiliated in each country, top 12</p>
+  <div class="viz" id="v-co"></div>
+</section>
+
+<section class="slide" data-run="langs">
+  <h2>The questionnaire now exists in 17 languages</h2>
+  <div class="langs" id="v-langs"></div>
+  <p class="foot">Documented minimum, October 26, 2026. Translation and validation are separate questions.</p>
+</section>
+
+<section class="slide" data-run="versions">
+  <h2>Other researchers kept rebuilding the instrument</h2>
+  <div class="steps" id="v-steps">
+    <div><b>2016</b><strong>The scale</strong><p>24 items, six motivations, overlapping scores</p></div>
+    <div><b>2019</b><strong>Revision</strong><p>Three items replaced, two Achiever and one Free Spirit</p></div>
+    <div><b>2023</b><strong>Hexad-12</strong><p>Krath et al. shorten it to 12 items</p></div>
+    <div><b>2025</b><strong>Chinese 12-item</strong><p>Only 10 items match the English short form</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2 style="margin-top:auto">What the Hexad changed in my own research</h2>
+  <aside class="notes">Your reflection: what you would keep, what you would change today.</aside>
+</section>
+
+<section class="slide" data-run="close">
+  <h1 style="margin-top:auto">Thank you, Gustavo, Rina, Lisa, Marc, and Andrzej</h1>
+  <p class="sub" style="margin-bottom:auto">Explore the citation network: acagamic.com/hexad</p>
+</section>
+
+</div>
+<div class="count" id="count"></div>
+
+<script src="viz.js"></script>
+<script>
+const slides = [...document.querySelectorAll('.slide')], stage = document.getElementById('stage');
+let cur = -1, data, net, viz = {};
+function fit() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `scale(${s}) translate(-50%,-50%)`; }
+addEventListener('resize', fit); fit();
+
+const runs = {
+  hexagon: () => (viz.hex ??= HX.hexagon(document.getElementById('v-hex'))).play(),
+  stats: s => s.querySelectorAll('[data-to]').forEach((el, i) => setTimeout(() => HX.countUp(el, +el.dataset.to, 1200), i * 250)),
+  scholar: () => {
+    HX.countUp(document.getElementById('v-big'), data.counts.google_scholar, 2400);
+    (viz.src ??= HX.hbars(document.getElementById('v-src'), [['Google Scholar', 1073], ['OpenAlex', data.counts.openalex], ['Semantic Scholar', 558], ['Crossref', 423]], { W: 1500, rowH: 70, stagger: 250 })).play();
+  },
+  years1: () => (viz.y1 ??= HX.yearBars(document.getElementById('v-y1'), data, { ticker: document.getElementById('t-y1'), W: 1600, H: 640, stagger: 380 })).play(),
+  years2: () => (viz.y2 ??= HX.yearBars(document.getElementById('v-y2'), data, { series: ['d1', 'd2'], W: 1600, H: 660, stagger: 260 })).play(),
+  milestones: () => (viz.ms ??= HX.hbars(document.getElementById('v-ms'), [...data.nodes].sort((a, b) => b[3] - a[3]).slice(0, 8),
+    { W: 1600, rowH: 82, label: r => `${r[4]} ${r[2]}`, value: r => r[3], stagger: 220 })).play(),
+  countries: () => (viz.co ??= HX.hbars(document.getElementById('v-co'), data.countries.slice(0, 12),
+    { W: 1600, rowH: 58, label: r => HX.country(r[0]), stagger: 120 })).play(),
+  chain: () => (viz.ch ??= HX.chain(document.getElementById('v-chain'), data, { W: 1680, H: 760, stagger: 650 })).play(),
+  langs: () => {
+    const el = document.getElementById('v-langs');
+    const L = ['English', 'Arabic', 'Catalan', 'Chinese', 'Dutch', 'French', 'German', 'Hungarian', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Persian', 'Portuguese', 'Spanish', 'Swedish', 'Turkish'];
+    el.innerHTML = L.map((l, i) => `<span class="${i ? '' : 'en'}">${l}</span>`).join('');
+    [...el.children].forEach((s, i) => setTimeout(() => s.classList.add('in'), 120 + i * 160));
+  },
+  versions: () => [...document.querySelectorAll('#v-steps div')].forEach((d, i) => { d.classList.remove('in'); setTimeout(() => d.classList.add('in'), 200 + i * 700); }),
+  ring1: async () => {
+    net.focus = null; net.setRing2(false); net.T = 2016; net.draw(); await net.fit(0, 470);
+    const t = document.getElementById('t-r1');
+    await net.reveal({ dur: 10000, onYear: y => t.textContent = y });
+  },
+  ring2: async () => {
+    net.focus = null; net.T = 2027; net.T2 = 2016;
+    net.fit(2500, 800);
+    const t = document.getElementById('t-r2');
+    await net.reveal({ dur: 9000, ring2: true, onYear: y => t.textContent = y });
+  },
+  zoom: async () => {
+    net.setRing2(true); net.focus = null; net.draw();
+    await net.fit(800, 800);
+    const n = net.byId.get('W2576624358'); net.focus = n; net.draw();
+    await net.zoomTo(n, 1.6, 2600);
+  },
+};
+
+function go(i) {
+  i = Math.max(0, Math.min(slides.length - 1, i)); if (i === cur) return;
+  slides[cur]?.classList.remove('on'); cur = i; const s = slides[i]; s.classList.add('on');
+  document.body.classList.toggle('net-on', s.hasAttribute('data-net'));
+  document.getElementById('count').textContent = `${i + 1} / ${slides.length}`;
+  history.replaceState(null, '', '#' + (i + 1));
+  if (data && runs[s.dataset.run]) runs[s.dataset.run](s);
+}
+addEventListener('keydown', e => {
+  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); go(cur + 1); }
+  else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'r') { const i = cur; cur = -1; go(i); }            // replay the current animation
+  else if (e.key === 'n') document.body.classList.toggle('show-notes');
+  else if (e.key === 'f') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+});
+addEventListener('click', e => { if (e.target.closest('a')) return; go(cur + (e.clientX < innerWidth / 4 ? -1 : 1)); });
+
+addEventListener('hashchange', () => { const i = (+location.hash.slice(1) || 1) - 1; if (i !== cur) go(i); });
+HX.load().then(d => {
+  data = d;
+  net = new HX.Net(document.getElementById("net"), d, { interactive: false });
+  net.shiftX = 0.17;  // keep the network clear of the left-hand headline
+  go((+location.hash.slice(1) || 1) - 1);
+});
+</script>
+</body>
+</html>
