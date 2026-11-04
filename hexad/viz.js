@@ -346,11 +346,11 @@ const HX = (() => {
       return { tx: (Math.cos(a0) * (1 - f) + Math.cos(a1) * f) * inset, ty: (Math.sin(a0) * (1 - f) + Math.sin(a1) * f) * inset,
         sx: rnd() * 2 - 1, sy: rnd() * 2 - 1, r: 1.8 + Math.min(5.5, Math.sqrt(c) * 0.26), col: col(y), d: i / N, ph: rnd() * 6.28, x: 0, y: 0, vx: 0, vy: 0 };
     });
-    let w, h, cx, cy, R, mx = -1e4, my = -1e4, t0 = performance.now(), on = true, raf;
+    let w, h, cx, cy, R, sc = 1, mx = -1e4, my = -1e4, t0 = performance.now(), on = true, raf;
     const size = () => {
       const dpr = devicePixelRatio || 1, b = canvas.getBoundingClientRect(); w = b.width; h = b.height;
       canvas.width = w * dpr; canvas.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const wide = w > 900; cx = wide ? w * 0.74 : w / 2; cy = h * 0.5; R = Math.min(h * 0.36, wide ? w * 0.2 : w * 0.42);
+      const wide = w > 900; cx = wide ? w * 0.74 : w / 2; cy = wide ? h * 0.5 : h * 0.17; R = wide ? Math.min(h * 0.36, w * 0.2) : Math.min(w * 0.22, h * 0.1); sc = wide ? 1 : 0.5;  // phones: smaller hexagon above the headline, clear of the text
     };
     const ease = t => t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
     function frame(now) {
@@ -364,7 +364,7 @@ const HX = (() => {
         if (d2 < 9000) { const f = (9000 - d2) / 9000 * 2.2, d = Math.sqrt(d2) || 1; p.vx += dx / d * f; p.vy += dy / d * f; }
         p.vx *= 0.9; p.vy *= 0.9; p.x = bx + p.vx; p.y = by + p.vy;
         ctx.globalAlpha = 0.35 + 0.65 * e; ctx.fillStyle = p.col;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r * sc, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalCompositeOperation = 'source-over';
       if (on && !reduced) raf = requestAnimationFrame(frame);
