@@ -36,8 +36,8 @@
       '.hx3-l .g{flex:none;min-width:1.5em;height:1.5em;border-radius:1em;display:inline-flex;align-items:center;justify-content:center;' +
       'font:700 .72em/1 "Montserrat",sans-serif;color:#0a2530;background:var(--c)}' +
       '.hx3-l .t,.hx3-l .c{display:none;white-space:normal}' +
-      '.hx3-l.cur{max-width:660px;background:rgba(10,37,48,.9);padding:12px 18px;border-radius:12px}.hx3-l.cur .n{font-size:32px;font-weight:700}' +
-      '.hx3-l.cur .t,.hx3-l.cur .c{padding-left:44px}.hx3-l.cur .t{display:block;font-size:20px;line-height:1.35;margin-top:8px}' +
+      '.hx3-l.cur{max-width:660px;background:#0a2530;padding:12px 18px;border-radius:12px}.hx3-l.cur .n{font-size:32px;font-weight:700}' +
+      '.hx3-l.cur .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hx3-l.cur .t,.hx3-l.cur .c{padding-left:44px}.hx3-l.cur .t{display:block;font-size:20px;line-height:1.35;margin-top:8px}' +
       '.hx3-l.cur .c{display:block;font-size:18px;color:#a9bec7;margin-top:6px}' +
       '.hx3-l.short .n{font-size:20px;font-weight:600;line-height:1.3;gap:8px}.hx3-l.short .g{font-size:18px}' +  // step numbers stay so the room can count the eight steps
       '.hx3-l.new .n{font-size:24px;font-weight:700;color:#f2c25a;line-height:1.3}.hx3-l.new .g{display:none}' +
@@ -70,7 +70,7 @@
     container.appendChild(overlay);
 
     var scene = new T.Scene();
-    var camera = new T.PerspectiveCamera(36, 2.4, 0.1, 300);
+    var camera = new T.PerspectiveCamera(24, 2.4, 0.1, 400);  // narrower lens: dots near the edges stay round
     var W = 1680, H = 700;
     function resize() {
       var r = container.getBoundingClientRect();
@@ -195,7 +195,7 @@
       } };
     }
     var bursts = [];
-    for (var bi = 0; bi < N; bi++) bursts.push(mkBurst(pos[bi], lite(nodeCol[bi], 0.2), 60, 3.2, 0.2, 2.4 + nodes[bi].r * 2, bi === 0 ? 0.5 : arrival(bi)));
+    for (var bi = 0; bi < N; bi++) bursts.push(mkBurst(pos[bi], lite(nodeCol[bi], 0.2), 60, 3.2, 0.2, 1.3 + nodes[bi].r, bi === 0 ? 0.5 : arrival(bi)));
     bursts.push(mkBurst(pos[0], AMBER_HI, 140, 8, 0.8, 7, T_IMP));
 
     // labels: odd generations above the line, even below
@@ -212,7 +212,7 @@
       else {
         el.innerHTML = '<div class="n"><span class="g"></span><b></b></div><div class="t"></div><div class="c"></div>';
         el.querySelector('.g').textContent = i === 0 ? '★' : i;
-        el.querySelector('b').textContent = short; el.querySelector('.t').textContent = trunc(d.title, 62);
+        el.querySelector('b').textContent = short; el.querySelector('.t').textContent = trunc(d.title, 90);
         el.querySelector('.c').textContent = d.cites.toLocaleString('en-CA') + (d.cites === 1 ? ' citation' : ' citations');
         L.shortCls = 'hx3-l short'; L.curCls = 'hx3-l cur';
       }
@@ -243,7 +243,7 @@
 
     // camera
     var cPos = new T.Vector3(), cLook = new T.Vector3(), v = new T.Vector3(), v2 = new T.Vector3();
-    var END_C = new T.Vector3(XEND / 2 + 1.6, 2.4, 0), END_P = new T.Vector3(XEND / 2 + 1.6, 2.4, 25);  // nudged left so the last label fits past the line's end
+    var END_C = new T.Vector3(XEND / 2 + 1.6, 2.4, 0), END_P = new T.Vector3(XEND / 2 + 1.6, 2.4, 25 * 1.529);  // nudged left so the last label fits past the line's end
     function camX(t) {
       var x = pos[0].x;
       for (var k = 1; k < N; k++) { var s = arrival(k) - TRAVEL; if (t >= s) x = lerp(pos[k - 1].x, pos[k].x, eio((t - s) / TRAVEL)); }
@@ -252,7 +252,7 @@
     function setCamera(t, cx) {
       var dolly = 1 + 0.45 * (1 - eio(t / A0));
       cLook.set(cx + 2.4, 0.3, 0);
-      cPos.set(cx - 2.6, 1.6, 9 * dolly);
+      cPos.set(cx - 2.6, 1.6, 9 * 1.529 * dolly);  // distances scaled so the narrower lens keeps the same framing
       var m = eio((t - O0) / OVD);
       if (m > 0) { cPos.lerp(END_P, m); cLook.lerp(END_C, m); }
       camera.position.copy(cPos); camera.lookAt(cLook);
