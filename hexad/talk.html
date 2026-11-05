@@ -220,7 +220,7 @@
 
 <section data-secs="75" class="slide" data-run="years2">
   <h2>Papers that cite the Hexad drew more citations every year through 2025</h2>
-  <p class="sub">Review papers carry the Hexad into fields that never cite it directly. Four reviews alone lead to 1,025 papers (15%): Nacke &amp; Deterding (2017), Klock et al. (2020), Vermeir et al. (2020), and Bennani et al. (2021). All 32 reviews among the citers lead to a quarter of them.</p>
+  <p class="sub">Review papers carry the Hexad into fields that never cite it directly. Four reviews alone lead to 1,025 papers (15%): Nacke &amp; Deterding (2017), Klock et al. (2020), Vermeir et al. (2020), and Bennani et al. (2021). All 32 review papers that cite the Hexad lead to a quarter of them.</p>
   <div class="legend" style="font-size:24px;margin-top:14px"><span><i style="background:var(--series-1)"></i>cite the Hexad paper</span><span><i style="background:var(--series-2);opacity:.55"></i>cite those papers</span><span><i style="background:var(--brand-pink)"></i>arrive through the four reviews, with their share on each bar</span></div>
   <div class="viz" id="v-y2"></div>
 </section>
@@ -233,7 +233,7 @@
 <section data-secs="60" class="slide" data-run="chain">
   <h2>The trail of top papers runs eight steps deep. The newest paper cites the Hexad itself</h2>
   <div class="viz" id="v-chain" style="position:relative"></div>
-  <p class="foot">Each paper cites the one before it; bigger dots have more citations. <b>Newest citer, November 3, 2026:</b> <span data-cite="newest"></span></p>
+  <p class="foot">Each paper cites the one before it; bigger dots have more citations. <b>Newest paper citing the Hexad, November 3, 2026:</b> <span data-cite="newest"></span></p>
   <aside class="notes">The newest paper cites both the 2016 scale and Hexad‑12, and appears in PACM HCI 10(7), likely the CHI PLAY 2026 issue. A CHI PLAY 2026 Companion paper (Fifield et al.) also cites us.</aside>
 </section>
 
@@ -345,7 +345,7 @@ function fit() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); stag
 addEventListener('resize', fit); fit();
 
 // Origin story as process steps (month level).
-const ORIGIN = [['2015-07', 'Gustavo and Rina rate candidate items'], ['2015-08', 'Questionnaire version 1'], ['2016-01', 'Validation study designed'],
+const ORIGIN = [['2015-07', 'Gustavo and Rina rate possible items'], ['2015-08', 'Questionnaire version 1'], ['2016-01', 'Study planned'],
   ['2016-03', '133 people take the survey'], ['2016-04', '40 retake it; 30 items cut to 24'], ['2016-10', 'Presented at CHI PLAY 2016', 1]];
 // Share of gamification papers citing the Hexad (OpenAlex, November 5, 2026): Hexad citers / works with "gamification" in the title.
 // Both series indexed to 2021 = 100 so they share one honest scale.
@@ -435,7 +435,7 @@ const runs = {
       requestAnimationFrame(tick); }, i * stagger));  // same delay, duration, and easing as each bar
   },
   share: () => (viz.sh ??= HX.lines($('v-share'), SHARE.years.map(String), INDEX, { W: 1680, H: 540, domain: [0, 230], unit: '',
-    note: j => ` · index ${SHARE.hexad[j]} Hexad citers, ${HX.fmt(SHARE.gamif[j])} gamification titles` })).play(),
+    note: j => ` · index ${SHARE.hexad[j]} papers citing the Hexad, ${HX.fmt(SHARE.gamif[j])} gamification titles` })).play(),
   milestones: () => (viz.ms ??= HX.timeBars($('v-ms'), [...data.nodes].sort((a, b) => b[3] - a[3]).slice(0, 7),
     { W: 1680, rowH: 92, lw: 330, label: r => `${r[4]} (${r[2]})`, total: r => r[3], years: r => r[9], sub: r => `${r[1]} · doi.org/${r[6]}` })).play(),
   ring1: async () => {

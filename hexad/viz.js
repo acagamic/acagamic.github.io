@@ -699,7 +699,7 @@ const HX = (() => {
     host.innerHTML = '';
     const people = counts.flatMap(([t, n]) => d3.range(n).map(i => ({ t, i })));
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
-      .attr('aria-label', 'Main user type of 133 respondents: ' + counts.map(c => `${c[0]} ${c[1]}`).join(', '));
+      .attr('aria-label', 'Main user type of 133 people: ' + counts.map(c => `${c[0]} ${c[1]}`).join(', '));
     const x = d3.scaleBand(counts.map(c => c[0]), [40, W - 40]).padding(0.18), cols = 4, s = 26, base = H - 80;
     const rnd = d3.randomLcg(7);
     people.forEach(p => { p.sx = 60 + rnd() * (W - 120); p.sy = 40 + rnd() * (base - 80);
@@ -733,7 +733,7 @@ const HX = (() => {
     };
     const A = layout('groupA'), B = layout('groupB');
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
-      .attr('aria-label', 'Correlations between 31 game elements and six user types; Philanthropist has almost none');
+      .attr('aria-label', 'Links between 31 game elements and six user types; Philanthropist has almost none');
     const col = d3.scaleSequential([0.1, 0.42], t => d3.interpolateRgb(css('--bg'), css('--series-1'))(0.3 + 0.7 * t)).clamp(true);
     svg.append('g').selectAll('text').data(types).join('text').attr('class', 'hx-lab hx-strong').style('font-size', '20px')
       .attr('x', (t, i) => lw + gw + i * cw + cw / 2).attr('y', 44).attr('text-anchor', 'middle').text(t => t);
@@ -776,7 +776,7 @@ const HX = (() => {
 // Test-retest, explained in motion: 133 dots answer, 40 of them walk over to answer again, then their scores are compared.
 function retest(host) {
   const W = 1680, H = 560, svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
-    .attr('aria-label', '133 respondents; 40 answered again two weeks later; retest correlations by type');
+    .attr('aria-label', '133 people; 40 answered again two weeks later; how closely answers matched, by type');
   const s = 26, L = { x: 90, y: 120, cols: 12 }, R = { x: 640, y: 120, cols: 8 };
   const pick = new Set(d3.range(133).filter(i => (i * 37) % 133 < 40));
   const dots = d3.range(133).map(i => ({ i, re: pick.has(i), x: L.x + (i % L.cols) * s, y: L.y + Math.floor(i / L.cols) * s }));
