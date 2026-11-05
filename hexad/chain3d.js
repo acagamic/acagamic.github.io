@@ -30,7 +30,7 @@
     st.id = 'hx3-css';
     st.textContent =
       '.hx3-ov{position:absolute;inset:0;overflow:hidden;pointer-events:none}' +
-      '.hx3-l{position:absolute;left:0;top:0;opacity:0;color:#f2f5f7;white-space:nowrap;' +
+      '.hx3-l{position:absolute;left:0;top:0;opacity:0;color:#f2f5f7;white-space:nowrap;font-size:20px;' +
       'font-family:"Montserrat",system-ui,sans-serif;text-shadow:0 2px 12px #0a2530,0 0 3px #0a2530,0 0 6px #0a2530}' +
       '.hx3-l .n{display:flex;align-items:center;gap:12px;font-family:"Wix Madefor Display","Montserrat",sans-serif}' +
       '.hx3-l .g{flex:none;min-width:1.5em;height:1.5em;border-radius:1em;display:inline-flex;align-items:center;justify-content:center;' +
@@ -39,9 +39,9 @@
       '.hx3-l.cur{max-width:660px}.hx3-l.cur .n{font-size:32px;font-weight:700}' +
       '.hx3-l.cur .t,.hx3-l.cur .c{padding-left:44px}.hx3-l.cur .t{display:block;font-size:20px;line-height:1.35;margin-top:8px}' +
       '.hx3-l.cur .c{display:block;font-size:18px;color:#a9bec7;margin-top:6px}' +
-      '.hx3-l.short .n{font-size:18px;font-weight:600;line-height:1.3}.hx3-l.short .g{display:none}' +
+      '.hx3-l.short .n{font-size:20px;font-weight:600;line-height:1.3}.hx3-l.short .g{display:none}' +
       '.hx3-l.new .n{font-size:24px;font-weight:700;color:#f2c25a;line-height:1.3}.hx3-l.new .g{display:none}' +
-      '.hx3-l.yr{color:#a9bec7;font:500 15px/1 "Montserrat",sans-serif}' +
+      '.hx3-l.yr{color:#a9bec7;font:500 18px/1 "Montserrat",sans-serif}' +
       '.hx3-ld{position:absolute;left:0;top:0;width:1px;background:#a9bec7;opacity:0}';
     document.head.appendChild(st);
   }
@@ -317,7 +317,7 @@
         var off = 22;
         L.x = clamp(L.sx - L.w / 2, 8, W - L.w - 8);
         L.y = L.side < 0 ? L.sy - off - L.h : L.sy + off;
-        for (var g = 0; g < 60 && placed.some(function (o) { return overlap(L, o, 6); }); g++) L.y += L.side * 6; // nudge away from the line
+        for (var g = 0; g < 60 && placed.some(function (o) { return overlap(L, o, 14); }); g++) L.y += L.side * 8; // nudge away from the line
         placed.push(L);
         L.el.style.transform = 'translate(' + L.x.toFixed(1) + 'px,' + L.y.toFixed(1) + 'px)';
         var y1 = L.side < 0 ? L.y + L.h : L.sy + 8, y2 = L.side < 0 ? L.sy - 8 : L.y;

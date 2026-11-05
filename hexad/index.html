@@ -369,7 +369,7 @@ $('theme').onclick = () => {
   const dark = matchMedia('(prefers-color-scheme: dark)').matches, cur = document.documentElement.dataset.theme || (dark ? 'dark' : 'light');
   const next = cur === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next;
   try { localStorage.setItem('hx-theme', next); } catch {}
-  net?.draw();
+  if (net) { net._pal = null; net.draw(); }
 };
 // Reading progress
 addEventListener('scroll', () => { const h = document.documentElement; $('progress').style.transform = `scaleX(${h.scrollTop / (h.scrollHeight - h.clientHeight || 1)})`; }, { passive: true });
@@ -411,7 +411,7 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
     years1: HX.yearBars($('v-y1'), data, { ticker: $('t-y1') }),
     years2: HX.reviewBars($('v-y2'), deck.reviewYears.map(([y, a, v]) => [y, (data.years.find(r => r[0] === y) || [0, 0])[1], a, v]), { W: 1400, H: 520 }),
     milestones: HX.timeBars($('v-ms'), top, { W: 1000, label: r => `${r[4]} ${r[2]}`, total: r => r[3], years: r => r[9] }),
-    chain: window.HXChain3D ? (c => ({ play: () => c.play() }))(HXChain3D.create($('v-chain'), data.chain, { who: 'Zhang, Altmeyer, & Seaborn', year: 2026, cites: 0, date: 'November 3, 2026', title: 'Measuring What Motivates Maldaimonia in Play with the Inventory on Maldaimonic Motivations in Player Experiences (IMPEX)' }))
+    chain: window.HXChain3D && (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })() ? (c => ({ play: () => c.play() }))(HXChain3D.create($('v-chain'), data.chain, { who: 'Zhang, Altmeyer, & Seaborn', year: 2026, cites: 0, date: 'November 3, 2026', title: 'Measuring What Motivates Maldaimonia in Play with the Inventory on Maldaimonic Motivations in Player Experiences (IMPEX)' }))
       : HX.chain($('v-chain'), data, { W: 1100, H: 640 }),
     countries: HX.hbars($('v-co'), data.countries.slice(0, 15), { W: 1000, rowH: 38, lw: 240, fs: 18, bar: 0.6, label: r => `${HX.country(r[0])}  ${flag(r[0])}` }),
     lineage: HX.lineage($('v-lin'), { W: 1400 }),

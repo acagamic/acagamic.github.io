@@ -94,7 +94,7 @@ const HX = (() => {
     const vals = g.append('text').attr('class', 'hx-val').style('font-size', Math.round(fs * 0.9) + 'px').attr('y', rowH / 2 + fs * 0.32).attr('x', lw + 8).style('opacity', 0).text(r => fmt(value(r)));
     function play() {
       bars.interrupt().attr('width', 0).transition().delay((r, i) => reduced ? 0 : i * stagger).duration(reduced ? 0 : 800).ease(d3.easeCubicOut).attr('width', r => x(value(r)));
-      vals.interrupt().style('opacity', 0).attr('x', lw + 8).transition().delay((r, i) => reduced ? 0 : i * stagger + 300).duration(500)
+      vals.interrupt().style('opacity', 0).attr('x', r => lw + x(value(r)) + 10).transition().delay((r, i) => reduced ? 0 : i * stagger + 750).duration(300)
         .style('opacity', 1).attr('x', r => lw + x(value(r)) + 10);
     }
     return { play };
@@ -164,7 +164,7 @@ const HX = (() => {
     function show(i) {
       if (!card) return;
       const [t] = TYPES[i];
-      card.interrupt().transition().duration(180).style('opacity', 0).on('end', () => {
+      card.interrupt().transition().duration(110).style('opacity', 0).on('end', () => {
         card.select('.hx-card-t').text(t);
         const d = card.select('.hx-card-d').text(null);
         wrap(desc[t]).forEach((l, k) => d.append('tspan').attr('x', 0).attr('dy', k ? 30 : 0).text(l));
@@ -177,9 +177,8 @@ const HX = (() => {
       if (card) card.interrupt().transition().duration(300).style('opacity', 0);
       if (shape && !shape.tag) {
         // Label the shape so nobody reads it as data: it is one example person.
-        shape.tag = svg.append('g').attr('class', 'hx-example').style('opacity', 0).attr('transform', `translate(${cx + R * 0.95},${cy + R * 0.55})`);
-        shape.tag.append('line').attr('x1', -R * 0.38).attr('y1', -R * 0.1).attr('x2', 0).attr('y2', 0);
-        shape.tag.append('text').attr('x', 10).attr('y', 6).text('Example: one person’s scores');
+        shape.tag = svg.append('g').attr('class', 'hx-example').style('opacity', 0).attr('transform', `translate(${cx},${cy + R * 0.12})`);
+        shape.tag.append('text').attr('class', 'hx-halo').attr('text-anchor', 'middle').attr('y', 6).text('Example: one person’s scores');
       }
       shape?.tag?.interrupt().style('opacity', 0).transition().delay(reduced ? 0 : 900).duration(500).style('opacity', 1);
       g.select('circle').interrupt().transition().duration(300).attr('r', 9);
@@ -270,12 +269,12 @@ const HX = (() => {
       return sel.transition().duration(dur).ease(d3.easeCubicInOut).call(this.zoom.transform, t).end().catch(() => {});
     }
     // Animate the time reveal: ring 1 grows clockwise, then ring 2 fills in by year.
-    reveal({ dur = 9000, ring2 = false, onYear } = {}) {
+    reveal({ dur = 9000, ring2 = false, onYear, ease = d3.easeSinInOut } = {}) {
       this.ring2 = ring2; const from = 2016, to = 2027;
       return new Promise(res => {
         if (reduced) { this.T = this.T2 = to; this.index(); this.draw(); return res(); }
         const tm = d3.timer(el => {
-          const p = Math.min(1, el / dur), v = from + (to - from) * d3.easeSinInOut(p);
+          const p = Math.min(1, el / dur), v = from + (to - from) * ease(p);
           if (ring2) this.T2 = v; else { this.T = v; this.T2 = to; }
           onYear?.(Math.min(2026, Math.floor(v)));
           this.draw();
@@ -283,18 +282,19 @@ const HX = (() => {
         });
       });
     }
-    setRing2(on) { this.ring2 = on; this.T2 = 2027; this.index(); this.draw(); }
+    setRing2(on) { if (this.ring2 === on && this.T2 === 2027) { this.draw(); return; }  // skip the index rebuild when nothing changed
+      this.ring2 = on; this.T2 = 2027; this.index(); this.draw(); }
     colour(n) { return n.deg === 0 ? this.cOrigin : n.deg === 1 ? this.c1 : n.deg === 2 ? this.c2 : this.c3; }
     draw() {
       if (!this.w) return;
       const { ctx, k } = this;
-      this.c1 = css('--series-1', this.canvas); this.c2 = css('--series-2', this.canvas); this.c3 = css('--series-3', this.canvas); this.cOrigin = css('--ink', this.canvas);
+      this.c1 = this.col('--series-1'); this.c2 = this.col('--series-2'); this.c3 = this.col('--series-3'); this.cOrigin = this.col('--ink');
       ctx.clearRect(0, 0, this.w, this.h);
       ctx.save(); ctx.translate(k.x, k.y); ctx.scale(k.k, k.k);
       const lw = 1 / k.k, hl = this.focus || this.hover;
       const lit = hl ? new Set([hl, ...hl.parents, ...hl.kids]) : null;
       // Year arcs and labels
-      ctx.lineWidth = 1.2 * lw; ctx.strokeStyle = css('--grid', this.canvas); ctx.fillStyle = css('--muted', this.canvas);
+      ctx.lineWidth = 1.2 * lw; ctx.strokeStyle = this.col('--grid'); ctx.fillStyle = this.col('--muted');
       ctx.font = `600 ${13 * lw}px Montserrat, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       for (const [y, [a, b]] of this.yearArcs) {
         if (y > this.T || this.d1.filter(n => n.y === y).length < 5) continue;
@@ -305,6 +305,7 @@ const HX = (() => {
       const edge = (a, b, alpha) => { ctx.globalAlpha = alpha; ctx.moveTo(a.x, a.yy); ctx.lineTo(b.x, b.yy); };
       for (const deg of [1, 2, 3]) {
         ctx.beginPath(); ctx.strokeStyle = deg === 1 ? this.c1 : deg === 2 ? this.c2 : this.c3; ctx.lineWidth = lw;
+        if (this.stars && deg === 2) continue;  // race track: the faint second-ring links cost the most and read as haze
         ctx.globalAlpha = lit ? 0.025 : deg === 1 ? 0.16 : deg === 2 ? 0.045 : 0.35;
         for (const n of this.all) {
           if (n.deg !== deg && !(deg === 3 && n.deg > 3)) continue;
@@ -328,19 +329,23 @@ const HX = (() => {
       }
       // Citation stars: the focused paper's citers flare up.
       if (hl && this.stars) {
-        ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = css('--brand-pink', this.canvas);
-        for (const c of hl.kids) { if (!this.visible(c)) continue; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.arc(c.x, c.yy, Math.max(c.r * 2.6, 4.5 * lw), 0, Math.PI * 2); ctx.fill(); }
+        ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = this.col('--brand-pink');
+        // One path and one fill for every star: hub papers have hundreds of citers, and per-star fills drop frames.
+        ctx.globalAlpha = 0.85; ctx.beginPath();
+        for (const c of hl.kids) { if (!this.visible(c)) continue; const r = Math.max(c.r * 2.6, 4.5 * lw); ctx.moveTo(c.x + r, c.yy); ctx.arc(c.x, c.yy, r, 0, Math.PI * 2); }
+        ctx.fill();
         ctx.globalCompositeOperation = 'source-over';
       }
       // Arrival burst for the genealogy track.
       if (this.burst) {
         const b = this.burst, age = Math.min(1, (performance.now() - b.t0) / 1100), e = 1 - Math.pow(1 - age, 3);
+        if (age < 0.09) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * (1 - age / 0.09); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(b.x, b.y, 26 * lw, 0, Math.PI * 2); ctx.fill(); }
         ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = 1 - age; ctx.strokeStyle = css('--brand-cyan', this.canvas); ctx.lineWidth = 3 * lw * (1 - age) + lw;
+        ctx.globalAlpha = 1 - age; ctx.strokeStyle = this.col('--brand-cyan'); ctx.lineWidth = 3 * lw * (1 - age) + lw;
         ctx.beginPath(); ctx.arc(b.x, b.y, (12 + 90 * e) * lw, 0, Math.PI * 2); ctx.stroke();
         for (const [a, sp, c] of b.sparks) {
-          const r0 = (8 + 40 * e * sp) * lw, r1 = r0 + (6 + 22 * sp) * lw * (1 - age);
-          ctx.globalAlpha = (1 - age) * 0.95; ctx.strokeStyle = c < 0.5 ? css('--brand-pink', this.canvas) : css('--brand-cyan', this.canvas); ctx.lineWidth = 2 * lw;
+          const e4 = 1 - Math.pow(1 - age, 4), r0 = (8 + 40 * e4 * sp) * lw, r1 = r0 + (6 + 22 * sp) * lw * (1 - age);
+          ctx.globalAlpha = (1 - age) * 0.95; ctx.strokeStyle = c < 0.5 ? this.col('--brand-pink') : this.col('--brand-cyan'); ctx.lineWidth = 2 * lw;
           ctx.beginPath(); ctx.moveTo(b.x + Math.cos(a) * r0, b.y + Math.sin(a) * r0); ctx.lineTo(b.x + Math.cos(a) * r1, b.y + Math.sin(a) * r1); ctx.stroke();
         }
         ctx.globalCompositeOperation = 'source-over';
@@ -348,23 +353,23 @@ const HX = (() => {
       // Highlighted papers (Hexad-12) keep their own colour and ring.
       for (const [n, v] of this.special || []) {
         if (!this.visible(n)) continue;
-        ctx.globalAlpha = 1; ctx.fillStyle = css(v, this.canvas); ctx.strokeStyle = css('--ink', this.canvas); ctx.lineWidth = 2 * lw;
+        ctx.globalAlpha = 1; ctx.fillStyle = css(v, this.canvas); ctx.strokeStyle = this.col('--ink'); ctx.lineWidth = 2 * lw;
         ctx.beginPath(); ctx.arc(n.x, n.yy, Math.max(n.r * 1.6, 6 * lw), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       }
       // Comet trail for the genealogy track.
       if (this.comet && this.comet.length > 1) {
         const pts = this.comet; ctx.lineCap = 'round';
         for (let i = 1; i < pts.length; i++) {
-          ctx.globalAlpha = i / pts.length; ctx.strokeStyle = css('--brand-cyan', this.canvas); ctx.lineWidth = (1 + 4 * i / pts.length) * lw;
+          ctx.globalAlpha = i / pts.length; ctx.strokeStyle = this.col('--brand-cyan'); ctx.lineWidth = (1 + 4 * i / pts.length) * lw;
           ctx.beginPath(); ctx.moveTo(pts[i - 1][0], pts[i - 1][1]); ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke();
         }
         const [hx, hy] = pts.at(-1); ctx.globalAlpha = 1; ctx.fillStyle = '#fff';
         ctx.beginPath(); ctx.arc(hx, hy, 5 * lw, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalAlpha = 1;
-      if (hl) { ctx.lineWidth = 2 * lw; ctx.strokeStyle = css('--ink', this.canvas); ctx.beginPath(); ctx.arc(hl.x, hl.yy, hl.r + 3 * lw, 0, Math.PI * 2); ctx.stroke(); }
+      if (hl) { ctx.lineWidth = 2 * lw; ctx.strokeStyle = this.col('--ink'); ctx.beginPath(); ctx.arc(hl.x, hl.yy, hl.r + 3 * lw, 0, Math.PI * 2); ctx.stroke(); }
       // Origin label
-      ctx.fillStyle = css('--bg', this.canvas); ctx.font = `700 7px Montserrat, sans-serif`; ctx.fillText('HEXAD', 0, 0.5);
+      ctx.fillStyle = this.col('--bg'); ctx.font = `700 7px Montserrat, sans-serif`; ctx.fillText('HEXAD', 0, 0.5);
       ctx.restore();
     }
     pick(e, click) {
@@ -374,6 +379,8 @@ const HX = (() => {
       else { this.hover = n || null; this.onHover?.(n || null, e); this.canvas.style.cursor = n ? 'pointer' : 'grab'; }
       this.draw();
     }
+    // Colours are read once per theme; reading styles inside the draw loop forces a style recalculation every frame.
+    col(v) { const m = this._pal ??= new Map(); if (!m.has(v)) m.set(v, css(v, this.canvas)); return m.get(v); }
     pathTo(n) { const p = []; while (n) { p.unshift(n); n = n.parents[0]; } return p; }
     // Screen position of a paper, for HTML callouts layered over the canvas.
     screen(n) { return this.k.apply([n.x, n.yy]); }
@@ -401,7 +408,7 @@ const HX = (() => {
         this.focus = s; onStop?.(s);
         // Arrival burst: a ring and a spray of sparks, redrawn every frame through the hold.
         const rnd = d3.randomLcg(s.x * 13 + s.yy);
-        this.burst = { x: s.x, y: s.yy, t0: performance.now(), sparks: d3.range(46).map(() => [rnd() * Math.PI * 2, 0.4 + rnd() * 0.9, rnd()]) };
+        this.burst = { x: s.x, y: s.yy, t0: performance.now(), sparks: d3.range(30).map(() => [rnd() * Math.PI * 2, 0.4 + rnd() * 0.9, rnd()]) };
         await new Promise(res => {
           const end = performance.now() + (reduced ? 0 : hold);
           const loop = now => { this.draw(); if (now < end) requestAnimationFrame(loop); else res(); };
@@ -410,7 +417,7 @@ const HX = (() => {
         this.burst = null;
         prev = s;
       }
-      this.stars = false;
+      // stars stays on until the caller has finished its zoom-out, so the heavy links do not redraw every frame.
     }
     // Fetch the most-cited papers citing n and place them as the next ring, fanned outward around n.
     async expand(n, per = 30) {
@@ -455,7 +462,7 @@ const HX = (() => {
 
   // ---- 2016 study charts (data/study2016.json) ----
 
-  // Hero: one particle per citing paper drifts in and settles on a hexagon, oldest papers first.
+  // Hero: one particle per citing paper drifts in and lands on a hexagon, oldest papers first.
   // Colour runs cyan (2016) to pink to magenta (2026); the pointer pushes particles aside.
   function heroField(canvas, data) {
     const ctx = canvas.getContext('2d'), rnd = d3.randomLcg(11);
@@ -520,7 +527,7 @@ const HX = (() => {
     }
     const g = svg.selectAll('g.b').data(rows).join('g').attr('class', 'b').attr('transform', (r, i) => `translate(0,${top + i * rowH})`);
     g.append('text').attr('class', 'hx-lab hx-strong').attr('x', lw - 14).attr('y', by + bh / 2 + 6).attr('text-anchor', 'end').text(label);
-    if (sub) g.append('text').attr('class', 'hx-muted').attr('x', lw).attr('y', by + bh + 22).style('font-size', '15px').text(sub);
+    if (sub) g.append('text').attr('class', 'hx-muted').attr('x', lw).attr('y', by + bh + 24).style('font-size', '18px').text(sub);
     const segs = g.selectAll('rect').data(r => { let acc = 0; return years(r).map((v, i) => ({ r, i, v, x0: (acc += v) - v })); }).join('rect')
       .attr('y', by).attr('height', bh).attr('fill', d => colour(d.i)).attr('stroke', 'var(--bg)').attr('stroke-width', 1.5)
       .attr('x', d => lw + x(d.x0)).attr('width', 0)
@@ -529,7 +536,7 @@ const HX = (() => {
     const vals = g.append('text').attr('class', 'hx-val').attr('y', by + bh / 2 + 6).attr('x', r => lw + x(total(r)) + 10).style('opacity', 0).text(r => fmt(total(r)));
     function play() {
       const step = reduced ? 0 : 260;
-      segs.interrupt().attr('width', 0).transition().delay((d) => d.i * step + d.r.__i * stagger).duration(reduced ? 0 : step).ease(d3.easeLinear).attr('width', d => Math.max(0, x(d.v)));
+      segs.interrupt().attr('width', 0).transition().delay((d) => d.i * step + d.r.__i * stagger).duration(reduced ? 0 : step * 1.6).ease(d3.easeCubicOut).attr('width', d => Math.max(0, x(d.v)));
       vals.interrupt().style('opacity', 0).transition().delay(n * step).duration(400).style('opacity', 1);
     }
     rows.forEach((r, i) => { r.__i = i; });
@@ -559,7 +566,7 @@ const HX = (() => {
     const { papers, people } = LINEAGE, lw = 250, top = 110, H = top + people.length * rowH + 120;
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
       .attr('aria-label', papers.map(p => `${p.y} ${p.name}: ${p.au.join(', ')}`).join('; '));
-    const x = d3.scalePoint(papers.map((p, i) => i), [lw + 60, W - 90]), y = i => top + i * rowH + rowH / 2;
+    const x = d3.scalePoint(papers.map((p, i) => i), [lw + 60, W - 140]), y = i => top + i * rowH + rowH / 2;
     const cls = k => ['hx-thread0', 'hx-thread1', 'hx-thread2'][k];
     const head = svg.selectAll('g.h').data(papers).join('g').attr('class', 'h').attr('transform', (p, i) => `translate(${x(i)},0)`);
     head.append('text').attr('class', 'hx-lab hx-strong').attr('text-anchor', 'middle').attr('y', 34).style('font-size', '24px').text(p => p.y);
@@ -583,15 +590,15 @@ const HX = (() => {
   }
 
   // Two series across ordered bands, direct-labelled, with the crossover marked.
-  function lines(host, bands, series, { W = 1400, H = 520, domain, unit = '%', note = r => '' } = {}) {
+  function lines(host, bands, series, { W = 1400, H = 520, domain, unit = '%', note = r => '', minimal = false } = {}) {
     host.innerHTML = '';
-    const m = { t: 30, r: 190, b: 60, l: 60 }, keys = Object.keys(series);
+    const m = { t: 30, r: 270, b: 60, l: 60 }, keys = Object.keys(series);
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
       .attr('aria-label', keys.map(k => `${k}: ${series[k].join(', ')}`).join('; '));
     const x = d3.scalePoint(bands, [m.l, W - m.r]).padding(0.2), y = d3.scaleLinear(domain || d3.extent(keys.flatMap(k => series[k])), [H - m.b, m.t]).nice();
     svg.append('g').selectAll('line').data(y.ticks(4)).join('line').attr('class', 'hx-axis').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y).style('opacity', .6);
-    svg.append('g').selectAll('text').data(y.ticks(4)).join('text').attr('class', 'hx-tick').attr('x', m.l - 12).attr('y', d => y(d) + 5).attr('text-anchor', 'end').text(d => d + unit);
-    svg.append('g').selectAll('text').data(bands).join('text').attr('class', 'hx-tick').attr('x', x).attr('y', H - m.b + 32).attr('text-anchor', 'middle').text(d => d);
+    if (!minimal) svg.append('g').selectAll('text').data(y.ticks(4)).join('text').attr('class', 'hx-tick').attr('x', m.l - 12).attr('y', d => y(d) + 5).attr('text-anchor', 'end').text(d => d + unit);
+    svg.append('g').selectAll('text').data(minimal ? [bands[0], bands.at(-1)] : bands).join('text').attr('class', 'hx-tick').style('font-size', minimal ? '22px' : null).attr('x', x).attr('y', H - m.b + 32).attr('text-anchor', 'middle').text(d => d);
     const gs = svg.selectAll('g.s').data(keys).join('g').attr('class', 's');
     const path = gs.append('path').attr('fill', 'none').attr('stroke-width', 3).attr('stroke', (k, i) => `var(--series-${i + 1})`)
       .attr('d', k => d3.line().curve(d3.curveMonotoneX)(bands.map((b, j) => [x(b), y(series[k][j])])));
@@ -610,28 +617,35 @@ const HX = (() => {
   }
 
   // Process timeline: month-level steps on one axis, labels stacked so close steps never collide.
-  function timeline(host, events, { W = 1680, H = 640, stagger = 420, rowStep = 82 } = {}) {
+  function timeline(host, events, { W = 1680, H = 640, stagger = 300, rowStep = 96 } = {}) {
     host.innerHTML = '';
     const ev = events.map(([d, t, s]) => ({ d: new Date(d + '-15T12:00'), t, s }));
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', events.map(e => `${e[0]}: ${e[1]}`).join('; '));
     const x = d3.scaleTime([d3.timeMonth.offset(ev[0].d, -1), d3.timeMonth.offset(ev.at(-1).d, 1)], [40, W - 330]), base = H - 70;
     svg.append('line').attr('class', 'hx-axis').attr('x1', 40).attr('x2', W - 40).attr('y1', base).attr('y2', base);
     const ends = [];
-    ev.forEach(e => { let r = 0; while (ends[r] > x(e.d) - 10) r++; ends[r] = x(e.d) + 330; e.row = r; });
+    ev.forEach(e => { let r = 0; while (ends[r] > x(e.d) - 10) r++; ends[r] = x(e.d) + 440; e.row = r; });
+    const stemLayer = svg.append('g');
     const g = svg.selectAll('g.e').data(ev).join('g').attr('class', 'e').style('opacity', 0);
-    g.append('line').attr('class', 'hx-chain').attr('x1', e => x(e.d)).attr('x2', e => x(e.d)).attr('y1', base).attr('y2', e => base - 54 - e.row * rowStep);
+    stemLayer.selectAll('line').data(ev).join('line').attr('class', 'hx-chain').attr('x1', e => x(e.d)).attr('x2', e => x(e.d)).attr('y1', base).attr('y2', e => base - 54 - e.row * rowStep);
     g.append('circle').attr('class', e => e.s ? 'hx-node2' : 'hx-node1').attr('cx', e => x(e.d)).attr('cy', base).attr('r', 10);
-    const t = g.append('text').attr('class', 'hx-lab hx-halo').style('font-size', '24px').attr('x', e => x(e.d) + 10).attr('y', e => base - 62 - e.row * rowStep);
+    const t = g.append('text').attr('class', 'hx-lab hx-halo').style('font-size', '24px').style('stroke-width', '18px').attr('x', e => x(e.d) + 10).attr('y', e => base - 62 - e.row * rowStep);
     t.append('tspan').attr('class', 'hx-strong').text(e => d3.timeFormat('%B %Y')(e.d));
     t.append('tspan').attr('x', e => x(e.d) + 10).attr('dy', 28).attr('class', 'hx-muted').style('font-size', '21px').text(e => e.t);
-    function play() { g.interrupt().style('opacity', 0).transition().delay((e, i) => reduced ? 0 : 300 + i * stagger).duration(450).style('opacity', 1); }
+    const stems = stemLayer.selectAll('line'), labels = g.select('text');
+    function play() {
+      g.interrupt().style('opacity', 1);
+      stems.interrupt().attr('y2', base).transition().delay((d, i) => reduced ? 0 : 300 + i * stagger).duration(reduced ? 0 : 380).ease(d3.easeCubicOut).attr('y2', e => base - 54 - e.row * rowStep);
+      g.select('circle').interrupt().attr('r', 0).transition().delay((e, i) => reduced ? 0 : 300 + i * stagger).duration(reduced ? 0 : 420).ease(d3.easeBackOut).attr('r', 10);
+      labels.interrupt().style('opacity', 0).transition().delay((e, i) => reduced ? 0 : 450 + i * stagger).duration(350).style('opacity', 1);
+    }
     return { play };
   }
 
   // Disruptor story: 2016 respondents (outlined dots) beside Hexad-12 test shares rescaled to 133 people (filled dots).
   function crowdCompare(host, a, b, { W = 1600, H = 560, highlight = 'Disruptor', n = 133 } = {}) {
     host.innerHTML = '';
-    const types = a.map(r => r[0]), s = 20, cols = 3, base = H - 90;
+    const types = a.map(r => r[0]), s = 30, cols = 3, base = H - 100;
     const x = d3.scaleBand(types, [40, W - 40]).padding(0.12);
     const bN = Object.fromEntries(b.map(([t, p]) => [t, Math.round(p / 100 * n)]));
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
@@ -643,15 +657,15 @@ const HX = (() => {
       d3.range(bN[t]).forEach(i => dots.push({ t, set: 1, i, x: cx1 + ((i % cols) - 1) * s, y: base - 12 - Math.floor(i / cols) * s }));
     });
     const hot = d => d.t === highlight;
-    const c = svg.selectAll('circle').data(dots).join('circle').attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 7.5)
+    const c = svg.selectAll('circle').data(dots).join('circle').attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 12)
       .attr('fill', d => d.set ? (hot(d) ? 'var(--series-2)' : 'var(--series-1)') : 'none')
       .attr('stroke', d => d.set ? 'none' : (hot(d) ? 'var(--series-2)' : 'var(--muted)')).attr('stroke-width', 2);
     const lab = svg.selectAll('g.l').data(types).join('g').attr('class', 'l').attr('transform', t => `translate(${x(t) + x.bandwidth() / 2},${base + 34})`);
     lab.append('text').attr('class', t => 'hx-lab hx-strong' + (t === highlight ? ' hx-moved' : '')).attr('text-anchor', 'middle').style('font-size', '22px').text(t => t);
-    lab.append('text').attr('class', 'hx-muted').attr('text-anchor', 'middle').attr('y', 28).style('font-size', '17px')
+    lab.append('text').attr('class', 'hx-muted').attr('text-anchor', 'middle').attr('y', 34).style('font-size', '24px')
       .text((t, i) => `${(a[i][1] / n * 100).toFixed(1)}% → ${b[i][1]}%`);
     function play() {
-      c.interrupt().attr('r', 0).transition().delay(d => reduced ? 0 : d.set * 1500 + d.i * 22).duration(350).ease(d3.easeBackOut).attr('r', 7.5);
+      c.interrupt().attr('r', 0).transition().delay(d => reduced ? 0 : d.set * 1500 + d.i * 22).duration(350).ease(d3.easeBackOut).attr('r', 12);
     }
     return { play };
   }
@@ -706,14 +720,14 @@ const HX = (() => {
   }
 
   // Game elements x user types. Rows start in the framework's grouping; regroup() slides them into the data's grouping.
-  function heatmap(host, E, types, { W = 1500, rowH = 24 } = {}) {
+  function heatmap(host, E, types, { W = 1500, rowH = 24, fs = 18 } = {}) {
     host.innerHTML = '';
-    const els = Object.keys(E.groupA), lw = 230, gw = 330, cw = (W - lw - gw) / types.length, H = els.length * rowH + 120;
+    const els = Object.keys(E.groupA), lw = 230, gw = 330, cw = (W - lw - gw) / types.length, H = els.length * rowH + 100;
     const order = g => [...types, 'General'].indexOf(g);
     const layout = key => {
       const sorted = [...els].sort((a, b) => order(E[key][a]) - order(E[key][b]) || a.localeCompare(b));
       const y = {}; let gap = 0, prev;
-      sorted.forEach((e, i) => { if (prev !== undefined && E[key][e] !== prev) gap += 10; prev = E[key][e]; y[e] = 70 + i * rowH + gap; });
+      sorted.forEach((e, i) => { if (prev !== undefined && E[key][e] !== prev) gap += 8; prev = E[key][e]; y[e] = 56 + i * rowH + gap; });
       const groups = d3.groups(sorted, e => E[key][e]).map(([g, v]) => [g, y[v[0]], y[v.at(-1)] + rowH]);
       return { y, groups };
     };
@@ -724,7 +738,7 @@ const HX = (() => {
     svg.append('g').selectAll('text').data(types).join('text').attr('class', 'hx-lab hx-strong').style('font-size', '20px')
       .attr('x', (t, i) => lw + gw + i * cw + cw / 2).attr('y', 44).attr('text-anchor', 'middle').text(t => t);
     const rows = svg.selectAll('g.hm-row').data(els).join('g').attr('class', 'hm-row').attr('transform', e => `translate(0,${A.y[e]})`);
-    rows.append('text').attr('class', 'hx-lab').attr('x', lw + gw - 14).attr('y', rowH / 2 + 6).attr('text-anchor', 'end').style('font-size', '18px').text(e => e);
+    rows.append('text').attr('class', 'hx-lab').attr('x', lw + gw - 14).attr('y', rowH / 2 + 6).attr('text-anchor', 'end').style('font-size', fs + 'px').text(e => e);
     const byKey = new Map(E.cells.map(c => [c[0] + '|' + c[1], c]));
     const cells = rows.selectAll('rect').data(e => types.map((t, i) => ({ e, t, i, c: byKey.get(e + '|' + t) }))).join('rect')
       .attr('x', d => lw + gw + d.i * cw + 1).attr('y', 1).attr('width', cw - 2).attr('height', rowH - 2).attr('rx', 3)
@@ -748,10 +762,13 @@ const HX = (() => {
       cells.interrupt().style('opacity', 0).transition().delay(d => reduced ? 0 : d.i * 300 + A.y[d.e] * 1.2).duration(400).style('opacity', 1);
     }
     function regroup() {
-      drawGroups(B, reduced ? 0 : 1200);
-      rows.interrupt().transition().delay((e, i) => reduced ? 0 : (E.groupA[e] !== E.groupB[e] ? 0 : 200)).duration(reduced ? 0 : 1600).ease(d3.easeCubicInOut)
-        .attr('transform', e => `translate(0,${B.y[e]})`);
-      rows.select('text').classed('hx-moved', e => E.groupA[e] !== E.groupB[e]);
+      // Labels fade out, rows travel together, labels return in their new places, so no text crosses while moving.
+      const lab = rows.select('text');
+      lab.interrupt().transition().duration(reduced ? 0 : 150).style('opacity', 0);
+      gl.interrupt().transition().duration(reduced ? 0 : 150).style('opacity', 0).on('end', () => drawGroups(B, 0));
+      gl.transition().delay(reduced ? 0 : 1050).duration(reduced ? 0 : 250).style('opacity', 1);
+      rows.interrupt().transition().delay(reduced ? 0 : 150).duration(reduced ? 0 : 900).ease(d3.easeCubicInOut).attr('transform', e => `translate(0,${B.y[e]})`);
+      lab.classed('hx-moved', e => E.groupA[e] !== E.groupB[e]).transition().delay(reduced ? 0 : 1050).duration(reduced ? 0 : 250).style('opacity', 1);
     }
     return { play, regroup };
   }
@@ -775,7 +792,7 @@ function retest(host) {
   const row = bars.selectAll('g').data(T2).join('g').attr('transform', (d, i) => `translate(${bx},${130 + i * 62})`);
   row.append('text').attr('class', 'hx-lab').attr('y', 22).style('font-size', '21px').text(d => d[0]);
   const bar = row.append('rect').attr('x', 170).attr('y', 4).attr('height', 26).attr('rx', 4).attr('width', 0).attr('fill', d => d[1] < .5 ? 'var(--series-2)' : 'var(--series-1)');
-  row.append('text').attr('class', 'hx-val').attr('x', d => 180 + d[1] * (bw - 200)).attr('y', 24).style('font-size', '20px').text(d => d[1].toFixed(2).replace(/^0/, ''));
+  const val = row.append('text').attr('class', 'hx-val').attr('x', d => 180 + d[1] * (bw - 200)).attr('y', 24).style('font-size', '20px').text(d => d[1].toFixed(2).replace(/^0/, ''));
   return () => {
     c.interrupt().attr('cx', d => d.x).attr('cy', d => d.y).attr('fill-opacity', 1).attr('r', 0)
       .transition().delay(d => d.i * 6).duration(300).attr('r', 9)
@@ -783,7 +800,8 @@ function retest(host) {
       .attr('cx', d => d.re ? d.rx : d.x).attr('cy', d => d.re ? d.ry : d.y).attr('fill-opacity', d => d.re ? 1 : 0.22);
     h2.interrupt().style('opacity', 0).transition().delay(2300).duration(500).style('opacity', 1);
     bars.interrupt().style('opacity', 0).transition().delay(3200).duration(500).style('opacity', 1);
-    bar.interrupt().attr('width', 0).transition().delay((d, i) => 3400 + i * 180).duration(700).attr('width', d => d[1] * (bw - 200));
+    bar.interrupt().attr('width', 0).transition().delay((d, i) => 3400 + i * 180).duration(700).ease(d3.easeCubicOut).attr('width', d => d[1] * (bw - 200));
+    val.interrupt().style('opacity', 0).transition().delay((d, i) => 3950 + i * 180).duration(300).style('opacity', 1);
   };
 }
 
@@ -807,10 +825,10 @@ function reviewBars(host, rows, { W = 1680, H = 560, names = '' } = {}) {
   g.on('pointermove', (ev, r) => tooltip(`<b>${r[0]}</b><br>${fmt(r[1])} cite the Hexad<br>${fmt(r[2])} cite those papers<br>${fmt(r[3])} of them through the four reviews`, ev))
     .on('pointerleave', () => tooltip(null));
   function play() {
-    const grow = (sel, v, x0, delay) => sel.interrupt().attr('y', H - m.b).attr('height', 0).transition().delay((r, i) => (reduced ? 0 : delay + i * 160)).duration(reduced ? 0 : 700)
+    const grow = (sel, v, x0, delay) => sel.interrupt().attr('y', H - m.b).attr('height', 0).transition().delay((r, i) => (reduced ? 0 : delay + i * 110)).duration(reduced ? 0 : 700)
       .ease(d3.easeCubicOut).attr('y', r => y(v(r))).attr('height', r => H - m.b - y(v(r)));
     grow(d1, r => r[1], 0, 0); grow(d2, r => r[2], 0, 200); grow(via, r => r[3], 0, 1900);
-    pct.interrupt().style('opacity', 0).attr('y', r => y(r[3]) - 8).transition().delay((r, i) => reduced ? 0 : 2600 + i * 160).duration(400).style('opacity', 1);
+    pct.interrupt().style('opacity', 0).attr('y', r => y(r[3]) - 8).transition().delay((r, i) => reduced ? 0 : 2300 + i * 110).duration(400).style('opacity', 1);
   }
   return { play };
 }
@@ -822,6 +840,7 @@ function chime(i = 0) {
   try {
     audio ??= new (window.AudioContext || window.webkitAudioContext)();
     if (audio.state === 'suspended') audio.resume();
+    if (i < 0) return;  // warm-up call: create the engine without a sound
     const scale = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98], f = scale[i % scale.length], t = audio.currentTime;
     [[1, 0.22], [2.76, 0.06], [5.4, 0.025]].forEach(([k, v]) => {
       const o = audio.createOscillator(), gn = audio.createGain();
