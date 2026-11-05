@@ -127,8 +127,8 @@ const HX = (() => {
   }
 
   // The six user types and the motivation each one scores (Tondello et al., 2016).
-  const TYPES = [['Philanthropist', 'purpose'], ['Socialiser', 'relatedness'], ['Free Spirit', 'autonomy'],
-    ['Achiever', 'competence'], ['Player', 'rewards'], ['Disruptor', 'change']];
+  const TYPES = [['Philanthropist', 'purpose'], ['Socialiser', 'belonging'], ['Free Spirit', 'freedom'],
+    ['Achiever', 'mastery'], ['Player', 'rewards'], ['Disruptor', 'change']];
   function hexagon(host, { W = 900, H = 640, R: R0 = 220, profile = null, desc = null } = {}) {
     host.innerHTML = '';
     const R = R0, cx = W / 2, cy = H / 2;
@@ -788,7 +788,7 @@ function retest(host) {
   const T2 = [['Philanthropist', .852], ['Socialiser', .853], ['Free Spirit', .631], ['Achiever', .798], ['Disruptor', .782], ['Player', .357]];
   const bx = 1040, bw = 520, bars = svg.append('g').style('opacity', 0);
   bars.append('text').attr('class', 'hx-lab hx-strong').attr('x', bx).attr('y', 60).style('font-size', '26px').text('Do the two answers match?');
-  bars.append('text').attr('class', 'hx-muted').attr('x', bx).attr('y', 90).style('font-size', '20px').text('Retest correlation, 1 = identical');
+  bars.append('text').attr('class', 'hx-muted').attr('x', bx).attr('y', 90).style('font-size', '20px').text('How closely answers match, 1 = identical');
   const row = bars.selectAll('g').data(T2).join('g').attr('transform', (d, i) => `translate(${bx},${130 + i * 62})`);
   row.append('text').attr('class', 'hx-lab').attr('y', 22).style('font-size', '21px').text(d => d[0]);
   const bar = row.append('rect').attr('x', 170).attr('y', 4).attr('height', 26).attr('rx', 4).attr('width', 0).attr('fill', d => d[1] < .5 ? 'var(--series-2)' : 'var(--series-1)');
