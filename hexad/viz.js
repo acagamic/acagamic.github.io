@@ -177,8 +177,8 @@ const HX = (() => {
       if (card) card.interrupt().transition().duration(300).style('opacity', 0);
       if (shape && !shape.tag) {
         // Label the shape so nobody reads it as data: it is one example person.
-        shape.tag = svg.append('g').attr('class', 'hx-example').style('opacity', 0).attr('transform', `translate(${cx},${cy + R * 0.12})`);
-        shape.tag.append('text').attr('class', 'hx-halo').attr('text-anchor', 'middle').attr('y', 6).text('Example: one person’s scores');
+        shape.tag = svg.append('g').attr('class', 'hx-example').style('opacity', 0).attr('transform', `translate(${cx + R * 0.5},${cy + R * 0.9})`);  // outside the shape, below the Achiever to Free Spirit edge
+        shape.tag.append('text').attr('class', 'hx-halo').attr('text-anchor', 'start').attr('y', 6).text('Example: one person’s scores');
       }
       shape?.tag?.interrupt().style('opacity', 0).transition().delay(reduced ? 0 : 900).duration(500).style('opacity', 1);
       g.select('circle').interrupt().transition().duration(300).attr('r', 9);
@@ -620,7 +620,8 @@ const HX = (() => {
   function timeline(host, events, { W = 1680, H = 640, stagger = 300, rowStep = 96 } = {}) {
     host.innerHTML = '';
     const ev = events.map(([d, t, s]) => ({ d: new Date(d + '-15T12:00'), t, s }));
-    const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', events.map(e => `${e[0]}: ${e[1]}`).join('; '));
+    const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMin meet')  // hang from the top, under the text
+      .attr('role', 'img').attr('aria-label', events.map(e => `${e[0]}: ${e[1]}`).join('; '));
     const x = d3.scaleTime([d3.timeMonth.offset(ev[0].d, -1), d3.timeMonth.offset(ev.at(-1).d, 1)], [40, W - 330]), base = H - 70;
     svg.append('line').attr('class', 'hx-axis').attr('x1', 40).attr('x2', W - 40).attr('y1', base).attr('y2', base);
     const ends = [];
