@@ -478,7 +478,7 @@ const HX = (() => {
     const size = () => {
       const dpr = devicePixelRatio || 1, b = canvas.getBoundingClientRect(); w = b.width; h = b.height;
       canvas.width = w * dpr; canvas.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const wide = w > 900; cx = wide ? w * 0.74 : w / 2; cy = wide ? h * 0.5 : h * 0.17; R = wide ? Math.min(h * 0.36, w * 0.2) : Math.min(w * 0.22, h * 0.1); sc = wide ? 1 : 0.5;  // phones: smaller hexagon above the headline, clear of the text
+      const wide = w > 900; cx = wide ? w * 0.74 : w / 2; cy = wide ? h * 0.5 : 150; R = wide ? Math.min(h * 0.36, w * 0.2) : Math.min(w * 0.26, 105); sc = wide ? 1 : 0.5;  // phones: smaller hexagon above the headline, clear of the text
       if (around) {  // trace a frame just outside the element, clockwise from its top-left corner
         const a = around.getBoundingClientRect(), k = w / (canvas.offsetWidth || w), L = a.left - b.left, T = a.top - b.top, AW = a.width, AH = a.height;
         cx = L + AW / 2; cy = T + AH / 2; R = Math.max(AW, AH) / 2;

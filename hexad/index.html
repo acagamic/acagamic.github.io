@@ -33,7 +33,7 @@
     border: 1.5px solid var(--grid); border-radius: 999px; padding: 12px 22px; transition: border-color .3s, background .3s; }
   .cue:hover { border-color: var(--brand-cyan); background: rgb(0 179 235 / .08); }
   .cue svg { transition: transform .4s var(--ease-out); } .cue:hover svg { transform: translateY(3px); }
-  @media (max-width: 900px) { .hero { align-items: flex-end; padding-bottom: 110px; } }
+  @media (max-width: 900px) { .hero { align-items: flex-start; padding: 290px 0 110px; } }
 
   /* heading reveal: visible by default, masked only when JS runs */
   .js .reveal h2 { clip-path: inset(0 0 100% 0); transform: translateY(0.35em); transition: clip-path 1s var(--ease-out), transform 1s var(--ease-out); }
@@ -116,6 +116,37 @@
   .cap .ticker { color: var(--muted); margin-top: 24px; }
   @media (max-width: 900px) { .cap { padding-top: 7vh; } .cap h2 { font-size: 30px; } .cap .lede { font-size: 16px; max-width: 28ch; } }
 
+  /* Each section fills the screen and holds for a moment before the next one scrolls in. Taller sections stick once their bottom is in view. */
+  :root { --dwell: 45svh; }
+  .js main section { padding: 0 0 var(--dwell); }
+  .js main section > .pin { position: sticky; top: var(--pin-top, 0px); min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: 76px 0 88px; }
+  @media (max-width: 900px) { :root { --dwell: 22svh; } .js main section > .pin { padding: 64px 0 80px; } }
+
+  /* three.js layers */
+  .n3-yr { position: absolute; left: 0; top: 0; z-index: 1; font: 600 13px var(--sans); color: var(--muted); pointer-events: none; will-change: transform; }
+  .co-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 28px; align-items: center; }
+  .co-grid.solo { grid-template-columns: 1fr; }
+  .globe { position: relative; height: min(560px, 62svh); border-radius: 18px; overflow: hidden; touch-action: pan-y; cursor: grab;
+    background: radial-gradient(circle at 50% 50%, rgb(26 156 203 / .12), transparent 70%), var(--bg); }
+  .globe:active { cursor: grabbing; }
+  .g3-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .g3-lab { position: absolute; left: 0; top: 0; font: 600 13px var(--sans); color: var(--ink); white-space: nowrap; pointer-events: none; transition: opacity .25s;
+    text-shadow: 0 0 6px var(--bg), 0 0 3px var(--bg); will-change: transform; }
+  .g3-lab b { color: var(--series-1); } .g3-home { color: var(--series-3); }
+  @media (max-width: 900px) { .co-grid { grid-template-columns: 1fr; } .globe { height: 380px; } }
+
+  .rp-cv { position: absolute; left: 0; top: 0; border-radius: 14px; pointer-events: none; opacity: 0; transition: opacity .2s; }
+  /* question form on the hero */
+  .ask { pointer-events: auto; display: grid; gap: 10px; max-width: 420px; margin-top: 32px; }
+  .ask label { font: 600 15px var(--sans); color: var(--ink); }
+  .ask textarea { font: 500 16px/1.45 var(--sans); color: var(--ink); background: rgb(15 48 61 / .78); border: 1px solid var(--grid); border-radius: 14px;
+    padding: 12px 14px; resize: vertical; min-height: 84px; backdrop-filter: blur(6px); }
+  .ask textarea::placeholder { color: var(--muted); }
+  .ask textarea:focus-visible { outline: 2px solid var(--brand-cyan); outline-offset: 1px; }
+  .ask .row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .ask button { background: var(--brand-cyan); color: #0a2530; border-color: transparent; }
+  .ask small { color: var(--muted); font-size: 13px; }
+
   /* step navigator */
   .stepper { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 22; display: flex; align-items: center; gap: 6px;
     background: var(--panel); color: var(--ink); border: 1px solid var(--grid); border-radius: 999px; padding: 6px; box-shadow: 0 10px 30px rgb(10 37 48 / .18);
@@ -138,9 +169,14 @@
   <canvas id="hero" aria-hidden="true"></canvas>
   <div class="wrap">
     <h1><span class="n" id="big">1,082</span> citations for a 24-item scale</h1>
-    <p>The Gamification User Types Hexad Scale received the CHI PLAY 2026 Lasting Impact Award, ten years after its debut. Each point here is one of the 594 papers that OpenAlex links to it, coloured from 2016 in cyan to 2026 in magenta.</p>
+    <p>The Gamification User Types Hexad Scale received the CHI PLAY 2026 Lasting Impact Award, ten years after its debut. Each point here is one of the 594 papers that OpenAlex links to it, coloured from 2016 in cyan to 2026 in magenta.<span id="hero-depth" hidden> Older papers sit further back.</span></p>
     <a class="cue" href="#start">Follow the citations
       <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v11M3 8.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <form class="ask" id="ask">
+      <label for="ask-q">Ask Lennart a question about the Hexad scale</label>
+      <textarea id="ask-q" rows="3" maxlength="2000" required placeholder="Your question"></textarea>
+      <div class="row"><button type="submit">Email the question</button><small>Opens your email app with the question filled in.</small></div>
+    </form>
   </div>
 </header>
 
@@ -272,7 +308,11 @@
   <section class="reveal" data-run="countries">
     <h2>Authors in 65 countries cite the paper</h2>
     <p class="lede">Citing papers with at least one author based in each country, top 15. Germany, Canada, and Brazil lead.</p>
-    <div class="viz" id="v-co"></div>
+    <div class="co-grid">
+      <div class="viz globe stage" id="v-globe" role="img" aria-label="Globe with one spike per citing country; the bar chart beside it lists the top 15 counts"></div>
+      <div class="viz" id="v-co"></div>
+    </div>
+    <p class="help" id="globe-help">On the globe, spike height shows the count for all 65 countries, and the arcs start in Waterloo, home of the HCI Games Group. Drag the globe to turn it.</p>
   </section>
 
   <section class="reveal">
@@ -361,6 +401,7 @@
 
 <script src="viz.js"></script>
 <script src="chain3d.js"></script>
+<script src="hx3d.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -372,11 +413,57 @@ $('theme').onclick = () => {
   try { localStorage.setItem('hx-theme', next); } catch {}
   if (net) { net._pal = null; net.draw(); }
 };
-// Reading progress
-addEventListener('scroll', () => { const h = document.documentElement; $('progress').style.transform = `scaleX(${h.scrollTop / (h.scrollHeight - h.clientHeight || 1)})`; }, { passive: true });
+// Reading progress; scrolling down out of the hero scatters its particles, scrolling back up gathers them again.
+let hero = null;
+addEventListener('scroll', () => { const h = document.documentElement; $('progress').style.transform = `scaleX(${h.scrollTop / (h.scrollHeight - h.clientHeight || 1)})`;
+  hero?.scatter?.(scrollY / ($('top').offsetHeight || 1)); }, { passive: true });
+
+// Each section's content sits in a sticky pin; a pin taller than the screen sticks once its bottom is in view.
+const pins = [...document.querySelectorAll('main section')].map(sec => { const pin = document.createElement('div'); pin.className = 'pin'; pin.append(...sec.childNodes); sec.append(pin); return pin; });
+const pinTops = () => pins.forEach(pin => pin.style.setProperty('--pin-top', Math.min(0, innerHeight - pin.offsetHeight) + 'px'));
+const ro = new ResizeObserver(pinTops); pins.forEach(p => ro.observe(p)); addEventListener('resize', pinTops);
+
+// The question form opens the visitor's email app; the address is assembled here so it never sits in the page source.
+$('ask').addEventListener('submit', e => {
+  e.preventDefault();
+  const q = $('ask-q').value.trim(); if (!q) return;
+  location.href = `mailto:${['lennart', 'nacke.ca'].join('@')}?subject=${encodeURIComponent('Question about the Hexad scale')}&body=${encodeURIComponent(q)}`;
+});
+
+// Scrolling back up plays a chart backwards: its marks shrink to their baselines, last drawn first.
+const MARKS = 'rect, path, circle, line, text, polygon, polyline, ellipse';
+const rewindMarks = host => {
+  if (!host) return;
+  d3.select(host).selectAll('*').interrupt();
+  const els = [...host.querySelectorAll(MARKS)].filter(e => !e.closest('defs, clipPath, mask')), n = els.length || 1;
+  els.forEach((e, i) => {
+    if (!e.dataset.rw) { e.dataset.rw = 1; e.dataset.op = e.style.opacity; }
+    const d = Math.round((n - 1 - i) / n * 420);
+    e.style.transition = `opacity 260ms ease-in ${d}ms, transform 300ms cubic-bezier(.5, 0, .75, 0) ${d}ms`;
+    e.style.transformBox = 'fill-box';
+    if (!e.hasAttribute('transform') && !/^(text|line)$/.test(e.tagName)) {
+      let b = null; try { b = e.getBBox(); } catch {}
+      if (b) { const tall = b.height > b.width * 1.4, wide = b.width > b.height * 1.4;
+        e.style.transformOrigin = tall ? '50% 100%' : wide ? '0 50%' : '50% 50%'; e.style.transform = tall ? 'scaleY(0)' : wide ? 'scaleX(0)' : 'scale(0)'; }
+    }
+    e.style.opacity = '0';
+  });
+};
+const restoreMarks = host => host?.querySelectorAll('[data-rw]').forEach(e => {
+  ['transition', 'transform-box', 'transform-origin', 'transform'].forEach(k => e.style.removeProperty(k));
+  e.style.opacity = e.dataset.op; delete e.dataset.rw; delete e.dataset.op;
+});
+const timers = {}, later = (k, f, ms) => (timers[k] ??= []).push(setTimeout(f, ms)), cancel = k => { (timers[k] || []).forEach(clearTimeout); timers[k] = []; };
+const countDown = (el, dur = 600) => { const from = +el.dataset.to, s0 = performance.now(); el._cd = s0;
+  const f = now => { if (el._cd !== s0) return; const k = Math.min(1, (now - s0) / dur); el.textContent = HX.fmt(Math.round(from * (1 - k) ** 2)); if (k < 1) requestAnimationFrame(f); };
+  requestAnimationFrame(f); };
 
 Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').then(r => r.json())]).then(([data, study, live, deck]) => {
-  HX.heroField($('hero'), data);
+  // Photo ripples start on the first hover, so lazy images have loaded and no GPU context opens for photos nobody touches.
+  if (window.HX3D && matchMedia('(hover: hover)').matches) document.querySelectorAll('.ph').forEach(f => f.addEventListener('pointerenter', () => HX3D.ripple(f.querySelector('img')).catch(() => {}), { once: true }));
+  (window.HX3D ? HX3D.hero($('hero'), data) : Promise.reject())
+    .then(h => { hero = h; $('hero-depth').hidden = false; }, () => { hero = HX.heroField($('hero'), data); })
+    .then(() => hero?.scatter?.(scrollY / ($('top').offsetHeight || 1)));
   HX.countUp($('big'), deck.scholar.total, 2400);
   $('oa-n').textContent = HX.fmt(data.counts.openalex);
   const flag = c => String.fromCodePoint(...[...c].map(ch => 127397 + ch.charCodeAt(0)));
@@ -401,12 +488,13 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
     timeline: HX.timeline($('v-tl'), ORIGIN, { W: 1400, H: 600, stagger: 260 }),
     hexagon: (() => { const h = HX.hexagon($('v-hex'), { W: 1100, H: 760, R: 280, profile: [0.62, 0.5, 0.92, 0.88, 0.8, 0.28], desc: DESC });
       // On the page the six type cards step on their own, then the example profile grows.
-      return { play: () => { h.play(); [0, 1, 2, 3, 4, 5].forEach(i => setTimeout(() => h.show(i), 1800 + i * 2300)); setTimeout(() => h.grow(), 1800 + 6 * 2300); } }; })(),
+      return { play: () => { cancel('hex'); h.play(); [0, 1, 2, 3, 4, 5].forEach(i => later('hex', () => h.show(i), 1800 + i * 2300)); later('hex', () => h.grow(), 1800 + 6 * 2300); },
+        rewind: () => { cancel('hex'); rewindMarks($('v-hex')); } }; })(),
     retest: { play: (f => () => (f ??= HX.retest($('v-rt')))())() },
     crowd: HX.crowd($('v-crowd'), study.dominant, { W: 1400, H: 470 }),
     elements: (() => { const hm = HX.heatmap($('v-hm'), study.elements, study.types, { W: 1400, rowH: 24 }); let t;
       // Cells fade in over about 3 s, then the rows regroup on their own.
-      return { play: () => { hm.play(); clearTimeout(t); t = setTimeout(() => hm.regroup(), HX.reduced ? 0 : 4500); } }; })(),
+      return { play: () => { hm.play(); clearTimeout(t); t = setTimeout(() => hm.regroup(), HX.reduced ? 0 : 4500); }, rewind: () => { clearTimeout(t); rewindMarks($('v-hm')); } }; })(),
     phil: HX.dumbbell($('v-t7'), study.table7.rows, { W: 1100, rowH: 60, domain: [0, 0.5] }),
     scholar: HX.yearBars($('v-sch'), { years: deck.scholar.years.map(([y, n]) => [y, n, 0]) }, { W: 1400, H: 520, stagger: 260, ramp: true }),
     index: HX.lines($('v-idx'), ['2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'], { 'Hexad scale citations': ix(SHARE.hexad), 'Gamification papers': ix(SHARE.gamif) },
@@ -414,24 +502,39 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
     years1: HX.yearBars($('v-y1'), data, { ticker: $('t-y1') }),
     years2: HX.reviewBars($('v-y2'), deck.reviewYears.map(([y, a, v]) => [y, (data.years.find(r => r[0] === y) || [0, 0])[1], a, v]), { W: 1400, H: 520 }),
     milestones: HX.timeBars($('v-ms'), top, { W: 1000, label: r => `${r[4]} ${r[2]}`, total: r => r[3], years: r => r[9] }),
-    chain: window.HXChain3D && (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })() ? (c => ({ play: () => c.play() }))(HXChain3D.create($('v-chain'), data.chain, { who: 'Zhang, Altmeyer, & Seaborn', year: 2026, cites: 0, date: 'November 3, 2026', title: 'Measuring What Motivates Maldaimonia in Play with the Inventory on Maldaimonic Motivations in Player Experiences (IMPEX)' }))
+    chain: window.HXChain3D && (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })() ? (c => ({ play: () => c.play(), rewind: () => c.rewind() }))(HXChain3D.create($('v-chain'), data.chain, { who: 'Zhang, Altmeyer, & Seaborn', year: 2026, cites: 0, date: 'November 3, 2026', title: 'Measuring What Motivates Maldaimonia in Play with the Inventory on Maldaimonic Motivations in Player Experiences (IMPEX)' }))
       : HX.chain($('v-chain'), data, { W: 1100, H: 640 }),
-    countries: HX.hbars($('v-co'), data.countries.slice(0, 15), { W: 1000, rowH: 38, lw: 240, fs: 18, bar: 0.6, label: r => `${HX.country(r[0])}  ${flag(r[0])}` }),
+    countries: (() => { const bars = HX.hbars($('v-co'), data.countries.slice(0, 15), { W: 1000, rowH: 38, lw: 240, fs: 18, bar: 0.6, label: r => `${HX.country(r[0])}  ${flag(r[0])}` });
+      let gl = null, want = null;
+      (window.HX3D ? fetch('data/land.json').then(r => r.json()).then(land => HX3D.globe($('v-globe'), data.countries, land, { name: HX.country, tip: HX.tooltip })) : Promise.reject())
+        .then(g => { gl = g; if (want) gl[want](); }, () => { $('v-globe').remove(); $('globe-help').remove(); document.querySelector('.co-grid').classList.add('solo'); });
+      return { play: () => { want = 'play'; bars.play(); gl?.play(); }, rewind: () => { want = 'rewind'; rewindMarks($('v-co')); gl?.rewind(); } }; })(),
     lineage: HX.lineage($('v-lin'), { W: 1400 }),
     live1: HX.crowdCompare($('v-live1'), study.dominant, live.singleType.rows, { W: 1400, H: 520 }),
     live2: HX.lines($('v-live2'), live.age.bands, { Philanthropist: live.age.Philanthropist, Player: live.age.Player }, { W: 1300, H: 520, domain: [15, 20], note: j => ` · ${HX.fmt(live.age.n[j])} people` }),
-    profile: { play: () => { const b = $('bars6'); b.classList.remove('go'); setTimeout(() => b.classList.add('go'), 300); } },
-    hexfacts: { play: () => document.querySelectorAll('.facts [data-to]').forEach((el, i) => setTimeout(() => HX.countUp(el, +el.dataset.to, 1600), i * 220)) },
+    profile: { play: () => { cancel('pro'); const b = $('bars6'); b.classList.remove('go'); later('pro', () => b.classList.add('go'), 300); },
+      rewind: () => { cancel('pro'); $('bars6').classList.remove('go'); } },
+    hexfacts: { play: () => { cancel('facts'); document.querySelectorAll('.facts [data-to]').forEach((el, i) => later('facts', () => { el._cd = 0; HX.countUp(el, +el.dataset.to, 1600); }, i * 220)); },
+      rewind: () => { cancel('facts'); document.querySelectorAll('.facts [data-to]').forEach(el => countDown(el)); } },
   };
   $('b-regroup').onclick = () => charts.elements.play();
   d3.select('#v-ms').selectAll('g.b').style('cursor', 'pointer').on('click', (ev, r) => r[6] && open('https://doi.org/' + r[6], '_blank'));
 
-  // Play each chart the first time it scrolls into view.
-  const io = new IntersectionObserver(es => es.forEach(e => {
-    if (!e.isIntersecting) return;
-    e.target.classList.add('in'); charts[e.target.dataset.run]?.play(); io.unobserve(e.target);
-  }), { threshold: 0.2 });
-  document.querySelectorAll('.reveal').forEach(s => io.observe(s));
+  // Scroll triggers: a section plays forward when its top crosses 65% of the screen on the way down,
+  // and plays backwards when it drops below that line on the way back up.
+  const reveals = [...document.querySelectorAll(".reveal")], armed = new Map();
+  const trigger = () => {
+    const line = innerHeight * 0.65;
+    reveals.forEach(sec => {
+      const on = sec.getBoundingClientRect().top < line;
+      if (on === !!armed.get(sec)) return;
+      armed.set(sec, on);
+      const c = charts[sec.dataset.run], host = sec.querySelector('.viz');
+      if (on) { sec.classList.add('in'); restoreMarks(host); c?.play(); }
+      else { sec.classList.remove('in'); if (c) c.rewind ? c.rewind() : rewindMarks(host); }
+    });
+  };
+  addEventListener('scroll', () => requestAnimationFrame(trigger), { passive: true }); addEventListener('resize', trigger); trigger();
 
   // Network explorer
   const panel = $('panel');
@@ -469,14 +572,18 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
     b.disabled = false; b.textContent = 'Dive nine deep';
   };
   // Scroll scrubbing: progress through the tall section drives the year reveal, then ring 2, then the zoom-out.
-  const sc = $('scrolly'), netS = new HX.Net($('net-s'), data, { interactive: false });
-  netS.shiftX = innerWidth > 900 ? 0.16 : 0; netS.setRing2(false); netS.T = 2016;
+  // The 3D scene tilts to show ring 2 on its own layer; without WebGL the flat 2D map runs instead.
+  const sc = $('scrolly'), shift = () => innerWidth > 900 ? 0.16 : 0;
+  let view = null;
+  const flat = () => { const netS = new HX.Net($('net-s'), data, { interactive: false });
+    netS.shiftX = shift(); netS.setRing2(false); netS.T = 2016;
+    return { scrub: (a, b) => { netS.ring2 = b > 0; netS.T = 2016 + a * 11; netS.T2 = 2016 + b * 11; netS.fit(0, 470 + 330 * b); } }; };
+  (window.HX3D ? HX3D.network($('net-s'), data, { shift }) : Promise.reject()).catch(flat).then(v => { view = v; scrub(); });
   const scrub = () => {
     const r = sc.getBoundingClientRect(), span = sc.offsetHeight - innerHeight, p = Math.min(1, Math.max(0, -r.top / span));
     const a = Math.min(1, p / 0.45), b = Math.min(1, Math.max(0, (p - 0.5) / 0.4));
-    netS.ring2 = b > 0; netS.T = 2016 + a * 11; netS.T2 = 2016 + b * 11;
-    netS.fit(0, 470 + 330 * b);
-    $('sc-y').textContent = Math.min(2026, Math.floor(b > 0 ? netS.T2 : netS.T));
+    view?.scrub(a, b);
+    $('sc-y').textContent = Math.min(2026, Math.floor(2016 + (b > 0 ? b : a) * 11));
     const two = p >= 0.48;
     $('sc-h').textContent = two ? 'Those papers were cited by 6,870 more papers' : '594 papers cite the Hexad scale paper directly';
     $('sc-p').textContent = two ? 'Magenta dots cite a paper that cites the Hexad scale paper. That outer ring kept growing every year through 2025.'
@@ -492,13 +599,14 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
     }
     steps.push({ el: sec, label: sec.querySelector('h2').textContent, run: sec.dataset.run });
   });
-  const topOf = s => s.el.getBoundingClientRect().top + scrollY + (s.at != null ? s.at * (s.el.offsetHeight - innerHeight) : 70);
-  const current = () => { let c = 0; steps.forEach((s, i) => { if (topOf(s) <= scrollY + innerHeight * 0.35) c = i; }); return c; };
+  const topOf = s => { const pin = s.el.querySelector(':scope > .pin');
+    return s.el.getBoundingClientRect().top + scrollY + (s.at != null ? s.at * (s.el.offsetHeight - innerHeight) : pin ? Math.max(0, pin.offsetHeight - innerHeight) : 0); };
+  const current = () => { let c = 0; steps.forEach((s, i) => { const r = s.el.getBoundingClientRect();
+    if (r.top + (s.at != null ? s.at * (s.el.offsetHeight - innerHeight) : 0) <= innerHeight * 0.35) c = i; }); return c; };
   const label = () => { const i = current(); $('s-lab').innerHTML = `<b>${i + 1} / ${steps.length}</b>${esc(steps[i].label)}`; $('s-prev').disabled = i === 0; $('s-next').disabled = i === steps.length - 1; };
   const goStep = d => {
     const s = steps[Math.max(0, Math.min(steps.length - 1, current() + d))];
-    scrollTo({ top: topOf(s), behavior: HX.reduced ? 'auto' : 'smooth' });
-    if (s.run && charts[s.run]) { s.el.classList.add('in'); setTimeout(() => charts[s.run].play(), 500); }
+    scrollTo({ top: topOf(s), behavior: HX.reduced ? 'auto' : 'smooth' });  // the scroll triggers play or rewind each chart on the way
   };
   $('s-prev').onclick = () => goStep(-1); $('s-next').onclick = () => goStep(1);
   addEventListener('keydown', e => {
