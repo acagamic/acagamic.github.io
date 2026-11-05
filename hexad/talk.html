@@ -11,7 +11,7 @@
 <style>
   html, body { height: 100%; overflow: hidden; }
   body { background: var(--bg); }
-  #net, #callouts { position: fixed; inset: 0; width: 100vw; height: 100vh; opacity: 0; transition: opacity .2s ease-in; }
+  #net, #callouts { position: fixed; inset: 0; width: 100vw; height: 100vh; opacity: 0; transition: opacity .2s ease-in; will-change: opacity; }  /* own layer from the start, so showing it costs no frame */
   body.net-on #net, body.net-on #callouts { transition: opacity .6s .16s ease-out; }
   #callouts { pointer-events: none; z-index: 3; }
   body.net-on #net, body.net-on #callouts { opacity: 1; }
@@ -405,6 +405,10 @@ $('net').addEventListener('pointermove', e => {
 $('net').addEventListener('pointerleave', dropHover);
 const topOf = y => net.d1.filter(n => n.y === y).sort((a, b) => b.c - a.c)[0];
 const onSlide = run => slides[cur]?.dataset.run === run;
+const PREBUILD = {
+  years2: () => viz.y2 ??= HX.reviewBars($('v-y2'), deck.reviewYears.map(([y, a, v]) => [y, (data.years.find(r => r[0] === y) || [0, 0])[1], a, v]), { W: 1680, H: 540 }),
+  chain: () => window.HXChain3D && HAS_GL ? (viz.c3 ??= HXChain3D.create($('v-chain'), data.chain, NEWEST)) : null,
+};
 
 
 
@@ -451,7 +455,7 @@ const runs = {
     await net.reveal({ dur: 9000, ring2: true, onYear: y => $('t-r2').textContent = y });
     netBusy = false;
   },
-  years2: () => (viz.y2 ??= HX.reviewBars($('v-y2'), deck.reviewYears.map(([y, a, v]) => [y, (data.years.find(r => r[0] === y) || [0, 0])[1], a, v]), { W: 1680, H: 540 })).play(),
+  years2: () => PREBUILD.years2().play(),
   track: async () => {
     netBusy = true; clearCallouts(); net.setRing2(true); net.T = net.T2 = 2027; net.focus = null; net.comet = null; await net.fit(500, 870);
     const stops = d3.range(2017, 2026).map(topOf).filter(Boolean);
@@ -462,7 +466,7 @@ const runs = {
   },
   chain: () => {
     // The 3D chain (chain3d.js) when it loaded; the flat chain otherwise.
-    if (window.HXChain3D && HAS_GL) (viz.c3 ??= HXChain3D.create($('v-chain'), data.chain, NEWEST)).play();
+    if (window.HXChain3D && HAS_GL) PREBUILD.chain().play();
     else (viz.ch ??= HX.chain($('v-chain'), data, { W: 1680, H: 640, stagger: 600 })).play();
   },
   countries: () => (viz.co ??= HX.hbars($('v-co'), data.countries.slice(0, 12), { W: 1680, rowH: 58, lw: 360, fs: 26, bar: 0.5, label: r => `${HX.country(r[0])}  ${flag(r[0])}`, stagger: 110 })).play(),
@@ -551,6 +555,10 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
   net.shiftX = 0.17;  // keep the network clear of the left-hand headline
   const h12 = net.byId.get(deck.hexad12); if (h12) net.special = new Map([[h12, '--series-3']]);
   go((+location.hash.slice(1) || 1) - 1);
+  // Build the heaviest charts while the deck sits idle, one per idle slot, so opening their slides costs no long frame.
+  const idle = window.requestIdleCallback || (f => setTimeout(f, 200));
+  const queue = Object.values(PREBUILD), next = () => { const f = queue.shift(); if (f) { f(); idle(next, { timeout: 2000 }); } };
+  idle(next, { timeout: 2000 });
 });
 </script>
 </body>
