@@ -223,14 +223,22 @@
     var arcLabel = mkEl('arc'); arcLabel.textContent = 'cites the Hexad paper';
     for (var yy = 0; yy <= YEARS; yy++) { var ye = mkEl('yr'); ye.textContent = 2016 + yy; yrLabels.push({ el: ye, w: 0, h: 0, st: '' }); }
     function measure(L) { L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; }
+    // Sizes for both label states are measured up front, so a state change mid-animation never forces a layout.
+    function measureBoth(L) {
+      if (L.isNew || !L.curCls) { measure(L); return; }
+      L.el.className = L.curCls; L.wc = L.el.offsetWidth; L.hc = L.el.offsetHeight;
+      L.el.className = L.shortCls; L.ws = L.el.offsetWidth; L.hs = L.el.offsetHeight;
+      L.el.className = L.st === 'cur' ? L.curCls : L.shortCls;
+      L.w = L.st === 'cur' ? L.wc : L.ws; L.h = L.st === 'cur' ? L.hc : L.hs;
+    }
     function setState(L, st) {
       if (L.st === st) return;
       L.st = st; if (L.isNew) return;
       L.el.className = st === 'cur' ? L.curCls : L.shortCls;
-      measure(L);
+      L.w = st === 'cur' ? L.wc : L.ws; L.h = st === 'cur' ? L.hc : L.hs;
     }
-    function remeasure() { labels.concat(yrLabels).forEach(function (L) { measure(L); }); if (!playing) render(curT); }
-    labels.concat(yrLabels).forEach(measure);
+    function remeasure() { labels.concat(yrLabels).forEach(measureBoth); arcLabel._w = arcLabel.offsetWidth; if (!playing) render(curT); }
+    labels.concat(yrLabels).forEach(measureBoth); arcLabel._w = arcLabel.offsetWidth;
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
 
     // camera
