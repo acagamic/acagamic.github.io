@@ -590,14 +590,14 @@ const HX = (() => {
   }
 
   // Two series across ordered bands, direct-labelled, with the crossover marked.
-  function lines(host, bands, series, { W = 1400, H = 520, domain, unit = '%', note = r => '', minimal = false } = {}) {
+  function lines(host, bands, series, { W = 1400, H = 520, domain, unit = '%', note = r => '', minimal = false, yTicks = !minimal } = {}) {
     host.innerHTML = '';
     const m = { t: 30, r: 270, b: 60, l: 60 }, keys = Object.keys(series);
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
       .attr('aria-label', keys.map(k => `${k}: ${series[k].join(', ')}`).join('; '));
     const x = d3.scalePoint(bands, [m.l, W - m.r]).padding(0.2), y = d3.scaleLinear(domain || d3.extent(keys.flatMap(k => series[k])), [H - m.b, m.t]).nice();
     svg.append('g').selectAll('line').data(y.ticks(4)).join('line').attr('class', 'hx-axis').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y).style('opacity', .6);
-    if (!minimal) svg.append('g').selectAll('text').data(y.ticks(4)).join('text').attr('class', 'hx-tick').attr('x', m.l - 12).attr('y', d => y(d) + 5).attr('text-anchor', 'end').text(d => d + unit);
+    if (yTicks) svg.append('g').selectAll('text').data(y.ticks(4)).join('text').attr('class', 'hx-tick').attr('x', m.l - 12).attr('y', d => y(d) + 5).attr('text-anchor', 'end').text(d => d + unit);
     svg.append('g').selectAll('text').data(minimal ? [bands[0], bands.at(-1)] : bands).join('text').attr('class', 'hx-tick').style('font-size', minimal ? '22px' : null).attr('x', x).attr('y', H - m.b + 32).attr('text-anchor', 'middle').text(d => d);
     const gs = svg.selectAll('g.s').data(keys).join('g').attr('class', 's');
     const path = gs.append('path').attr('fill', 'none').attr('stroke-width', 3).attr('stroke', (k, i) => `var(--series-${i + 1})`)
@@ -620,8 +620,7 @@ const HX = (() => {
   function timeline(host, events, { W = 1680, H = 640, stagger = 300, rowStep = 96 } = {}) {
     host.innerHTML = '';
     const ev = events.map(([d, t, s]) => ({ d: new Date(d + '-15T12:00'), t, s }));
-    const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMin meet')  // hang from the top, under the text
-      .attr('role', 'img').attr('aria-label', events.map(e => `${e[0]}: ${e[1]}`).join('; '));
+    const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', events.map(e => `${e[0]}: ${e[1]}`).join('; '));
     const x = d3.scaleTime([d3.timeMonth.offset(ev[0].d, -1), d3.timeMonth.offset(ev.at(-1).d, 1)], [40, W - 330]), base = H - 70;
     svg.append('line').attr('class', 'hx-axis').attr('x1', 40).attr('x2', W - 40).attr('y1', base).attr('y2', base);
     const ends = [];
