@@ -1,4 +1,4 @@
-// Shared motion-graphics engine for the Hexad impact site (index.html) and talk deck (talk.html).
+// Shared motion-graphics engine for the Hexad scale impact site (index.html) and talk deck (talk.html).
 const HX = (() => {
   const css = (n, el = document.documentElement) => getComputedStyle(el).getPropertyValue(n).trim();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -38,7 +38,7 @@ const HX = (() => {
     const rows = data.years.map(([y, a, b]) => ({ y, d1: a, d2: b }));
     const m = { t: 30, r: 20, b: 44, l: 20 };
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
-      .attr('aria-label', 'Papers per year citing the Hexad paper' + (series.includes('d2') ? ' and papers citing those papers' : ''));
+      .attr('aria-label', 'Papers per year citing the Hexad scale paper' + (series.includes('d2') ? ' and papers citing those papers' : ''));
     const x = d3.scaleBand(rows.map(r => r.y), [m.l, W - m.r]).padding(0.22);
     const max = d3.max(rows, r => d3.max(series, s => r[s]));
     const y = d3.scaleLinear([0, max * 1.12], [H - m.b, m.t]);
@@ -62,7 +62,7 @@ const HX = (() => {
     // Hit targets wider than the marks.
     svg.append('g').selectAll('rect').data(rows).join('rect').attr('x', r => x(r.y) - 4).attr('width', x.bandwidth() + 8)
       .attr('y', m.t).attr('height', H - m.t - m.b).attr('fill', 'transparent')
-      .on('pointermove', (ev, r) => tooltip(`<b>${r.y}${r.y === 2026 ? ' (to Nov 4)' : ''}</b><br>${fmt(r.d1)} cite the Hexad paper` +
+      .on('pointermove', (ev, r) => tooltip(`<b>${r.y}${r.y === 2026 ? ' (to Nov 4)' : ''}</b><br>${fmt(r.d1)} cite the Hexad scale paper` +
         (series.includes('d2') ? `<br>${fmt(r.d2)} cite those papers` : ''), ev))
       .on('pointerleave', () => tooltip(null));
 
@@ -105,7 +105,7 @@ const HX = (() => {
     host.innerHTML = '';
     const c = data.chain, n = c.length;
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
-      .attr('aria-label', `A chain of ${n - 1} generations of citing papers starting from the Hexad paper`);
+      .attr('aria-label', `A chain of ${n - 1} generations of citing papers starting from the Hexad scale paper`);
     const px = i => 70 + i * (W - 640) / (n - 1), py = i => 90 + i * (H - 200) / (n - 1);
     const r = d => 6 + Math.sqrt(d.cites) * 0.55;
     const link = svg.append('path').attr('class', 'hx-chain')
@@ -369,7 +369,7 @@ const HX = (() => {
       ctx.globalAlpha = 1;
       if (hl) { ctx.lineWidth = 2 * lw; ctx.strokeStyle = this.col('--ink'); ctx.beginPath(); ctx.arc(hl.x, hl.yy, hl.r + 3 * lw, 0, Math.PI * 2); ctx.stroke(); }
       // Origin label
-      ctx.fillStyle = this.col('--bg'); ctx.font = `700 7px Montserrat, sans-serif`; ctx.fillText('HEXAD', 0, 0.5);
+      ctx.fillStyle = this.col('--bg'); ctx.font = `700 5.5px Montserrat, sans-serif`; ctx.fillText('HEXAD', 0, -2.6); ctx.fillText('SCALE', 0, 3.6);
       ctx.restore();
     }
     pick(e, click) {
@@ -590,9 +590,9 @@ const HX = (() => {
   }
 
   // Two series across ordered bands, direct-labelled, with the crossover marked.
-  function lines(host, bands, series, { W = 1400, H = 520, domain, unit = '%', note = r => '', minimal = false, yTicks = !minimal } = {}) {
+  function lines(host, bands, series, { W = 1400, H = 520, domain, unit = '%', note = r => '', minimal = false, yTicks = !minimal, mr = 270 } = {}) {
     host.innerHTML = '';
-    const m = { t: 30, r: 270, b: 60, l: 60 }, keys = Object.keys(series);
+    const m = { t: 30, r: mr, b: 60, l: 60 }, keys = Object.keys(series);
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
       .attr('aria-label', keys.map(k => `${k}: ${series[k].join(', ')}`).join('; '));
     const x = d3.scalePoint(bands, [m.l, W - m.r]).padding(0.2), y = d3.scaleLinear(domain || d3.extent(keys.flatMap(k => series[k])), [H - m.b, m.t]).nice();
@@ -810,7 +810,7 @@ function retest(host) {
 function reviewBars(host, rows, { W = 1680, H = 560, names = '' } = {}) {
   host.innerHTML = '';
   const m = { t: 40, r: 20, b: 46, l: 20 }, svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
-    .attr('aria-label', 'Per year: papers citing the Hexad, papers citing those, and the part arriving through four review papers');
+    .attr('aria-label', 'Per year: papers citing the Hexad scale, papers citing those, and the part arriving through four review papers');
   const x = d3.scaleBand(rows.map(r => r[0]), [m.l, W - m.r]).padding(0.2), bw = x.bandwidth();
   const y = d3.scaleLinear([0, d3.max(rows, r => r[2]) * 1.12], [H - m.b, m.t]), bp = (bx, top, h) => barPathR(bx, top, bw * 0.62, h);
   svg.append('line').attr('class', 'hx-axis').attr('x1', m.l).attr('x2', W - m.r).attr('y1', H - m.b).attr('y2', H - m.b);
@@ -825,7 +825,7 @@ function reviewBars(host, rows, { W = 1680, H = 560, names = '' } = {}) {
   // Totals on the first year and the peak give the bars a scale without a y-axis.
   const peak = d3.max(rows, r => r[2]), tot = g.filter((r, i) => i === 0 || i === rows.length - 1 || r[2] === peak).append('text').attr('class', 'hx-val hx-strong')
     .attr('text-anchor', 'middle').attr('x', r => x(r[0]) + bw * 0.67).attr('y', r => y(r[2]) - 10).style('font-size', '22px').text(r => fmt(r[2]));
-  g.on('pointermove', (ev, r) => tooltip(`<b>${r[0]}</b><br>${fmt(r[1])} cite the Hexad<br>${fmt(r[2])} cite those papers<br>${fmt(r[3])} of them through the four reviews`, ev))
+  g.on('pointermove', (ev, r) => tooltip(`<b>${r[0]}</b><br>${fmt(r[1])} cite the Hexad scale<br>${fmt(r[2])} cite those papers<br>${fmt(r[3])} of them through the four reviews`, ev))
     .on('pointerleave', () => tooltip(null));
   function play() {
     const grow = (sel, v, x0, delay) => sel.interrupt().attr('y', H - m.b).attr('height', 0).transition().delay((r, i) => (reduced ? 0 : delay + i * 110)).duration(reduced ? 0 : 700)
