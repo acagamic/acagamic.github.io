@@ -33,7 +33,7 @@ const HX = (() => {
   };
 
   // Citations per year. series: 'd1' direct, 'd2' second ring. Animates bar by bar with a year ticker.
-  function yearBars(host, data, { series = ['d1'], ticker, W = 1000, H = 460, stagger = 260 } = {}) {
+  function yearBars(host, data, { series = ['d1'], ticker, W = 1000, H = 460, stagger = 260, ramp = false } = {}) {
     host.innerHTML = '';
     const rows = data.years.map(([y, a, b]) => ({ y, d1: a, d2: b }));
     const m = { t: 30, r: 20, b: 44, l: 20 };
@@ -54,6 +54,9 @@ const HX = (() => {
       const labels = g.selectAll('text').data(rows).join('text').attr('class', 'hx-val')
         .attr('x', r => x(r.y) + si * bw + bw / 2).attr('y', r => y(r[s]) - 8).attr('text-anchor', 'middle')
         .style('opacity', 0).text(r => fmt(r[s]));
+      // ramp: colour each year on the site's time scale (cyan 2016 to magenta 2026)
+      if (ramp) { const c = d3.piecewise(d3.interpolateLab, ['--series-1', '--ramp-mid', '--series-2'].map(v => css(v, host)));
+        bars.style('fill', (r, i) => c(i / (rows.length - 1))).style('opacity', 1); }
       return { s, si, bars, labels };
     });
     // Hit targets wider than the marks.
@@ -126,9 +129,9 @@ const HX = (() => {
   // The six user types and the motivation each one scores (Tondello et al., 2016).
   const TYPES = [['Philanthropist', 'purpose'], ['Socialiser', 'relatedness'], ['Free Spirit', 'autonomy'],
     ['Achiever', 'competence'], ['Player', 'rewards'], ['Disruptor', 'change']];
-  function hexagon(host, { W = 900, H = 640 } = {}) {
+  function hexagon(host, { W = 900, H = 640, R: R0 = 220, profile = null, desc = null } = {}) {
     host.innerHTML = '';
-    const R = 220, cx = W / 2, cy = H / 2;
+    const R = R0, cx = W / 2, cy = H / 2;
     const pts = TYPES.map((t, i) => { const a = -Math.PI / 2 + i * Math.PI / 3; return [cx + Math.cos(a) * R, cy + Math.sin(a) * R, a]; });
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
       .attr('aria-label', 'Hexagon of six user types: ' + TYPES.map(t => `${t[0]} (${t[1]})`).join(', '));
@@ -140,7 +143,44 @@ const HX = (() => {
       .attr('transform', (d, i) => { const a = pts[i][2]; return `translate(${Math.cos(a) * 30},${Math.sin(a) * 30 + (i === 0 ? -14 : i === 3 ? 22 : 0)})`; });
     lab.append('tspan').attr('class', 'ty').text(d => d[0]);
     lab.append('tspan').attr('class', 'mo').attr('x', 0).attr('dy', 22).text(d => d[1]);
+    // Optional profile: one person's six scores as a filled shape growing from the centre.
+    let shape = null;
+    if (profile) {
+      const at = (v, i) => [cx + Math.cos(pts[i][2]) * R * v, cy + Math.sin(pts[i][2]) * R * v];
+      shape = svg.insert('polygon', 'g').attr('class', 'hx-profile');
+      shape.datum(profile);
+      shape.at = at;
+    }
+    // Optional explainer: each vertex pulses while a centre card says what that type wants.
+    let card = null;
+    if (desc) {
+      card = svg.append('g').attr('class', 'hx-card').attr('transform', `translate(${cx},${cy})`).style('opacity', 0);
+      card.append('rect').attr('x', -190).attr('y', -96).attr('width', 380).attr('height', 192).attr('rx', 20);
+      card.append('text').attr('class', 'hx-card-t').attr('text-anchor', 'middle').attr('y', -40);
+      card.append('text').attr('class', 'hx-card-d').attr('text-anchor', 'middle').attr('y', 0);
+    }
+    const wrap = (t, n = 30) => t.split(' ').reduce((L, w) => { const l = L.at(-1); (l + ' ' + w).trim().length > n ? L.push(w) : (L[L.length - 1] = (l + ' ' + w).trim()); return L; }, ['']);
+    function explain(i0) {
+      if (!card) return Promise.resolve();
+      return new Promise(res => {
+        const step = i => {
+          if (i >= TYPES.length) { card.transition().duration(400).style('opacity', 0); g.select('circle').transition().duration(300).attr('r', 9); return res(); }
+          const [t, m] = TYPES[i];
+          card.select('.hx-card-t').text(t);
+          const d = card.select('.hx-card-d').text(null);
+          wrap(desc[t]).forEach((l, k) => d.append('tspan').attr('x', 0).attr('dy', k ? 30 : 0).text(l));
+          card.interrupt().attr('transform', `translate(${cx},${cy}) scale(.85)`).style('opacity', 0)
+            .transition().duration(380).ease(d3.easeBackOut).attr('transform', `translate(${cx},${cy}) scale(1)`).style('opacity', 1);
+          g.select('circle').interrupt().transition().duration(300).attr('r', (d, j) => j === i ? 20 : 9);
+          setTimeout(() => step(i + 1), reduced ? 0 : 1900);
+        };
+        setTimeout(() => step(i0), reduced ? 0 : 1900);
+      });
+    }
     function play() {
+      if (shape) shape.interrupt().attr('points', profile.map((v, i) => shape.at(0, i).join(',')).join(' '));
+      explain(0).then(() => shape && shape.transition().duration(reduced ? 0 : 1600).ease(d3.easeElasticOut.amplitude(1).period(0.5))
+        .attr('points', profile.map((v, i) => shape.at(v, i).join(',')).join(' ')));
       poly.interrupt().attr('stroke-dasharray', `${len} ${len}`).attr('stroke-dashoffset', len)
         .transition().duration(reduced ? 0 : 1600).ease(d3.easeCubicInOut).attr('stroke-dashoffset', 0);
       g.interrupt().style('opacity', 0).transition().delay((d, i) => reduced ? 0 : 250 + i * 260).duration(450).style('opacity', 1);
@@ -265,9 +305,9 @@ const HX = (() => {
         ctx.stroke();
       }
       if (lit) {
-        ctx.beginPath(); ctx.globalAlpha = 0.9; ctx.lineWidth = 1.5 * lw; ctx.strokeStyle = this.cOrigin;
+        ctx.beginPath(); ctx.globalAlpha = this.stars ? 0.25 : 0.9; ctx.lineWidth = 1.5 * lw; ctx.strokeStyle = this.cOrigin;
         for (const p of hl.parents) edge(p, hl, 0.9);
-        for (const c of hl.kids) if (this.visible(c)) edge(hl, c, 0.9);
+        for (const c of hl.kids) if (this.visible(c)) edge(hl, c, this.stars ? 0.25 : 0.9);
         ctx.stroke();
       }
       // Nodes, smallest last ring first so big hubs sit on top
@@ -276,6 +316,28 @@ const HX = (() => {
         ctx.globalAlpha = lit && !lit.has(n) ? 0.12 : n.deg === 2 ? 0.75 : 0.95;
         ctx.fillStyle = this.colour(n);
         ctx.beginPath(); ctx.arc(n.x, n.yy, Math.max(n.r, 1.1 * lw), 0, Math.PI * 2); ctx.fill();
+      }
+      // Citation stars: the focused paper's citers flare up.
+      if (hl && this.stars) {
+        ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = css('--brand-pink', this.canvas);
+        for (const c of hl.kids) { if (!this.visible(c)) continue; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.arc(c.x, c.yy, Math.max(c.r * 2.6, 4.5 * lw), 0, Math.PI * 2); ctx.fill(); }
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      // Highlighted papers (Hexad-12) keep their own colour and ring.
+      for (const [n, v] of this.special || []) {
+        if (!this.visible(n)) continue;
+        ctx.globalAlpha = 1; ctx.fillStyle = css(v, this.canvas); ctx.strokeStyle = css('--ink', this.canvas); ctx.lineWidth = 2 * lw;
+        ctx.beginPath(); ctx.arc(n.x, n.yy, Math.max(n.r * 1.6, 6 * lw), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+      // Comet trail for the genealogy track.
+      if (this.comet && this.comet.length > 1) {
+        const pts = this.comet; ctx.lineCap = 'round';
+        for (let i = 1; i < pts.length; i++) {
+          ctx.globalAlpha = i / pts.length; ctx.strokeStyle = css('--brand-cyan', this.canvas); ctx.lineWidth = (1 + 4 * i / pts.length) * lw;
+          ctx.beginPath(); ctx.moveTo(pts[i - 1][0], pts[i - 1][1]); ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke();
+        }
+        const [hx, hy] = pts.at(-1); ctx.globalAlpha = 1; ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(hx, hy, 5 * lw, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalAlpha = 1;
       if (hl) { ctx.lineWidth = 2 * lw; ctx.strokeStyle = css('--ink', this.canvas); ctx.beginPath(); ctx.arc(hl.x, hl.yy, hl.r + 3 * lw, 0, Math.PI * 2); ctx.stroke(); }
@@ -291,6 +353,35 @@ const HX = (() => {
       this.draw();
     }
     pathTo(n) { const p = []; while (n) { p.unshift(n); n = n.parents[0]; } return p; }
+    // Screen position of a paper, for HTML callouts layered over the canvas.
+    screen(n) { return this.k.apply([n.x, n.yy]); }
+    // Race-track genealogy: a comet runs clockwise along ring 1 from stop to stop; at each stop the paper's citers flare.
+    async track(stops, { scale = 1.5, travel = 1100, hold = 1500, onStop } = {}) {
+      this.stars = true; this.comet = [];
+      const follow = (x, y) => {
+        this.k = d3.zoomIdentity.translate(this.w / 2 + this.w * (this.shiftX || 0), this.h / 2).scale(scale).translate(-x, -y);
+        d3.select(this.canvas).property('__zoom', this.k);
+      };
+      let prev = { ang: -Math.PI / 2, rad: 0, x: 0, yy: 0 };
+      for (const s of stops) {
+        const a0 = prev.ang, a1 = s.ang < a0 ? s.ang + Math.PI * 2 : s.ang, r0 = prev.rad, t0 = performance.now();
+        this.focus = null;
+        await new Promise(res => {
+          const step = now => {
+            const p = reduced ? 1 : Math.min(1, (now - t0) / travel), e = d3.easeCubicInOut(p);
+            const a = a0 + (a1 - a0) * e, r = r0 + (s.rad - r0) * e, x = Math.cos(a) * r, y = Math.sin(a) * r;
+            this.comet.push([x, y]); if (this.comet.length > 40) this.comet.shift();
+            follow(x, y); this.draw();
+            if (p < 1) requestAnimationFrame(step); else res();
+          };
+          requestAnimationFrame(step);
+        });
+        this.focus = s; this.draw(); onStop?.(s);
+        await new Promise(r => setTimeout(r, reduced ? 0 : hold));
+        prev = s;
+      }
+      this.stars = false;
+    }
     // Fetch the most-cited papers citing n and place them as the next ring, fanned outward around n.
     async expand(n, per = 30) {
       if (n.deg < 2 || n.expanded) return n.kids.length;
@@ -379,9 +470,10 @@ const HX = (() => {
 
   // Horizontal bars split into one segment per citing year, coloured on the site's time ramp (cyan 2016 → magenta 2026).
   // A year cursor sweeps left to right so every bar fills in the order its citations arrived.
-  function timeBars(host, rows, { W = 1000, rowH = 46, label = r => r[0], total = r => r[1], years = r => r[2], y0 = 2016, stagger = 0, legend = true } = {}) {
+  function timeBars(host, rows, { W = 1000, rowH = 46, label = r => r[0], total = r => r[1], years = r => r[2], sub = null, y0 = 2016, stagger = 0, legend = true, lw = 230 } = {}) {
     host.innerHTML = '';
-    const lw = 230, top = legend ? 46 : 6, H = rows.length * rowH + top + 6, n = years(rows[0]).length;
+    const top = legend ? 46 : 6, H = rows.length * rowH + top + 6, n = years(rows[0]).length;
+    const by = sub ? rowH * 0.1 : rowH * 0.2, bh = sub ? rowH * 0.42 : rowH * 0.6;  // with a sub line, the bar shares the row with its citation
     const ramp = d3.piecewise(d3.interpolateLab, ['--series-1', '--ramp-mid', '--series-2'].map(v => css(v, host)));
     const colour = i => ramp(i / (n - 1));
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
@@ -397,13 +489,14 @@ const HX = (() => {
       lg.append('text').attr('class', 'hx-tick').attr('x', gw).attr('y', 30).attr('text-anchor', 'end').text(y0 + n - 1);
     }
     const g = svg.selectAll('g.b').data(rows).join('g').attr('class', 'b').attr('transform', (r, i) => `translate(0,${top + i * rowH})`);
-    g.append('text').attr('class', 'hx-lab').attr('x', lw - 12).attr('y', rowH / 2 + 5).attr('text-anchor', 'end').text(label);
+    g.append('text').attr('class', 'hx-lab hx-strong').attr('x', lw - 14).attr('y', by + bh / 2 + 6).attr('text-anchor', 'end').text(label);
+    if (sub) g.append('text').attr('class', 'hx-muted').attr('x', lw).attr('y', by + bh + 22).style('font-size', '15px').text(sub);
     const segs = g.selectAll('rect').data(r => { let acc = 0; return years(r).map((v, i) => ({ r, i, v, x0: (acc += v) - v })); }).join('rect')
-      .attr('y', rowH * 0.2).attr('height', rowH * 0.6).attr('fill', d => colour(d.i)).attr('stroke', 'var(--bg)').attr('stroke-width', 1.5)
+      .attr('y', by).attr('height', bh).attr('fill', d => colour(d.i)).attr('stroke', 'var(--bg)').attr('stroke-width', 1.5)
       .attr('x', d => lw + x(d.x0)).attr('width', 0)
       .on('pointermove', (ev, d) => tooltip(`<b>${label(d.r)}</b><br>${y0 + d.i}: ${fmt(d.v)} citation${d.v === 1 ? '' : 's'}`, ev))
       .on('pointerleave', () => tooltip(null));
-    const vals = g.append('text').attr('class', 'hx-val').attr('y', rowH / 2 + 5).attr('x', r => lw + x(total(r)) + 10).style('opacity', 0).text(r => fmt(total(r)));
+    const vals = g.append('text').attr('class', 'hx-val').attr('y', by + bh / 2 + 6).attr('x', r => lw + x(total(r)) + 10).style('opacity', 0).text(r => fmt(total(r)));
     function play() {
       const step = reduced ? 0 : 260;
       segs.interrupt().attr('width', 0).transition().delay((d) => d.i * step + d.r.__i * stagger).duration(reduced ? 0 : step).ease(d3.easeLinear).attr('width', d => Math.max(0, x(d.v)));
@@ -482,6 +575,53 @@ const HX = (() => {
         .transition().duration(reduced ? 0 : 2000).ease(d3.easeCubicInOut).attr('stroke-dashoffset', 0); });
       dots.interrupt().style('opacity', 0).transition().delay(d => reduced ? 0 : d.j * 270).duration(300).style('opacity', 1);
       lab.interrupt().style('opacity', 0).transition().delay(reduced ? 0 : 1900).duration(400).style('opacity', 1);
+    }
+    return { play };
+  }
+
+  // Process timeline: month-level steps on one axis, labels stacked so close steps never collide.
+  function timeline(host, events, { W = 1680, H = 640, stagger = 420, rowStep = 82 } = {}) {
+    host.innerHTML = '';
+    const ev = events.map(([d, t, s]) => ({ d: new Date(d + '-15T12:00'), t, s }));
+    const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', events.map(e => `${e[0]}: ${e[1]}`).join('; '));
+    const x = d3.scaleTime([d3.timeMonth.offset(ev[0].d, -1), d3.timeMonth.offset(ev.at(-1).d, 1)], [40, W - 330]), base = H - 70;
+    svg.append('line').attr('class', 'hx-axis').attr('x1', 40).attr('x2', W - 40).attr('y1', base).attr('y2', base);
+    const ends = [];
+    ev.forEach(e => { let r = 0; while (ends[r] > x(e.d) - 10) r++; ends[r] = x(e.d) + 330; e.row = r; });
+    const g = svg.selectAll('g.e').data(ev).join('g').attr('class', 'e').style('opacity', 0);
+    g.append('line').attr('class', 'hx-chain').attr('x1', e => x(e.d)).attr('x2', e => x(e.d)).attr('y1', base).attr('y2', e => base - 54 - e.row * rowStep);
+    g.append('circle').attr('class', e => e.s ? 'hx-node2' : 'hx-node1').attr('cx', e => x(e.d)).attr('cy', base).attr('r', 10);
+    const t = g.append('text').attr('class', 'hx-lab hx-halo').style('font-size', '24px').attr('x', e => x(e.d) + 10).attr('y', e => base - 62 - e.row * rowStep);
+    t.append('tspan').attr('class', 'hx-strong').text(e => d3.timeFormat('%B %Y')(e.d));
+    t.append('tspan').attr('x', e => x(e.d) + 10).attr('dy', 28).attr('class', 'hx-muted').style('font-size', '21px').text(e => e.t);
+    function play() { g.interrupt().style('opacity', 0).transition().delay((e, i) => reduced ? 0 : 300 + i * stagger).duration(450).style('opacity', 1); }
+    return { play };
+  }
+
+  // Disruptor story: 2016 respondents (outlined dots) beside Hexad-12 test shares rescaled to 133 people (filled dots).
+  function crowdCompare(host, a, b, { W = 1600, H = 560, highlight = 'Disruptor', n = 133 } = {}) {
+    host.innerHTML = '';
+    const types = a.map(r => r[0]), s = 20, cols = 3, base = H - 90;
+    const x = d3.scaleBand(types, [40, W - 40]).padding(0.12);
+    const bN = Object.fromEntries(b.map(([t, p]) => [t, Math.round(p / 100 * n)]));
+    const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+      .attr('aria-label', types.map((t, i) => `${t}: ${a[i][1]} of ${n} in 2016, ${b[i][1]}% in Hexad-12`).join('; '));
+    const dots = [];
+    types.forEach((t, ti) => {
+      const cx0 = x(t) + x.bandwidth() * 0.27, cx1 = x(t) + x.bandwidth() * 0.73;
+      d3.range(a[ti][1]).forEach(i => dots.push({ t, set: 0, i, x: cx0 + ((i % cols) - 1) * s, y: base - 12 - Math.floor(i / cols) * s }));
+      d3.range(bN[t]).forEach(i => dots.push({ t, set: 1, i, x: cx1 + ((i % cols) - 1) * s, y: base - 12 - Math.floor(i / cols) * s }));
+    });
+    const hot = d => d.t === highlight;
+    const c = svg.selectAll('circle').data(dots).join('circle').attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 7.5)
+      .attr('fill', d => d.set ? (hot(d) ? 'var(--series-2)' : 'var(--series-1)') : 'none')
+      .attr('stroke', d => d.set ? 'none' : (hot(d) ? 'var(--series-2)' : 'var(--muted)')).attr('stroke-width', 2);
+    const lab = svg.selectAll('g.l').data(types).join('g').attr('class', 'l').attr('transform', t => `translate(${x(t) + x.bandwidth() / 2},${base + 34})`);
+    lab.append('text').attr('class', t => 'hx-lab hx-strong' + (t === highlight ? ' hx-moved' : '')).attr('text-anchor', 'middle').style('font-size', '22px').text(t => t);
+    lab.append('text').attr('class', 'hx-muted').attr('text-anchor', 'middle').attr('y', 28).style('font-size', '17px')
+      .text((t, i) => `${(a[i][1] / n * 100).toFixed(1)}% → ${b[i][1]}%`);
+    function play() {
+      c.interrupt().attr('r', 0).transition().delay(d => reduced ? 0 : d.set * 1500 + d.i * 22).duration(350).ease(d3.easeBackOut).attr('r', 7.5);
     }
     return { play };
   }
@@ -590,5 +730,5 @@ const HX = (() => {
   const country = code => { try { return region.of(code); } catch { return code; } };
   const loadStudy = () => fetch('data/study2016.json').then(r => r.json());
   const loadLive = () => fetch('data/hexad12live.json').then(r => r.json());
-  return { load, loadStudy, loadLive, lines, countUp, tooltip, yearBars, hbars, chain, hexagon, dumbbell, heroField, timeBars, lineage, crowd, heatmap, Net, fmt, reduced, country, TYPES };
+  return { load, loadStudy, loadLive, lines, countUp, tooltip, yearBars, hbars, chain, hexagon, dumbbell, heroField, timeBars, lineage, crowdCompare, timeline, crowd, heatmap, Net, fmt, reduced, country, TYPES };
 })();

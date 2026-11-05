@@ -58,8 +58,11 @@ path.hx-thread2 { stroke: var(--series-2); } circle.hx-thread2 { fill: var(--ser
 /* hexagon of six user types */
 .hexad svg text { fill: var(--ink); }
 .hexad .ty { font: 700 22px var(--display); } .hexad .mo { font: 500 16px var(--sans); fill: var(--muted); }
-.hexad polygon { fill: none; stroke: var(--grid); stroke-width: 2; }
-.hexad circle { fill: var(--series-1); }
+.hexad polygon { fill: none; stroke: var(--muted); stroke-width: 2.5; stroke-opacity: .6; }
+.hexad polygon.hx-profile { fill: var(--series-2); fill-opacity: .28; stroke: var(--series-2); stroke-width: 3; stroke-opacity: 1; }
+.hexad .hx-card rect { fill: var(--panel); stroke: var(--series-1); stroke-width: 2; }
+.hexad .hx-card-t { font: 800 34px var(--display); fill: var(--series-1); } .hexad .hx-card-d { font: 500 22px var(--sans); fill: var(--ink); }
+.hexad circle { fill: var(--series-1); stroke: var(--bg); stroke-width: 4; }
 
 /* film grain on navy stages */
 .grain { position: relative; isolation: isolate; }
