@@ -208,7 +208,7 @@
       el.style.setProperty('--c', css);
       var short = d.who + ' (' + d.year + ')';
       var L = { el: el, i: i, isNew: isNew, w: 0, h: 0, st: '', side: i % 2 ? -1 : 1, ld: isNew ? null : mkLeader(), op: 0, x: 0, y: 0 };
-      if (isNew) { el.innerHTML = '<div class="n"></div>'; el.firstChild.textContent = 'Newest citer, ' + (d.date || d.year) + ': ' + short; }
+      if (isNew) { el.innerHTML = '<div class="n"></div>'; el.firstChild.textContent = 'Newest paper citing the Hexad, ' + (d.date || d.year) + ': ' + short; }
       else {
         el.innerHTML = '<div class="n"><span class="g"></span><b></b></div><div class="t"></div><div class="c"></div>';
         el.querySelector('.g').textContent = i === 0 ? '★' : i;

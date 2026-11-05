@@ -389,7 +389,7 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
   const flag = c => String.fromCodePoint(...[...c].map(ch => 127397 + ch.charCodeAt(0)));
   const SHARE = { hexad: [19, 36, 46, 65, 76, 76, 78, 78, 68], gamif: [957, 1119, 1315, 1462, 1546, 1616, 1959, 2537, 3374] };
   const ix = a => a.map(v => Math.round(v / a[4] * 100));
-  const ORIGIN = [['2015-07', 'Gustavo and Rina rate candidate items'], ['2015-08', 'Questionnaire version 1'], ['2016-01', 'Validation study designed'],
+  const ORIGIN = [['2015-07', 'Gustavo and Rina rate possible items'], ['2015-08', 'Questionnaire version 1'], ['2016-01', 'Study planned'],
     ['2016-03', '133 people take the survey'], ['2016-04', '40 retake it; 30 items cut to 24'], ['2016-10', 'Presented at CHI PLAY 2016', 1]];
   const DESC = { Philanthropist: 'Wants purpose. Gives and helps others without expecting a reward.', Socialiser: 'Wants to belong. Interacts with others and builds social connections.',
     'Free Spirit': 'Wants freedom. Explores and creates on their own terms.', Achiever: 'Wants mastery. Learns, improves, and masters challenges.',
