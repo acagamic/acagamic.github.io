@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hexad Scale at Ten</title>
+<title>10 years of The Hexad Scale</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Wix+Madefor+Display:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="hexad.css">
@@ -39,6 +39,8 @@
   /* Title slide: particle hexagon behind the headline */
   .slide canvas.field { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
   .kicker-line { font: 600 30px var(--sans); color: var(--muted); margin: 0; }
+  .play { align-self: flex-start; margin-top: 40px; display: inline-flex; align-items: center; gap: 12px; font: 700 26px var(--sans); color: var(--ink); background: none; border: 2px solid var(--series-1); border-radius: 999px; padding: 14px 30px 14px 24px; cursor: pointer; transition: opacity .4s, transform .4s var(--ease-out), background .2s; }
+  .play:hover { background: color-mix(in srgb, var(--series-1) 20%, transparent); } .play.gone { opacity: 0; transform: scale(.92); pointer-events: none; }
 
   #v-live2 svg text { font-size: 22px !important; }  /* this chart renders at 0.82 scale */
   .overlay h2, .overlay .sub { text-shadow: 0 0 3px var(--bg), 0 0 6px var(--bg), 0 0 12px var(--bg), 0 0 24px var(--bg), 0 0 40px var(--bg); }  /* stacked halo keeps network lines off the words */
@@ -136,11 +138,12 @@
 <div id="callouts"></div>
 <div class="stage" id="stage">
 
-<section data-secs="60" class="slide" data-run="title">
+<section data-secs="60" class="slide" data-run="title" data-steps="1">
   <canvas class="field" id="field" aria-hidden="true"></canvas>
-  <p class="kicker-line">CHI PLAY 2026 · ten-year award</p>
-  <h1 style="margin-top:auto">The Hexad scale, ten years on</h1>
+  <p class="kicker-line">CHI PLAY 2026 · 10-Year Award</p>
+  <h1 style="margin-top:auto">10 years of The Hexad Scale</h1>
   <p class="sub">Lennart Nacke · Waterloo</p>
+  <button class="play" id="play" aria-label="Play the intro animation"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3.5v15l12-7.5z" fill="currentColor"/></svg>Play</button>
   <p class="foot" data-cite="hexad2016" style="margin-top:28px;margin-bottom:auto;max-width:900px"></p>
   <aside class="notes">Thank the committee. Name Gustavo first. Each dot is one of the 594 papers that cite us, cyan for 2016, magenta for 2026.</aside>
 </section>
@@ -196,14 +199,14 @@
 
 <section data-secs="90" class="slide" data-run="share">
   <h2>After 2021, gamification papers doubled while Hexad scale citations held steady</h2>
-  <p class="sub">Both lines start at 100 in 2021, because we divide each year’s count by the 2021 count. Until 2021, Hexad scale citations grew faster than the field. Since then the field has doubled, but Hexad scale citations stayed near 75 a year. So the Hexad scale’s share fell from 5% to 2%.</p>
+  <p class="sub">We divide each year’s count by its 2021 count, so both lines meet at 100 in 2021. We picked 2021 because that is the year Hexad scale citations stopped growing. Before then, they grew faster than the field. Since then the field has doubled, but Hexad scale citations stayed near 75 a year. So the Hexad scale’s share fell from 5% to 2%.</p>
   <div class="viz" id="v-share"></div>
   <p class="foot">OpenAlex, November 5, 2026: works with “gamification” in the title, and papers citing the Hexad scale. Both lines are set to 100 in 2021.</p>
-  <aside class="notes">Why the share fell, three hunches: (1) citations split across versions, as the 2019 validation and Hexad‑12 drew about 51 citations in 2026; (2) the boom brought education and AI work that rarely personalizes; (3) COVID paused the lab and classroom studies that use questionnaires. Google Scholar still shows growth every year to 149 in 2025, so only the share fell; raw citations kept rising. Chart note: an earlier version overlaid bars and a line on two scales; this version uses one scale so the comparison is honest.</aside>
+  <aside class="notes">Why the share fell, three hunches: (1) citations split across versions, as the 2019 validation and Hexad‑12 were cited about 51 times in 2026; (2) the boom brought education and AI work that rarely personalizes; (3) COVID paused the lab and classroom studies that use questionnaires. Google Scholar still shows growth every year to 149 in 2025, so only the share fell; raw citations kept rising. Chart note: an earlier version overlaid bars and a line on two scales; this version uses one scale so the comparison is honest.</aside>
 </section>
 
 <section data-secs="75" class="slide" data-run="milestones">
-  <h2>The most-cited follow-ups drew hundreds of citations of their own</h2>
+  <h2>The most-cited follow-ups were cited hundreds of times themselves</h2>
   <p class="sub">Each bar splits by the year its citations arrived, cyan for 2016 to magenta for 2026</p>
   <div class="viz" id="v-ms"></div>
 </section>
@@ -215,15 +218,15 @@
 </section>
 
 <section data-secs="45" class="slide overlay" data-run="ring2" data-net>
-  <h2>Those papers drew 6,870 more</h2>
+  <h2>Those papers were cited by 6,870 more papers</h2>
   <p class="sub">The magenta ring holds papers that cite one of the papers in the first ring. Amber marks Hexad‑12.</p>
   <div class="ticker" id="t-r2"></div>
 </section>
 
 <section data-secs="75" class="slide" data-run="years2">
-  <h2>Papers that cite the Hexad scale drew more citations every year through 2025</h2>
-  <p class="sub">Review papers carry the Hexad scale into fields that never cite it directly. Four reviews alone lead to 1,025 papers (15%): Nacke &amp; Deterding (2017), Klock et al. (2020), Vermeir et al. (2020), and Bennani et al. (2021). All 32 review papers that cite the Hexad scale lead to a quarter of them.</p>
-  <div class="legend" style="font-size:24px;margin-top:14px"><span><i style="background:var(--series-1)"></i>cite the Hexad scale paper</span><span><i style="background:var(--series-2);opacity:.55"></i>cite those papers</span><span><i style="background:var(--brand-pink)"></i>arrive through the four reviews, with their share on each bar</span></div>
+  <h2>Papers that cite the Hexad scale were cited more every year through 2025</h2>
+  <p class="sub">Papers that survey the field carry the Hexad scale into fields that never cite it directly. Four of them alone lead to 1,025 papers (15%): the special-issue editorial by Nacke &amp; Deterding (2017) and the reviews by Klock et al. (2020), Vermeir et al. (2020), and Bennani et al. (2021).</p>
+  <div class="legend" style="font-size:24px;margin-top:14px"><span><i style="background:var(--series-1)"></i>cite the Hexad scale paper</span><span><i style="background:var(--series-2);opacity:.55"></i>cite those papers</span><span><i style="background:var(--brand-pink)"></i>arrive through these four papers, with their share on each bar</span></div>
   <div class="viz" id="v-y2"></div>
 </section>
 
@@ -233,10 +236,10 @@
 </section>
 
 <section data-secs="60" class="slide" data-run="chain">
-  <h2>The trail of top papers runs eight steps deep. The newest paper cites the Hexad scale itself</h2>
+  <h2>The Hexad scale’s family tree: each paper cites the one before it, eight generations deep</h2>
   <div class="viz" id="v-chain" style="position:relative"></div>
-  <p class="foot">Each paper cites the one before it; bigger dots have more citations. <b>Newest paper citing the Hexad scale, November 3, 2026:</b> <span data-cite="newest"></span></p>
-  <aside class="notes">The newest paper cites both the 2016 scale and Hexad‑12, and appears in PACM HCI 10(7), likely the CHI PLAY 2026 issue. A CHI PLAY 2026 Companion paper (Fifield et al.) also cites us.</aside>
+  <p class="foot">At each step we follow the most-cited child; bigger dots have more citations. The gold arc is not part of the tree. It marks the <b>newest paper citing the Hexad scale directly, November 3, 2026:</b> <span data-cite="newest"></span></p>
+  <aside class="notes">Say: this is a family tree. Generation 1 cites us; each later paper cites its parent, so our ideas travel through papers that never name us. By generation 8, the line reaches a 2026 study on AI. The gold arc is a separate point: a paper from two days ago that cites us directly. The newest paper cites both the 2016 scale and Hexad‑12, and appears in PACM HCI 10(7), likely the CHI PLAY 2026 issue. A CHI PLAY 2026 Companion paper (Fifield et al.) also cites us.</aside>
 </section>
 
 <section data-secs="45" class="slide" data-run="countries">
@@ -418,7 +421,7 @@ const PREBUILD = {
 // The 3D chain needs WebGL; without it the flat chain draws instead.
 const HAS_GL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })();
 const runs = {
-  title: () => hero?.replay(),
+  title: () => { hero?.reset(); $('play').classList.remove('gone'); },  // the intro waits for the Play button or a click
   impact: () => HX.countUp($('n-impact'), 1082, 1600),  // same total as slide 7, counted up the same way
   close: () => hero2?.replay(),
   timeline: () => (viz.tl ??= HX.timeline($('v-tl'), ORIGIN, { W: 1680, H: 370 })).play(),
@@ -512,7 +515,7 @@ function go(i) {
   broadcast();
 }
 // Slides with data-steps spend that many forward clicks on in-slide beats before moving on.
-const STEPS = { elements: () => viz.hm?.regroup(), hexagon: i => i < 6 ? viz.hex?.show(i) : viz.hex?.grow(), langs: () => slides[cur].classList.add('show-refs') };
+const STEPS = { title: () => { hero?.replay(); $('play').classList.add('gone'); }, elements: () => viz.hm?.regroup(), hexagon: i => i < 6 ? viz.hex?.show(i) : viz.hex?.grow(), langs: () => slides[cur].classList.add('show-refs') };
 function next() {
   const s = slides[cur], n = +s.dataset.steps || 0;
   if (step < n) { STEPS[s.dataset.run]?.(step); step++; broadcast(); } else go(cur + 1);
@@ -543,7 +546,7 @@ addEventListener('keydown', e => {
 addEventListener('keydown', () => HX.chime(-1), { once: true }); addEventListener('pointerdown', () => HX.chime(-1), { once: true });
 addEventListener('click', e => { if (e.target.closest('a, button')) return; e.clientX < innerWidth / 4 ? go(cur - 1) : next(); });
 const toggleFs = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
-$('fs').onclick = toggleFs;
+$('fs').onclick = toggleFs; $('play').onclick = () => next();
 // Hide the full-screen button while the mouse rests, like a slide viewer.
 let idleT; addEventListener('mousemove', () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 2500); });
 addEventListener('hashchange', () => { const i = (+location.hash.slice(1) || 1) - 1; if (i !== cur) go(i); });
@@ -553,7 +556,7 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
   // Full APA citations from the deck data
   document.querySelectorAll('[data-cite]').forEach(el => { const k = el.dataset.cite;
     el.textContent = (el.dataset.pre || '') + (k === 'hexad2016' ? deck.hexad2016 : k === 'newest' ? deck.newest.apa : deck.apa[k] || ''); });
-  hero = HX.heroField($('field'), d); hero2 = HX.heroField($('field2'), d);
+  hero = HX.heroField($('field'), d, { paused: true }); hero2 = HX.heroField($('field2'), d, { around: document.querySelector('.close-ph img') });
   net = new HX.Net($('net'), d, { interactive: false });
   net.shiftX = 0.17;  // keep the network clear of the left-hand headline
   const h12 = net.byId.get(deck.hexad12); if (h12) net.special = new Map([[h12, '--series-3']]);

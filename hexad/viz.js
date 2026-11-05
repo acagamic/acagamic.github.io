@@ -464,7 +464,7 @@ const HX = (() => {
 
   // Hero: one particle per citing paper drifts in and lands on a hexagon, oldest papers first.
   // Colour runs cyan (2016) to pink to magenta (2026); the pointer pushes particles aside.
-  function heroField(canvas, data) {
+  function heroField(canvas, data, { paused = false, around = null } = {}) {
     const ctx = canvas.getContext('2d'), rnd = d3.randomLcg(11);
     const col = d3.scaleLinear([2016, 2021, 2026], ['--brand-cyan', '--brand-pink', '--brand-magenta'].map(v => css(v))).interpolate(d3.interpolateRgb).clamp(true);
     const N = data.nodes.length;
@@ -472,22 +472,33 @@ const HX = (() => {
       const t = (i / N + rnd() * 0.004) * 6, k = Math.floor(t) % 6, f = t - Math.floor(t);
       const a0 = -Math.PI / 2 + k * Math.PI / 3, a1 = a0 + Math.PI / 3, inset = 1 - Math.pow(rnd(), 2.2) * 0.32;
       return { tx: (Math.cos(a0) * (1 - f) + Math.cos(a1) * f) * inset, ty: (Math.sin(a0) * (1 - f) + Math.sin(a1) * f) * inset,
-        sx: rnd() * 2 - 1, sy: rnd() * 2 - 1, r: 1.8 + Math.min(5.5, Math.sqrt(c) * 0.26), col: col(y), d: i / N, ph: rnd() * 6.28, x: 0, y: 0, vx: 0, vy: 0 };
+        u: i / N + rnd() * 0.004, o: rnd(), sx: rnd() * 2 - 1, sy: rnd() * 2 - 1, r: 1.8 + Math.min(5.5, Math.sqrt(c) * 0.26), col: col(y), d: i / N, ph: rnd() * 6.28, x: 0, y: 0, vx: 0, vy: 0 };
     });
-    let w, h, cx, cy, R, sc = 1, mx = -1e4, my = -1e4, t0 = performance.now(), on = true, raf;
+    let w, h, cx, cy, R, sc = 1, mx = -1e4, my = -1e4, t0 = performance.now(), on = true, raf, started = !paused;
     const size = () => {
       const dpr = devicePixelRatio || 1, b = canvas.getBoundingClientRect(); w = b.width; h = b.height;
       canvas.width = w * dpr; canvas.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const wide = w > 900; cx = wide ? w * 0.74 : w / 2; cy = wide ? h * 0.5 : h * 0.17; R = wide ? Math.min(h * 0.36, w * 0.2) : Math.min(w * 0.22, h * 0.1); sc = wide ? 1 : 0.5;  // phones: smaller hexagon above the headline, clear of the text
+      if (around) {  // trace a frame just outside the element, clockwise from its top-left corner
+        const a = around.getBoundingClientRect(), k = w / (canvas.offsetWidth || w), L = a.left - b.left, T = a.top - b.top, AW = a.width, AH = a.height;
+        cx = L + AW / 2; cy = T + AH / 2; R = Math.max(AW, AH) / 2;
+        for (const p of P) {
+          let s = (p.u % 1) * 2 * (AW + AH); const m = (14 + p.o * 34) * k;
+          if (s < AW) { p.X = L + s; p.Y = T - m; } else if ((s -= AW) < AH) { p.X = L + AW + m; p.Y = T + s; }
+          else if ((s -= AH) < AW) { p.X = L + AW - s; p.Y = T + AH + m; } else { p.X = L - m; p.Y = T + AH - (s - AW); }
+        }
+      } else for (const p of P) { p.X = cx + R * p.tx; p.Y = cy + R * p.ty; }
+      for (const p of P) { p.SX = cx + R * p.sx * 1.6; p.SY = cy + R * p.sy * 1.2; }
     };
     const ease = t => t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
     function frame(now) {
       const el = (now - t0) / 1000;
-      ctx.clearRect(0, 0, w, h); ctx.globalCompositeOperation = 'lighter';
+      ctx.clearRect(0, 0, w, h); if (!started) return;  // waits for replay()
+      ctx.globalCompositeOperation = 'lighter';
       for (const p of P) {
         const e = reduced ? 1 : ease(Math.max(0, (el - p.d * 1.6) / 1.8));
-        const bx = cx + R * (p.sx * 1.6 * (1 - e) + p.tx * e) + Math.sin(el * 0.6 + p.ph) * 3 * e;
-        const by = cy + R * (p.sy * 1.2 * (1 - e) + p.ty * e) + Math.cos(el * 0.5 + p.ph) * 3 * e;
+        const bx = p.SX * (1 - e) + p.X * e + Math.sin(el * 0.6 + p.ph) * 3 * e;
+        const by = p.SY * (1 - e) + p.Y * e + Math.cos(el * 0.5 + p.ph) * 3 * e;
         const dx = bx + p.vx - mx, dy = by + p.vy - my, d2 = dx * dx + dy * dy;
         if (d2 < 9000) { const f = (9000 - d2) / 9000 * 2.2, d = Math.sqrt(d2) || 1; p.vx += dx / d * f; p.vy += dy / d * f; }
         p.vx *= 0.9; p.vy *= 0.9; p.x = bx + p.vx; p.y = by + p.vy;
@@ -498,11 +509,13 @@ const HX = (() => {
       if (on && !reduced) raf = requestAnimationFrame(frame);
     }
     size(); new ResizeObserver(() => { size(); if (reduced) frame(performance.now()); }).observe(canvas);
+    addEventListener('resize', size);  // the deck scales its stage, which the observer cannot see
     canvas.parentElement.addEventListener('pointermove', e => { const b = canvas.getBoundingClientRect(); mx = e.clientX - b.left; my = e.clientY - b.top; });
     canvas.parentElement.addEventListener('pointerleave', () => { mx = my = -1e4; });
     // Pause off screen to save the laptop battery.
     new IntersectionObserver(([en]) => { on = en.isIntersecting; if (on) { cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); } }).observe(canvas);
-    return { replay: () => { t0 = performance.now(); } };
+    const restart = () => { cancelAnimationFrame(raf); if (on) raf = requestAnimationFrame(frame); };
+    return { replay: () => { started = true; t0 = performance.now(); restart(); }, reset: () => { started = false; restart(); } };
   }
 
   // Horizontal bars split into one segment per citing year, coloured on the site's time ramp (cyan 2016 → magenta 2026).
@@ -806,11 +819,11 @@ function retest(host) {
 }
 
 
-// Second ring per year (magenta) with the part that arrives through the four big reviews (pink), beside the direct citers (cyan).
+// Second ring per year (magenta) with the part that arrives through four papers that survey the field (pink), beside the direct citers (cyan).
 function reviewBars(host, rows, { W = 1680, H = 560, names = '' } = {}) {
   host.innerHTML = '';
   const m = { t: 40, r: 20, b: 46, l: 20 }, svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
-    .attr('aria-label', 'Per year: papers citing the Hexad scale, papers citing those, and the part arriving through four review papers');
+    .attr('aria-label', 'Per year: papers citing the Hexad scale, papers citing those, and the part arriving through four papers that survey the field');
   const x = d3.scaleBand(rows.map(r => r[0]), [m.l, W - m.r]).padding(0.2), bw = x.bandwidth();
   const y = d3.scaleLinear([0, d3.max(rows, r => r[2]) * 1.12], [H - m.b, m.t]), bp = (bx, top, h) => barPathR(bx, top, bw * 0.62, h);
   svg.append('line').attr('class', 'hx-axis').attr('x1', m.l).attr('x2', W - m.r).attr('y1', H - m.b).attr('y2', H - m.b);
@@ -825,7 +838,7 @@ function reviewBars(host, rows, { W = 1680, H = 560, names = '' } = {}) {
   // Totals on the first year and the peak give the bars a scale without a y-axis.
   const peak = d3.max(rows, r => r[2]), tot = g.filter((r, i) => i === 0 || i === rows.length - 1 || r[2] === peak).append('text').attr('class', 'hx-val hx-strong')
     .attr('text-anchor', 'middle').attr('x', r => x(r[0]) + bw * 0.67).attr('y', r => y(r[2]) - 10).style('font-size', '22px').text(r => fmt(r[2]));
-  g.on('pointermove', (ev, r) => tooltip(`<b>${r[0]}</b><br>${fmt(r[1])} cite the Hexad scale<br>${fmt(r[2])} cite those papers<br>${fmt(r[3])} of them through the four reviews`, ev))
+  g.on('pointermove', (ev, r) => tooltip(`<b>${r[0]}</b><br>${fmt(r[1])} cite the Hexad scale<br>${fmt(r[2])} cite those papers<br>${fmt(r[3])} of them through the four survey papers`, ev))
     .on('pointerleave', () => tooltip(null));
   function play() {
     const grow = (sel, v, x0, delay) => sel.interrupt().attr('y', H - m.b).attr('height', 0).transition().delay((r, i) => (reduced ? 0 : delay + i * 110)).duration(reduced ? 0 : 700)
