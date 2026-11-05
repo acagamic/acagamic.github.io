@@ -160,32 +160,33 @@ const HX = (() => {
       card.append('text').attr('class', 'hx-card-d').attr('text-anchor', 'middle').attr('y', 0);
     }
     const wrap = (t, n = 30) => t.split(' ').reduce((L, w) => { const l = L.at(-1); (l + ' ' + w).trim().length > n ? L.push(w) : (L[L.length - 1] = (l + ' ' + w).trim()); return L; }, ['']);
-    function explain(i0) {
-      if (!card) return Promise.resolve();
-      return new Promise(res => {
-        const step = i => {
-          if (i >= TYPES.length) { card.transition().duration(400).style('opacity', 0); g.select('circle').transition().duration(300).attr('r', 9); return res(); }
-          const [t, m] = TYPES[i];
-          card.select('.hx-card-t').text(t);
-          const d = card.select('.hx-card-d').text(null);
-          wrap(desc[t]).forEach((l, k) => d.append('tspan').attr('x', 0).attr('dy', k ? 30 : 0).text(l));
-          card.interrupt().attr('transform', `translate(${cx},${cy}) scale(.85)`).style('opacity', 0)
-            .transition().duration(380).ease(d3.easeBackOut).attr('transform', `translate(${cx},${cy}) scale(1)`).style('opacity', 1);
-          g.select('circle').interrupt().transition().duration(300).attr('r', (d, j) => j === i ? 20 : 9);
-          setTimeout(() => step(i + 1), reduced ? 0 : 1900);
-        };
-        setTimeout(() => step(i0), reduced ? 0 : 1900);
+    // Presenter-driven steps: show(i) fades in type i's card and pulses its vertex; grow() draws the profile.
+    function show(i) {
+      if (!card) return;
+      const [t] = TYPES[i];
+      card.interrupt().transition().duration(180).style('opacity', 0).on('end', () => {
+        card.select('.hx-card-t').text(t);
+        const d = card.select('.hx-card-d').text(null);
+        wrap(desc[t]).forEach((l, k) => d.append('tspan').attr('x', 0).attr('dy', k ? 30 : 0).text(l));
+        card.attr('transform', `translate(${cx},${cy}) scale(.9)`).transition().duration(420).ease(d3.easeBackOut)
+          .attr('transform', `translate(${cx},${cy}) scale(1)`).style('opacity', 1);
       });
+      g.select('circle').interrupt().transition().duration(300).attr('r', (d, j) => j === i ? 22 : 9);
+    }
+    function grow() {
+      if (card) card.interrupt().transition().duration(300).style('opacity', 0);
+      g.select('circle').interrupt().transition().duration(300).attr('r', 9);
+      if (shape) shape.interrupt().transition().duration(reduced ? 0 : 1600).ease(d3.easeElasticOut.amplitude(1).period(0.5))
+        .attr('points', profile.map((v, i) => shape.at(v, i).join(',')).join(' '));
     }
     function play() {
+      if (card) card.interrupt().style('opacity', 0);
       if (shape) shape.interrupt().attr('points', profile.map((v, i) => shape.at(0, i).join(',')).join(' '));
-      explain(0).then(() => shape && shape.transition().duration(reduced ? 0 : 1600).ease(d3.easeElasticOut.amplitude(1).period(0.5))
-        .attr('points', profile.map((v, i) => shape.at(v, i).join(',')).join(' ')));
       poly.interrupt().attr('stroke-dasharray', `${len} ${len}`).attr('stroke-dashoffset', len)
         .transition().duration(reduced ? 0 : 1600).ease(d3.easeCubicInOut).attr('stroke-dashoffset', 0);
       g.interrupt().style('opacity', 0).transition().delay((d, i) => reduced ? 0 : 250 + i * 260).duration(450).style('opacity', 1);
     }
-    return { play };
+    return { play, show, grow };
   }
 
   // Radial citation network on canvas. Angle is time (papers in publication order, clockwise from 12 o'clock),
@@ -323,6 +324,19 @@ const HX = (() => {
         for (const c of hl.kids) { if (!this.visible(c)) continue; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.arc(c.x, c.yy, Math.max(c.r * 2.6, 4.5 * lw), 0, Math.PI * 2); ctx.fill(); }
         ctx.globalCompositeOperation = 'source-over';
       }
+      // Arrival burst for the genealogy track.
+      if (this.burst) {
+        const b = this.burst, age = Math.min(1, (performance.now() - b.t0) / 1100), e = 1 - Math.pow(1 - age, 3);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = 1 - age; ctx.strokeStyle = css('--brand-cyan', this.canvas); ctx.lineWidth = 3 * lw * (1 - age) + lw;
+        ctx.beginPath(); ctx.arc(b.x, b.y, (12 + 90 * e) * lw, 0, Math.PI * 2); ctx.stroke();
+        for (const [a, sp, c] of b.sparks) {
+          const r0 = (8 + 40 * e * sp) * lw, r1 = r0 + (6 + 22 * sp) * lw * (1 - age);
+          ctx.globalAlpha = (1 - age) * 0.95; ctx.strokeStyle = c < 0.5 ? css('--brand-pink', this.canvas) : css('--brand-cyan', this.canvas); ctx.lineWidth = 2 * lw;
+          ctx.beginPath(); ctx.moveTo(b.x + Math.cos(a) * r0, b.y + Math.sin(a) * r0); ctx.lineTo(b.x + Math.cos(a) * r1, b.y + Math.sin(a) * r1); ctx.stroke();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      }
       // Highlighted papers (Hexad-12) keep their own colour and ring.
       for (const [n, v] of this.special || []) {
         if (!this.visible(n)) continue;
@@ -376,8 +390,16 @@ const HX = (() => {
           };
           requestAnimationFrame(step);
         });
-        this.focus = s; this.draw(); onStop?.(s);
-        await new Promise(r => setTimeout(r, reduced ? 0 : hold));
+        this.focus = s; onStop?.(s);
+        // Arrival burst: a ring and a spray of sparks, redrawn every frame through the hold.
+        const rnd = d3.randomLcg(s.x * 13 + s.yy);
+        this.burst = { x: s.x, y: s.yy, t0: performance.now(), sparks: d3.range(46).map(() => [rnd() * Math.PI * 2, 0.4 + rnd() * 0.9, rnd()]) };
+        await new Promise(res => {
+          const end = performance.now() + (reduced ? 0 : hold);
+          const loop = now => { this.draw(); if (now < end) requestAnimationFrame(loop); else res(); };
+          requestAnimationFrame(loop);
+        });
+        this.burst = null;
         prev = s;
       }
       this.stars = false;
@@ -693,7 +715,7 @@ const HX = (() => {
     const col = d3.scaleSequential([0.1, 0.42], t => d3.interpolateRgb(css('--bg'), css('--series-1'))(0.3 + 0.7 * t)).clamp(true);
     svg.append('g').selectAll('text').data(types).join('text').attr('class', 'hx-lab hx-strong').style('font-size', '20px')
       .attr('x', (t, i) => lw + gw + i * cw + cw / 2).attr('y', 44).attr('text-anchor', 'middle').text(t => t);
-    const rows = svg.selectAll('g.row').data(els).join('g').attr('class', 'row').attr('transform', e => `translate(0,${A.y[e]})`);
+    const rows = svg.selectAll('g.hm-row').data(els).join('g').attr('class', 'hm-row').attr('transform', e => `translate(0,${A.y[e]})`);
     rows.append('text').attr('class', 'hx-lab').attr('x', lw + gw - 14).attr('y', rowH / 2 + 6).attr('text-anchor', 'end').style('font-size', '18px').text(e => e);
     const byKey = new Map(E.cells.map(c => [c[0] + '|' + c[1], c]));
     const cells = rows.selectAll('rect').data(e => types.map((t, i) => ({ e, t, i, c: byKey.get(e + '|' + t) }))).join('rect')
