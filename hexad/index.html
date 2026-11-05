@@ -378,15 +378,15 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
   HX.heroField($('hero'), data);
   HX.countUp($('big'), deck.scholar.total, 2400);
   $('oa-n').textContent = HX.fmt(data.counts.openalex);
+  const flag = c => String.fromCodePoint(...[...c].map(ch => 127397 + ch.charCodeAt(0)));
   // Languages: validated, mixed, and website-only groups, with full references in a disclosure.
   const G = [['validated', 'Tested in a published study', 'var(--series-1)'], ['mixed', 'Tried, with mixed results', 'var(--series-3)'], ['site', 'Translated, not yet tested', 'var(--muted)']];
   $('v-langs').innerHTML = G.map(([k, name, c]) => `<div class="g-${k}"><h3><i style="background:${c}"></i>${name}</h3>${deck.langs.filter(l => l[1] === k)
-    .map(l => `<div class="chip">${l[0]}${l[2] ? `<small>${l[2]}</small>` : ''}</div>`).join('')}</div>`).join('');
+    .map(l => `<div class="chip"><span class="fl">${flag(l[3])}</span> ${l[0]}${l[2] ? `<small>${l[2]}</small>` : ''}</div>`).join('')}</div>`).join('');
   $('v-refs').innerHTML = [...new Set(Object.values(deck.langrefs).flat())].map(r => `<li>${esc(r)}</li>`).join('');
   // Mean Hexad-12 profile of 23,502 tests, drawn as six bars.
   $('bars6').innerHTML = [['Achiever', 18.47], ['Free Spirit', 18.19], ['Philanthropist', 18.16], ['Player', 17.67], ['Socialiser', 16.31], ['Disruptor', 11.21]]
     .map(([n, v]) => `<div><span>${n}</span><span class="b" style="--v:${v / 20}"></span><em>${v}%</em></div>`).join('');
-  const flag = c => String.fromCodePoint(...[...c].map(ch => 127397 + ch.charCodeAt(0)));
   const SHARE = { hexad: [19, 36, 46, 65, 76, 76, 78, 78, 68], gamif: [957, 1119, 1315, 1462, 1546, 1616, 1959, 2537, 3374] };
   const ix = a => a.map(v => Math.round(v / a[4] * 100));
   const ORIGIN = [['2015-07', 'Gustavo and Rina rate possible items'], ['2015-08', 'Questionnaire version 1'], ['2016-01', 'Study planned'],
