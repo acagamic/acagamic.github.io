@@ -2,9 +2,9 @@
 (function () {
   'use strict';
   var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js';
-  var TOTAL = 24.6, A0 = 1.2, STEP = 2.0, TRAVEL = 1.1, O0 = 18.1, OVD = 2.4;
-  var T_NEW = 20.6, T_ARC = 21.9, ARC_D = 0.9, T_IMP = T_ARC + ARC_D;
-  var N = 9, TUB = 8 * 20, RAD = 6;
+  var A0 = 1.0, STEP = 1.55, TRAVEL = 0.9, O0 = 14.5, OVD = 2.4;
+  var T_NEW = 17.1, T_ARC = 18.1, ARC_D = 1.1, T_IMP = T_ARC + ARC_D, TOTAL = T_IMP + 2.4;
+  var N = 9, TUB = 90, RAD = 6, SX = 3.6, YEARS = 10;
   var RAMP = [[0x1a, 0x9c, 0xcb], [0xb9, 0x8a, 0xd0], [0xde, 0x4f, 0x97]];
 
   function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
@@ -30,21 +30,19 @@
     st.id = 'hx3-css';
     st.textContent =
       '.hx3-ov{position:absolute;inset:0;overflow:hidden;pointer-events:none}' +
-      '.hx3-l{position:absolute;left:0;top:0;opacity:0;transition:opacity .4s ease;color:#f2f5f7;' +
-      'font-family:"Montserrat",system-ui,sans-serif;text-shadow:0 2px 12px #0a2530,0 0 3px #0a2530;will-change:transform}' +
-      '.hx3-l .n{display:flex;align-items:center;gap:12px;font-family:"Wix Madefor Display","Montserrat",sans-serif;color:#f2f5f7}' +
+      '.hx3-l{position:absolute;left:0;top:0;opacity:0;color:#f2f5f7;white-space:nowrap;' +
+      'font-family:"Montserrat",system-ui,sans-serif;text-shadow:0 2px 12px #0a2530,0 0 3px #0a2530,0 0 6px #0a2530}' +
+      '.hx3-l .n{display:flex;align-items:center;gap:12px;font-family:"Wix Madefor Display","Montserrat",sans-serif}' +
       '.hx3-l .g{flex:none;min-width:1.5em;height:1.5em;border-radius:1em;display:inline-flex;align-items:center;justify-content:center;' +
       'font:700 .72em/1 "Montserrat",sans-serif;color:#0a2530;background:var(--c)}' +
-      '.hx3-l b{font-weight:700}' +
-      '.hx3-l .t,.hx3-l .c{display:none}' +
-      '.hx3-l.cur{max-width:660px}.hx3-l.cur .n{font-size:32px}' +
+      '.hx3-l .t,.hx3-l .c{display:none;white-space:normal}' +
+      '.hx3-l.cur{max-width:660px}.hx3-l.cur .n{font-size:32px;font-weight:700}' +
       '.hx3-l.cur .t,.hx3-l.cur .c{padding-left:44px}.hx3-l.cur .t{display:block;font-size:20px;line-height:1.35;margin-top:8px}' +
       '.hx3-l.cur .c{display:block;font-size:18px;color:#a9bec7;margin-top:6px}' +
-      '.hx3-l.past{max-width:210px}.hx3-l.past .n{font-size:17px;line-height:1.25}' +
-      '.hx3-l.new{max-width:620px}.hx3-l.new .n{justify-content:flex-end}.hx3-l.new .n{font-size:30px;color:#f2c25a}' +
-      '.hx3-l.new .t{display:block;font-size:19px;line-height:1.35;margin-top:8px}' +
-      '.hx3-l.new .c{display:block;font-size:18px;color:#a9bec7;margin-top:6px}' +
-      '.hx3-l .who{display:block;font-weight:700;color:#f2f5f7;font-family:"Wix Madefor Display","Montserrat",sans-serif;font-size:22px;margin-top:10px}';
+      '.hx3-l.short .n{font-size:18px;font-weight:600;line-height:1.3}.hx3-l.short .g{display:none}' +
+      '.hx3-l.new .n{font-size:24px;font-weight:700;color:#f2c25a;line-height:1.3}.hx3-l.new .g{display:none}' +
+      '.hx3-l.yr{color:#a9bec7;font:500 15px/1 "Montserrat",sans-serif}' +
+      '.hx3-ld{position:absolute;left:0;top:0;width:1px;background:#a9bec7;opacity:0}';
     document.head.appendChild(st);
   }
 
@@ -53,7 +51,7 @@
     var s = t * 2, i = Math.min(1, Math.floor(s)), f = s - i, a = RAMP[i], b = RAMP[i + 1];
     return [lerp(a[0], b[0], f) / 255, lerp(a[1], b[1], f) / 255, lerp(a[2], b[2], f) / 255];
   }
-  function trunc(s, n) { if (s.length <= n) return s; var c = s.slice(0, n - 1), k = c.lastIndexOf(' '); return (k > n - 14 ? c.slice(0, k) : c).trim() + '\u2026'; }
+  function trunc(s, n) { if (s.length <= n) return s; var c = s.slice(0, n - 1), k = c.lastIndexOf(' '); return (k > n - 14 ? c.slice(0, k) : c).trim() + '…'; }
 
   function build(container, chain, newest) {
     var T = window.THREE;
@@ -71,7 +69,7 @@
     container.appendChild(overlay);
 
     var scene = new T.Scene();
-    var camera = new T.PerspectiveCamera(36, 2.4, 0.1, 200);
+    var camera = new T.PerspectiveCamera(36, 2.4, 0.1, 300);
     var W = 1680, H = 700;
     function resize() {
       var r = container.getBoundingClientRect();
@@ -82,7 +80,6 @@
       if (!playing) render(curT);
     }
 
-    // textures
     function glowTex() {
       var c = document.createElement('canvas'); c.width = c.height = 128;
       var g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
@@ -93,17 +90,16 @@
     }
     var gtex = glowTex();
 
-    // node positions: descending spiral receding into depth
-    var pos = data.map(function (_, i) {
-      var a = i * 0.85;
-      return new T.Vector3(Math.cos(a) * 3.4, -i * 0.6 + Math.sin(a) * 0.9, -i * 4.0);
+    // nodes on one straight line along x; x = publication year, same-year papers fan out by generation
+    var seen = {};
+    var pos = data.map(function (d) {
+      var r = seen[d.year] = (seen[d.year] === undefined ? 0 : seen[d.year] + 1);
+      return new T.Vector3((d.year - 2016 + 0.3 * r) * SX, 0, 0);
     });
-    var yearT = data.map(function (d) { return (d.year - 2016) / 10; });
-    function colAt(f) { var i = Math.min(7, Math.floor(f)); return ramp(lerp(yearT[i], yearT[i + 1], f - i)); }
+    var XEND = YEARS * SX;
+    var yearT = data.map(function (d) { return (d.year - 2016) / YEARS; });
     var nodeCol = data.map(function (d, i) { return ramp(yearT[i]); });
-
-    var curve = new T.CatmullRomCurve3(pos, false, 'catmullrom', 0.5);
-    curve.getPointAt = curve.getPoint; curve.getTangentAt = curve.getTangent; // uniform in node index
+    function lite(c, k) { return [lerp(c[0], 1, k), lerp(c[1], 1, k), lerp(c[2], 1, k)]; }
 
     function tube(c, segs, rad, radial, colFn, op) {
       var g = new T.TubeGeometry(c, segs, rad, radial, false);
@@ -118,12 +114,18 @@
       m.frustumCulled = false; scene.add(m);
       return m;
     }
-    function lite(c, k) { return [lerp(c[0], 1, k), lerp(c[1], 1, k), lerp(c[2], 1, k)]; }
-    var pathCore = tube(curve, TUB, 0.022, RAD, function (u) { return lite(colAt(u * 8), 0.15); }, 0.9);
-    var pathGlow = tube(curve, TUB, 0.09, RAD, function (u) { return colAt(u * 8); }, 0.14);
+    var line = new T.LineCurve3(new T.Vector3(0, 0, 0), new T.Vector3(XEND, 0, 0));
+    var pathCore = tube(line, TUB, 0.03, RAD, function (u) { return lite(ramp(u), 0.15); }, 0.9);
+    var pathGlow = tube(line, TUB, 0.12, RAD, function (u) { return ramp(u); }, 0.14);
     function setDraw(m, u, segs, radial) { m.geometry.setDrawRange(0, Math.floor(clamp(u, 0, 1) * segs) * radial * 6); }
 
-    // nodes
+    // year axis under the line
+    var AY = -4.2, ax = [0, AY, 0, XEND, AY, 0], yrs = [];
+    for (var y = 0; y <= YEARS; y++) { ax.push(y * SX, AY, 0, y * SX, AY - 0.3, 0); yrs.push(new T.Vector3(y * SX, AY - 0.3, 0)); }
+    var axG = new T.BufferGeometry(); axG.setAttribute('position', new T.Float32BufferAttribute(ax, 3));
+    var axis = new T.LineSegments(axG, new T.LineBasicMaterial({ color: 0xa9bec7, transparent: true, opacity: 0.25 }));
+    axis.frustumCulled = false; scene.add(axis);
+
     var maxC = Math.max.apply(null, data.map(function (d) { return d.cites; }));
     var coreGeo = new T.SphereGeometry(1, 20, 14);
     function mkNode(col, r, coreCol) {
@@ -138,35 +140,32 @@
       var n = mkNode(nodeCol[i], r); n.core.position.copy(pos[i]); n.glow.position.copy(pos[i]); return n;
     });
     var AMBER = [0xc2 / 255, 0x87 / 255, 0x1c / 255], AMBER_HI = [1, 0.76, 0.35];
-    var nPos = new T.Vector3(-1, 5.5, -38);
+    var nPos = new T.Vector3(XEND + 1.0, 5.2, 0);
     var nNode = mkNode(AMBER, 0.42, new T.Color(1, 0.82, 0.45)); nNode.core.position.copy(nPos); nNode.glow.position.copy(nPos);
 
-    // head light
     var head = new T.Sprite(new T.SpriteMaterial({ map: gtex, color: 0xffffff, blending: T.AdditiveBlending, transparent: true, depthWrite: false }));
     head.visible = false; scene.add(head);
 
-    // arc
-    var ctrl = pos[0].clone().add(nPos).multiplyScalar(0.5); ctrl.y += 9.5; ctrl.z += 9; ctrl.x += 2;
-    var arc = new T.QuadraticBezierCurve3(nPos, ctrl, pos[0]);
+    // amber arc: newest node back over the line to the Hexad node
+    var arc = new T.QuadraticBezierCurve3(nPos, new T.Vector3(XEND / 2 + 0.5, 16.5, 0), pos[0]);
     arc.getPointAt = arc.getPoint; arc.getTangentAt = arc.getTangent;
     var ARC_SEG = 100;
-    var arcCore = tube(arc, ARC_SEG, 0.05, RAD, function () { return [1, 0.84, 0.5]; }, 1);
-    var arcGlow = tube(arc, ARC_SEG, 0.2, RAD, function () { return AMBER_HI; }, 0.2);
+    var arcCore = tube(arc, ARC_SEG, 0.06, RAD, function () { return [1, 0.84, 0.5]; }, 1);
+    var arcGlow = tube(arc, ARC_SEG, 0.22, RAD, function () { return AMBER_HI; }, 0.2);
     var arcHead = new T.Sprite(new T.SpriteMaterial({ map: gtex, color: 0xffd27a, blending: T.AdditiveBlending, transparent: true, depthWrite: false }));
     arcHead.visible = false; scene.add(arcHead);
 
-    // stars
-    var SN = 450, sp = new Float32Array(SN * 3), sc = new Float32Array(SN * 3);
+    // static starfield
+    var SN = 600, sp = new Float32Array(SN * 3), sc = new Float32Array(SN * 3);
     for (var s = 0; s < SN; s++) {
-      sp[s * 3] = (Math.random() - 0.5) * 70; sp[s * 3 + 1] = -24 + Math.random() * 36; sp[s * 3 + 2] = -55 + Math.random() * 70;
+      sp[s * 3] = -30 + Math.random() * 100; sp[s * 3 + 1] = -30 + Math.random() * 60; sp[s * 3 + 2] = -70 + Math.random() * 60;
       var b = 0.25 + Math.random() * 0.45; sc[s * 3] = 0.66 * b; sc[s * 3 + 1] = 0.75 * b; sc[s * 3 + 2] = 0.78 * b;
     }
     var sg = new T.BufferGeometry();
     sg.setAttribute('position', new T.BufferAttribute(sp, 3)); sg.setAttribute('color', new T.BufferAttribute(sc, 3));
-    var stars = new T.Points(sg, new T.PointsMaterial({ size: 0.12, vertexColors: true, map: gtex, transparent: true, blending: T.AdditiveBlending, depthWrite: false }));
+    var stars = new T.Points(sg, new T.PointsMaterial({ size: 0.2, vertexColors: true, map: gtex, transparent: true, blending: T.AdditiveBlending, depthWrite: false }));
     stars.frustumCulled = false; scene.add(stars);
 
-    // bursts (particles + ring)
     function mkBurst(origin, col, count, speed, size, ringR, t0) {
       var g = new T.BufferGeometry(), p = new Float32Array(count * 3), c = new Float32Array(count * 3), dir = [];
       for (var i = 0; i < count; i++) {
@@ -179,7 +178,7 @@
       var ring = new T.Mesh(new T.RingGeometry(0.92, 1, 56), new T.MeshBasicMaterial({ color: new T.Color(col[0], col[1], col[2]), transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide }));
       ring.visible = false; scene.add(ring);
       var lc = lite(col, 0.3);
-      return { t0: t0, upd: function (t) {
+      return { upd: function (t) {
         var a = t - t0, on = a >= 0 && a < 0.8;
         pts.visible = ring.visible = on;
         if (!on) return;
@@ -195,142 +194,134 @@
       } };
     }
     var bursts = [];
-    for (var bi = 0; bi < N; bi++) bursts.push(mkBurst(pos[bi], lite(nodeCol[bi], 0.2), 60, 3.2, 0.16, 2.4 + nodes[bi].r * 2, bi === 0 ? 0.5 : arrival(bi)));
-    var impact = mkBurst(pos[0], AMBER_HI, 140, 8, 0.7, 7, T_IMP);
-    bursts.push(impact);
+    for (var bi = 0; bi < N; bi++) bursts.push(mkBurst(pos[bi], lite(nodeCol[bi], 0.2), 60, 3.2, 0.2, 2.4 + nodes[bi].r * 2, bi === 0 ? 0.5 : arrival(bi)));
+    bursts.push(mkBurst(pos[0], AMBER_HI, 140, 8, 0.8, 7, T_IMP));
 
-    // labels
-    var labels = [];
-    function mkLabel(d, i, isNew) {
-      var el = document.createElement('div'); el.className = 'hx3-l';
+    // labels: odd generations above the line, even below
+    var labels = [], yrLabels = [];
+    function mkEl(cls) { var el = document.createElement('div'); el.className = 'hx3-l ' + cls; overlay.appendChild(el); return el; }
+    function mkLeader() { var el = document.createElement('div'); el.className = 'hx3-ld'; overlay.insertBefore(el, overlay.firstChild); return el; }
+    function mk(d, i, isNew) {
       var c = isNew ? AMBER_HI : nodeCol[i], css = 'rgb(' + c.map(function (v) { return Math.round(v * 255); }).join(',') + ')';
+      var el = mkEl(isNew ? 'new' : 'short');
       el.style.setProperty('--c', css);
-      var nm = isNew ? 'Newest citer, ' + (d.date || d.year) : '<span class="g">' + (i === 0 ? '★' : i) + '</span><b></b>';
-      el.innerHTML = '<div class="n">' + nm + '</div><div class="t"></div><div class="c"></div>';
-      var q = function (s) { return el.querySelector(s); };
-      var title = trunc(d.title, 70);
-      if (isNew) {
-        var who = document.createElement('span'); who.className = 'who'; who.textContent = d.who + ' (' + d.year + ')';
-        q('.n').appendChild(document.createElement('span')); q('.n').lastChild.remove();
-        el.insertBefore(who, q('.t')); who.style.display = 'block';
-        q('.t').textContent = title; q('.c').textContent = '';
-      } else {
-        q('b').textContent = d.who + ' (' + d.year + ')'; q('.t').textContent = title;
-        q('.c').textContent = d.cites.toLocaleString('en-CA') + (d.cites === 1 ? ' citation' : ' citations');
+      var short = d.who + ' (' + d.year + ')';
+      var L = { el: el, i: i, isNew: isNew, w: 0, h: 0, st: '', side: i % 2 ? -1 : 1, ld: isNew ? null : mkLeader(), op: 0, x: 0, y: 0 };
+      if (isNew) { el.innerHTML = '<div class="n"></div>'; el.firstChild.textContent = 'Newest citer, ' + (d.date || d.year) + ': ' + short; }
+      else {
+        el.innerHTML = '<div class="n"><span class="g"></span><b></b></div><div class="t"></div><div class="c"></div>';
+        el.querySelector('.g').textContent = i === 0 ? '★' : i;
+        el.querySelector('b').textContent = short; el.querySelector('.t').textContent = trunc(d.title, 70);
+        el.querySelector('.c').textContent = d.cites.toLocaleString('en-CA') + (d.cites === 1 ? ' citation' : ' citations');
+        L.shortCls = 'hx3-l short'; L.curCls = 'hx3-l cur';
       }
-      overlay.appendChild(el);
-      return { el: el, st: '', w: 0, h: 0, i: i, isNew: isNew };
+      labels.push(L); return L;
     }
-    data.forEach(function (d, i) { labels.push(mkLabel(d, i, false)); });
-    var nLabel = mkLabel(newest, 9, true); labels.push(nLabel);
+    data.forEach(function (d, i) { mk(d, i, false); });
+    var nLabel = mk(newest, 9, true);
+    for (var yy = 0; yy <= YEARS; yy++) { var ye = mkEl('yr'); ye.textContent = 2016 + yy; yrLabels.push({ el: ye, w: 0, h: 0, st: '' }); }
+    function measure(L) { L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; }
     function setState(L, st) {
       if (L.st === st) return;
-      L.st = st;
-      L.el.className = 'hx3-l ' + (st === 'hidden' ? 'past' : st);
-      L.el.style.opacity = st === 'hidden' ? 0 : 1;
-      L.w = L.el.offsetWidth; L.h = L.el.offsetHeight;
+      L.st = st; if (L.isNew) return;
+      L.el.className = st === 'cur' ? L.curCls : L.shortCls;
+      measure(L);
     }
+    function remeasure() { labels.concat(yrLabels).forEach(function (L) { measure(L); }); if (!playing) render(curT); }
+    labels.concat(yrLabels).forEach(measure);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
 
     // camera
     var cPos = new T.Vector3(), cLook = new T.Vector3(), v = new T.Vector3(), v2 = new T.Vector3();
-    var OV_C = new T.Vector3(0, 0.6, -17.8);
-    function focusF(t) {
-      var f = 0;
-      for (var k = 1; k <= 8; k++) {
-        var s = arrival(k) - TRAVEL;
-        if (t >= s) f = (k - 1) + eio((t - s) / TRAVEL);
-      }
-      return f;
+    var END_C = new T.Vector3(XEND / 2 + 0.8, 2.4, 0), END_P = new T.Vector3(XEND / 2 + 0.8, 2.4, 31);
+    function camX(t) {
+      var x = pos[0].x;
+      for (var k = 1; k < N; k++) { var s = arrival(k) - TRAVEL; if (t >= s) x = lerp(pos[k - 1].x, pos[k].x, eio((t - s) / TRAVEL)); }
+      return x;
     }
-    function setCamera(t, f) {
-      var tg = curve.getPoint(f / 8), ah = curve.getPoint(Math.min(1, (f + 0.5) / 8));
+    function setCamera(t, cx) {
       var dolly = 1 + 0.45 * (1 - eio(t / A0));
-      cLook.copy(tg).lerp(ah, 0.3); cLook.x += 1.9;
-      var ang = f * 0.3;
-      cPos.set(tg.x + 1.0 + Math.sin(ang) * 1.8, tg.y + 1.1, tg.z + 11.0 * dolly);
+      cLook.set(cx + 2.4, 0.3, 0);
+      cPos.set(cx - 2.6, 1.6, 9 * dolly);
       var m = eio((t - O0) / OVD);
-      if (m > 0) {
-        var th = 0.5 + 0.012 * Math.max(0, t - O0);
-        v.set(OV_C.x + 34 * Math.cos(th), OV_C.y + 8, OV_C.z + 34 * Math.sin(th));
-        cPos.lerp(v, m); cLook.lerp(OV_C, m);
-      }
+      if (m > 0) { cPos.lerp(END_P, m); cLook.lerp(END_C, m); }
       camera.position.copy(cPos); camera.lookAt(cLook);
       return m;
     }
 
-    var curT = 0, playing = false, raf = 0, t0 = 0;
+    function overlap(a, b, pad) { return a.x < b.x + b.w + pad && b.x < a.x + a.w + pad && a.y < b.y + b.h + pad && b.y < a.y + a.h + pad; }
+    function proj(p3, out) { v2.copy(p3).project(camera); out.sx = (v2.x * 0.5 + 0.5) * W; out.sy = (-v2.y * 0.5 + 0.5) * H; out.behind = v2.z > 1; return out; }
+
+    var curT = 0, playing = false, raf = 0, t0 = 0, pt = { sx: 0, sy: 0, behind: false };
     function render(t) {
       curT = t;
-      var f = focusF(t), m = setCamera(t, f);
+      var cx = camX(t), m = setCamera(t, cx);
       camera.updateMatrixWorld();
-      var rev = t >= O0 ? 1 : f / 8;
+      var rev = t >= O0 ? 1 : (cx + 5) / XEND;
       setDraw(pathCore, rev, TUB, RAD); setDraw(pathGlow, rev, TUB, RAD);
+      axis.material.opacity = 0.2 + 0.3 * m;
 
-      // nodes
       for (var i = 0; i < N; i++) {
         var st = i === 0 ? 0 : arrival(i) - TRAVEL + 0.25, a = eio((t - st) / 0.6), n = nodes[i], on = a > 0.001;
         n.core.visible = n.glow.visible = on;
         if (!on) continue;
-        var pulse = 1 + 0.06 * Math.sin(t * 2.2 + i);
-        var boost = (i === 0 && t > T_IMP) ? 1 + 1.6 * Math.exp(-(t - T_IMP) * 2.2) : 1;
-        var cur = (t - arrival(i) > -0.3 && t - arrival(i) < 1.2) ? 1 + 0.4 * Math.exp(-Math.abs(t - arrival(i)) * 2) : 1;
-        var big = 1 + (i === 0 ? 0.35 : 0) * 0;
-        n.core.scale.setScalar(n.r * a * big * (1 + 0.15 * (boost - 1)));
-        n.glow.scale.setScalar(n.r * 6.5 * a * pulse * cur * boost);
+        var boost = (i === 0 && t > T_IMP) ? 1 + 1.6 * Math.pow(Math.max(0, 1 - (t - T_IMP) / 1.6), 2) : 1;
+        var cur = 1 + 0.4 * Math.exp(-Math.abs(t - arrival(i)) * 2) * (t < O0 ? 1 : 0);
+        n.core.scale.setScalar(n.r * a * (1 + 0.15 * (boost - 1)));
+        n.glow.scale.setScalar(n.r * 6.5 * a * cur * boost);
       }
-      // head light
-      var hv = t < O0 && f > 0.01 && f < 8;
+      var hv = t < O0 && cx > pos[0].x + 0.01 && cx < XEND;
       head.visible = hv;
-      if (hv) { head.position.copy(curve.getPoint(f / 8)); var hs = 1.1 * Math.min(1, Math.sin(Math.PI * (f % 1)) * 3 + 0.0); head.scale.setScalar(0.4 + hs); }
+      if (hv) { head.position.set(cx, 0, 0); var f = (t - A0 + TRAVEL) % STEP; head.scale.setScalar(0.4 + 1.1 * Math.min(1, Math.sin(Math.PI * clamp(f / TRAVEL, 0, 1)) * 3)); }
 
-      // newest
       var na = eio((t - T_NEW) / 0.7), nOn = na > 0.001;
       nNode.core.visible = nNode.glow.visible = nOn;
-      if (nOn) {
-        var pu = 1 + 0.25 * Math.sin((t - T_NEW) * 5.5);
-        nNode.core.scale.setScalar(nNode.r * na * (0.9 + 0.2 * pu)); nNode.glow.scale.setScalar(4.5 * na * pu);
-      }
+      if (nOn) { nNode.core.scale.setScalar(nNode.r * na); nNode.glow.scale.setScalar(4.5 * na); }
       var au = t >= T_ARC ? clamp((t - T_ARC) / ARC_D, 0, 1) : 0, aeased = au * au * (3 - 2 * au);
       setDraw(arcCore, aeased, ARC_SEG, RAD); setDraw(arcGlow, aeased, ARC_SEG, RAD);
-      if (t >= T_ARC) {
-        var hu = au < 1 ? aeased : ((t - T_IMP) / 1.6) % 1;
+      if (t >= T_ARC) { // the only motion after the finale: a light pulse on the arc
+        var hu = au < 1 ? aeased : ((t - T_IMP) / 2.4) % 1;
         arcHead.visible = true; arcHead.position.copy(arc.getPoint(hu)); arcHead.scale.setScalar(au < 1 ? 2.6 : 1.6 * Math.sin(Math.PI * hu) + 0.3);
       } else arcHead.visible = false;
-
       bursts.forEach(function (b) { b.upd(t); });
-      stars.rotation.y = t * 0.006; stars.position.y = Math.sin(t * 0.1) * 0.6; stars.position.x = t * -0.05;
 
-      // labels
-      var pxu = H / (2 * Math.tan(camera.fov * Math.PI / 360));
+      // labels. fly-through: only the active node, full title. pull-back: short labels, collision-checked in screen space.
+      var shortOp = t >= O0 ? clamp((m - 0.4) / 0.6, 0, 1) : 0, placed = [], vis = [];
+      yrLabels.forEach(function (Y, k) {
+        proj(yrs[k], pt);
+        Y.x = pt.sx - Y.w / 2; Y.y = pt.sy + 6; Y.el.style.opacity = shortOp;
+        Y.el.style.transform = 'translate(' + Y.x.toFixed(1) + 'px,' + Y.y.toFixed(1) + 'px)';
+        if (shortOp > 0) placed.push(Y);
+      });
+      var nOp = clamp((t - T_NEW - 0.3) / 0.6, 0, 1);
+      proj(nPos, pt);
+      nLabel.x = clamp(pt.sx + 36 - nLabel.w, 8, W - nLabel.w - 8); nLabel.y = pt.sy + 34;
+      nLabel.el.style.opacity = nOp; nLabel.el.style.transform = 'translate(' + nLabel.x.toFixed(1) + 'px,' + nLabel.y.toFixed(1) + 'px)';
+      if (nOp > 0) placed.push(nLabel);
       labels.forEach(function (L) {
-        var i = L.i, p3, state;
-        if (L.isNew) { state = t > T_NEW + 0.5 ? 'new' : 'hidden'; p3 = nPos; }
-        else {
-          p3 = pos[i];
-          var show = i === 0 ? 0.3 : arrival(i) - 0.5, shrink = i === 8 ? O0 : arrival(i) + TRAVEL - 0.2;
-          if (i === 0) shrink = arrival(1) - TRAVEL;
-          state = t < show ? 'hidden' : (t < shrink ? 'cur' : 'past');
-          if (state === 'cur' && t >= O0) state = 'past';
-        }
-        setState(L, state);
-        if (state === 'hidden') return;
-        v2.copy(p3).project(camera);
-        var behind = v2.z > 1;
-        var sx = (v2.x * 0.5 + 0.5) * W, sy = (-v2.y * 0.5 + 0.5) * H;
-        var dist = camera.position.distanceTo(p3), off = (L.isNew ? 0.42 : nodes[i].r) * pxu / dist * 1.0 + 20;
-        var rx = sx + off, ry = sy - L.h / 2;
-        var cx = sx - L.w / 2, cy = (i % 2 ? sy - off - L.h - 6 : sy + off + 2);
-        var x = lerp(rx, cx, m), y = lerp(ry, cy, m);
-        if (i === 8) x += lerp(0, 46, m);
-        if (i === 1) x += lerp(0, 34, m);
-        if (L.isNew) { x = sx + 40 - L.w; y = sy + 50; }
-        x = clamp(x, 8, W - L.w - 8); y = clamp(y, 8, H - L.h - 8);
-        L.el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
-        L.el.querySelector('.n').style.justifyContent = L.isNew ? 'flex-end' : (m > 0.5 ? 'center' : 'flex-start');
-        L.el.style.textAlign = L.isNew ? 'right' : (m > 0.5 ? 'center' : 'left');
-        var op = behind ? 0 : (state === 'past' ? lerp(0.55, 1, m) : 1);
-        if (L.isNew) op = 1;
-        L.el.style.opacity = op;
+        if (L.isNew) return;
+        var i = L.i, show = arrival(i) - 0.35, hide = arrival(i) + 0.9, state, op = 0;
+        if (t < O0) { state = (t >= show && t < hide) ? 'cur' : 'hidden'; if (state === 'cur') op = clamp(Math.min(t - show, hide - t) / 0.3, 0, 1); }
+        else { state = 'short'; op = shortOp; }
+        setState(L, state === 'hidden' ? 'short' : state);
+        L.op = op; L.state = state; L.el.style.opacity = op; L.ld.style.opacity = 0;
+        if (op <= 0) return;
+        proj(pos[i], pt);
+        if (state === 'cur') {
+          L.x = clamp(pt.sx - 16, 8, W - L.w - 8); L.y = clamp(pt.sy - L.h - 70, 8, H - L.h - 8); // above the line, clear of the beam
+          L.el.style.transform = 'translate(' + L.x.toFixed(1) + 'px,' + L.y.toFixed(1) + 'px)';
+        } else { L.sx = pt.sx; L.sy = pt.sy; vis.push(L); }
+      });
+      vis.sort(function (p, q) { return p.sx - q.sx; });
+      vis.forEach(function (L) {
+        var off = 22;
+        L.x = clamp(L.sx - L.w / 2, 8, W - L.w - 8);
+        L.y = L.side < 0 ? L.sy - off - L.h : L.sy + off;
+        for (var g = 0; g < 60 && placed.some(function (o) { return overlap(L, o, 6); }); g++) L.y += L.side * 6; // nudge away from the line
+        placed.push(L);
+        L.el.style.transform = 'translate(' + L.x.toFixed(1) + 'px,' + L.y.toFixed(1) + 'px)';
+        var y1 = L.side < 0 ? L.y + L.h : L.sy + 8, y2 = L.side < 0 ? L.sy - 8 : L.y;
+        if (y2 > y1) { L.ld.style.transform = 'translate(' + L.sx.toFixed(1) + 'px,' + y1.toFixed(1) + 'px)'; L.ld.style.height = (y2 - y1).toFixed(1) + 'px'; L.ld.style.opacity = 0.35 * L.op; }
       });
       renderer.render(scene, camera);
     }
@@ -351,7 +342,7 @@
     if (window.ResizeObserver) new ResizeObserver(resize).observe(container);
     else window.addEventListener('resize', resize);
     resize(); render(rm ? TOTAL : 0.0);
-    return { play: play, stop: stop, _render: render, TOTAL: TOTAL };
+    return { play: play, stop: stop, _render: render, TOTAL: TOTAL, _labels: labels, _yr: yrLabels };
   }
 
   window.HXChain3D = {
