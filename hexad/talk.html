@@ -11,53 +11,104 @@
 <style>
   html, body { height: 100%; overflow: hidden; }
   body { background: var(--bg); }
-  #net { position: fixed; inset: 0; width: 100vw; height: 100vh; opacity: 0; transition: opacity .8s; }
-  body.net-on #net { opacity: 1; }
-  .stage { position: fixed; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; pointer-events: none; }
-  .slide { position: absolute; inset: 0; padding: 96px 120px; opacity: 0; transition: opacity .6s; display: flex; flex-direction: column; }
+  #net, #callouts { position: fixed; inset: 0; width: 100vw; height: 100vh; opacity: 0; transition: opacity .8s; }
+  #callouts { pointer-events: none; z-index: 3; }
+  body.net-on #net, body.net-on #callouts { opacity: 1; }
+  .stage { position: fixed; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; pointer-events: none; z-index: 2; }
+  .slide { position: absolute; inset: 0; padding: 96px 120px; opacity: 0; transition: opacity .5s; display: flex; flex-direction: column; }
   .slide.on { opacity: 1; pointer-events: auto; }
-  .slide h1 { font-size: 104px; max-width: 1500px; }
-  .slide h2 { font-size: 64px; max-width: 1600px; }
-  .slide .sub { font-size: 32px; color: var(--muted); max-width: 1400px; margin: 0; }
-  .slide .viz { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; margin-top: 24px; }
+  .slide h1 { font-size: 112px; font-weight: 800; letter-spacing: -0.035em; max-width: 1100px; }
+  .slide h2 { font-size: 62px; max-width: 1600px; }
+  .slide .sub { font-size: 30px; line-height: 1.45; color: var(--muted); max-width: 1450px; margin: 0; }
+  .slide .viz { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; margin-top: 20px; }
   .slide .viz svg { width: 100%; height: 100%; }
-  .overlay h2 { text-shadow: 0 2px 18px var(--bg), 0 0 6px var(--bg); max-width: 760px; font-size: 58px; }
-  .overlay .sub { max-width: 640px; text-shadow: 0 0 10px var(--bg); }
-  .ticker { position: absolute; right: 120px; bottom: 90px; font: 800 150px var(--display); color: var(--muted); opacity: .55; }
-  .overlay .ticker { left: 120px; right: auto; }
-  .big { font: 800 260px/1 var(--display); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+  .foot { margin-top: auto; font-size: 22px; line-height: 1.45; color: var(--muted); max-width: 1680px; }
+  .foot b { color: var(--ink); font-weight: 600; }
+
+  /* Entrance: every slide opens with the headline unmasking upward, then its supporting parts rising in. */
+  @keyframes unmask { from { clip-path: inset(0 0 100% 0); transform: translateY(.35em); } to { clip-path: inset(0 0 -0.25em 0); transform: none; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+  .slide.on h1, .slide.on h2 { animation: unmask 1.1s var(--ease-out) both; }
+  .slide.on .sub { animation: rise .9s .3s var(--ease-out) both; }
+  .slide.on .viz, .slide.on .row, .slide.on .authors, .slide.on .chips, .slide.on .profile, .slide.on .points { animation: rise 1s .45s var(--ease-out) both; }
+  .slide.on .foot { animation: rise .9s .9s var(--ease-out) both; }
+
+  /* Title slide: particle hexagon behind the headline */
+  .slide canvas.field { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+  .kicker-line { font: 600 30px var(--sans); color: var(--muted); margin: 0; }
+
+  .overlay h2 { text-shadow: 0 2px 18px var(--bg), 0 0 6px var(--bg); max-width: 760px; font-size: 56px; }
+  .overlay .sub { max-width: 620px; text-shadow: 0 0 10px var(--bg); }
+  .ticker { position: absolute; left: 120px; bottom: 90px; font: 800 150px var(--display); color: var(--muted); opacity: .5; font-variant-numeric: tabular-nums; }
+  .bigrow { display: flex; align-items: baseline; gap: 36px; }
+  .big { font: 800 220px/1 var(--display); letter-spacing: -0.045em; font-variant-numeric: tabular-nums; }
   .row { display: flex; gap: 90px; margin-top: 60px; }
-  .row .stat b { display: block; font: 800 150px/1 var(--display); }
+  .row .stat b { display: block; font: 800 150px/1 var(--display); font-variant-numeric: tabular-nums; }
   .row .stat span { font-size: 30px; color: var(--muted); }
   .authors { font-size: 40px; line-height: 1.5; margin-top: 50px; }
   .authors small { display: block; font-size: 26px; color: var(--muted); }
-  .langs { display: flex; flex-wrap: wrap; gap: 22px 46px; margin-top: 60px; font: 700 56px var(--display); max-width: 1680px; }
-  .langs span { opacity: 0; transform: translateY(18px); transition: opacity .5s, transform .5s; }
-  .langs span.in { opacity: 1; transform: none; }
-  .langs span.en { color: var(--muted); }
-  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; margin-top: 90px; }
-  .steps div { border-top: 4px solid var(--series-1); padding-top: 26px; opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s; }
-  .steps div.in { opacity: 1; transform: none; }
-  .steps b { font: 800 58px var(--display); display: block; } .steps p { font-size: 28px; margin: 12px 0 0; color: var(--muted); }
-  .steps strong { color: var(--ink); font-size: 32px; display: block; margin-bottom: 6px; }
-  .legend { font-size: 26px; margin-top: 14px; }
-  .legend i { width: 20px; height: 20px; }
-  .foot { margin-top: auto; font-size: 26px; color: var(--muted); }
+
+  /* callouts over the network */
+  .leaders { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .leader line { stroke: var(--ink); stroke-opacity: .7; stroke-width: 1.5; } .leader circle { fill: none; stroke: var(--ink); stroke-width: 2; }
+  .leader.special line, .leader.special circle { stroke: var(--series-3); stroke-opacity: 1; }
+  .leader { animation: pop .45s var(--ease-out) both; } .leader.out { animation: fade .5s both; }
+  .callout { position: absolute; padding: 8px 12px; border-radius: 10px; background: rgb(15 48 61 / .94);
+    border: 1px solid var(--grid); color: var(--ink); font: 500 13px/1.3 var(--sans); width: max-content; max-width: 230px; box-shadow: 0 10px 28px rgb(0 0 0 / .35);
+    animation: pop .45s var(--ease-out) both; }
+  .callout b { display: block; font: 700 15px var(--display); }
+  .callout i { font-style: normal; color: var(--muted); font-size: 13px; }
+  .callout.special { border-color: var(--series-3); } .callout.special b { color: var(--series-3); }
+  .callout.big { font-size: 17px; max-width: 340px; } .callout.big b { font-size: 21px; }
+  .callout.out { animation: fade .5s both; }
+  @keyframes pop { from { opacity: 0; filter: blur(6px); } to { opacity: 1; filter: none; } }  /* no size change, so placement measures true size */
+  @keyframes fade { to { opacity: 0; } }
+
+  /* languages */
+  .chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px 60px; margin-top: 48px; }
+  .chips h3 { font: 700 26px var(--sans); margin: 0 0 14px; display: flex; align-items: center; gap: 12px; }
+  .chips h3 i { width: 16px; height: 16px; border-radius: 50%; display: inline-block; }
+  .chip { font: 700 40px/1.15 var(--display); margin: 0 0 14px; opacity: 0; transform: translateY(14px); transition: opacity .5s, transform .5s var(--ease-out); }
+  .chip small { display: block; font: 500 18px var(--sans); color: var(--muted); margin-top: 2px; }
+  .chip.in { opacity: 1; transform: none; }
+  .g-site .chip { color: var(--muted); }
+
+  /* profile: one label splitting into six scores */
+  .profile { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; margin-top: 50px; align-items: center; }
+  .label-one { font: 800 120px/1 var(--display); color: var(--series-1); transition: opacity .8s, filter .8s; }
+  .label-one.gone { opacity: .12; filter: blur(4px); }
+  .bars6 div { display: grid; grid-template-columns: 220px 1fr 90px; align-items: center; gap: 16px; font-size: 26px; margin: 10px 0; }
+  .bars6 span.b { height: 26px; border-radius: 0 6px 6px 0; background: var(--series-1); transform-origin: 0 50%; transform: scaleX(0); transition: transform 1s var(--ease-out); }
+  .bars6.go span.b { transform: scaleX(var(--v)); }
+  .bars6 em { font-style: normal; font-weight: 700; text-align: right; }
+  .points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 56px; margin-top: 56px; }
+  .points b { display: block; font: 800 84px/1 var(--display); color: var(--series-1); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+  .points p { font-size: 27px; line-height: 1.4; margin: 0; color: var(--ink); }
+  .points p small { display: block; color: var(--muted); font-size: 20px; margin-top: 10px; }
+  .tag { display: inline-block; font: 700 18px var(--sans); color: var(--series-3); border: 1.5px solid var(--series-3); border-radius: 999px; padding: 3px 12px; margin-left: 10px; vertical-align: middle; }
+
+  .slide .hexad .ty { font-size: 30px; } .slide .hexad .mo { font-size: 21px; }
+  body.net-on .slide.on { pointer-events: none; }  /* let the pointer reach the network for hover */
   .notes { display: none; }
   body.show-notes .slide.on .notes { display: block; position: fixed; left: 120px; right: 120px; bottom: 20px; background: var(--panel);
-    border: 1px solid var(--grid); padding: 18px 24px; font-size: 26px; border-radius: 10px; color: var(--ink); }
-  .count { position: fixed; right: 18px; bottom: 12px; font: 600 14px var(--sans); color: var(--muted); }
+    border: 1px solid var(--grid); padding: 18px 24px; font-size: 26px; border-radius: 10px; color: var(--ink); z-index: 9; }
+  .fs { position: fixed; right: 16px; bottom: 40px; z-index: 5; width: 46px; height: 46px; display: grid; place-items: center; cursor: pointer;
+    color: var(--ink); background: rgb(15 48 61 / .85); border: 1px solid var(--grid); border-radius: 12px; transition: opacity .4s, border-color .25s; }
+  .fs:hover { border-color: var(--brand-cyan); } body.idle .fs { opacity: 0; }
+  .count { position: fixed; right: 18px; bottom: 12px; font: 600 14px var(--sans); color: var(--muted); z-index: 4; }
 </style>
 </head>
 <body>
 <canvas id="net" aria-label="Radial citation network of the Hexad paper"></canvas>
+<div id="callouts"></div>
 <div class="stage" id="stage">
 
 <section class="slide" data-run="title">
-  <p class="sub">CHI PLAY 2026 · ten-year impact award</p>
+  <canvas class="field" id="field" aria-hidden="true"></canvas>
+  <p class="kicker-line">CHI PLAY 2026 · ten-year impact award</p>
   <h1 style="margin-top:auto">The Gamification User Types Hexad Scale, ten years on</h1>
   <p class="sub" style="margin-bottom:auto">Lennart E. Nacke · University of Waterloo</p>
-  <aside class="notes">Thank the committee. Name Gustavo first.</aside>
+  <aside class="notes">Thank the committee. Name Gustavo first. Each dot is one of the 594 papers that cite us, cyan for 2016, magenta for 2026.</aside>
 </section>
 
 <section class="slide">
@@ -69,12 +120,20 @@
     Andrzej Marczewski <small>Gamified UK, who designed the Hexad framework</small>
     Lennart E. Nacke <small>HCI Games Group, University of Waterloo</small>
   </div>
-  <aside class="notes">Gustavo wanted to study gamification and personalization through work industry could use. Andrzej’s framework. BrainHex with Chris Bateman, Bartle’s player types. Tell the early Gustavo memory here.</aside>
+  <aside class="notes">Gustavo wanted to study gamification and personalization through work industry could use. Andrzej’s framework. BrainHex with Chris Bateman, Bartle’s player types.</aside>
+</section>
+
+<section class="slide" data-run="timeline">
+  <h2>We wrote the items first, tested them on 133 people, then cut what did not hold</h2>
+  <p class="sub">From a rating form in July 2015 to the CHI PLAY stage in October 2016</p>
+  <div class="viz" id="v-tl"></div>
+  <aside class="notes">Gustavo and Rina rated candidate items for each type in July 2015. Version 1 in August. Survey in March 2016, retest in April, then the analysis cut 30 items to 24.</aside>
 </section>
 
 <section class="slide" data-run="hexagon">
   <h2>Twenty-four items score six motivations, and one person can score high on several</h2>
-  <div class="viz" id="v-hex"></div>
+  <div class="viz hexad" id="v-hex"></div>
+  <p class="foot">Magenta: one illustrative respondent, high on Free Spirit, Achiever, and Player at once.</p>
 </section>
 
 <section class="slide" data-run="stats">
@@ -85,84 +144,66 @@
     <div class="stat"><b data-to="133">0</b><span>respondents</span></div>
     <div class="stat"><b data-to="40">0</b><span>retest</span></div>
   </div>
-  <p class="foot">Tondello et al. (2016), CHI PLAY, pp. 229–233. doi.org/10.1145/2967934.2968082</p>
-</section>
-
-<section class="slide" data-run="retest">
-  <h2>Cutting six items strengthened the retest for five of six types</h2>
-  <p class="sub">Test–retest reliability (Pearson r, 40 people), 30-item draft to final 24 items</p>
-  <div class="viz" id="v-rt"></div>
-  <p class="foot">Tondello et al. (2016), Table 2. The Player scale fell to .357 and was revised in 2019.</p>
-</section>
-
-<section class="slide" data-run="crowd">
-  <h2>One respondent in 133 scored highest as a Disruptor</h2>
-  <p class="sub">Each dot is one person, placed by their highest-scoring type. Disruptor scores averaged 14.9 of 28; every other type averaged 20 to 22.</p>
-  <div class="viz" id="v-crowd"></div>
+  <p class="foot" data-cite="hexad2016"></p>
 </section>
 
 <section class="slide" data-run="elements" data-step>
   <h2>The data moved 14 of 31 game elements out of the framework’s grouping</h2>
-  <p class="sub">Correlations between type scores and element ratings in the 2016 study, significant cells only</p>
+  <p class="sub">Correlations between type scores and game-element ratings in the 2016 study, significant cells only</p>
   <div class="viz" id="v-hm"></div>
-  <aside class="notes">Press → once to regroup. Orange rows moved. Watch the Philanthropist group disappear.</aside>
-</section>
-
-<section class="slide" data-run="phil">
-  <h2>The most reliable scale matched none of its game elements</h2>
-  <p class="sub">Kendall’s τ between each type and its suggested elements, framework grouping → improved grouping</p>
-  <div class="viz" id="v-t7"></div>
-  <p class="foot">Tondello et al. (2016), Tables 1 and 7. Philanthropist α = .893, τ = .039. The improved grouping gained 9% overall.</p>
+  <p class="foot" data-cite="hexad2016" data-pre="Data and Table 7 from "></p>
+  <aside class="notes">Press → once to regroup. Orange rows moved. The Philanthropist group disappears: it matched none of its elements.</aside>
 </section>
 
 <section class="slide" data-run="scholar">
-  <p class="sub">Google Scholar, October 26, 2026</p>
-  <div class="big" id="v-big">0</div>
-  <h2>citations, and every index counts them differently</h2>
-  <div class="viz" id="v-src" style="max-height:330px"></div>
-  <aside class="notes">The next charts use OpenAlex because it records who cites whom. It finds 594 citing papers.</aside>
+  <div class="bigrow"><div class="big" id="v-big">0</div><h2 style="max-width:900px">citations on Google Scholar</h2></div>
+  <div class="viz" id="v-sch"></div>
+  <p class="foot">Citations per year on Google Scholar, as of November 5, 2026. The 2026 bar is still growing.</p>
 </section>
 
-<section class="slide" data-run="years1">
-  <h2>Direct citations climbed to about 75 a year by 2021 and held there</h2>
-  <p class="sub">Papers citing the Hexad paper each year, OpenAlex. 2026 runs to November 4.</p>
-  <div class="viz" id="v-y1"></div>
-  <div class="ticker" id="t-y1"></div>
+<section class="slide" data-run="share">
+  <h2>Gamification kept booming, but the Hexad’s share of it peaked in 2021</h2>
+  <p class="sub">Share of gamification papers that cite the Hexad: one in 20 in 2021, one in 50 by 2025, while gamification titles grew from 1,315 in 2019 to 3,374 in 2025.</p>
+  <div class="viz" id="v-share"></div>
+  <p class="foot"><b>Three hunches.</b> Citations split across versions: the 2019 validation and Hexad‑12 drew about 51 citations in 2026. The boom brought education and AI work that rarely personalizes. COVID paused the lab and classroom studies that use questionnaires.</p>
+  <aside class="notes">OpenAlex counts; gamification = works with “gamification” in the title. Google Scholar still shows growth every year to 149 in 2025, so this is about share, not decline.</aside>
 </section>
 
 <section class="slide" data-run="milestones">
   <h2>The most-cited follow-ups became citation engines of their own</h2>
-  <p class="sub">Citations to the eight most-cited follow-ups, split by the year they arrived</p>
+  <p class="sub">Each bar splits by the year its citations arrived, cyan for 2016 to magenta for 2026</p>
   <div class="viz" id="v-ms"></div>
 </section>
 
 <section class="slide overlay" data-run="ring1" data-net>
   <h2>594 papers cite the Hexad paper directly</h2>
-  <p class="sub">Each dot is a paper. Time runs clockwise from 2016. Bigger dots have more citations.</p>
+  <p class="sub">Each dot is a paper, clockwise by year. The biggest paper of each year pops out; amber marks Hexad‑12.</p>
   <div class="ticker" id="t-r1"></div>
 </section>
 
 <section class="slide overlay" data-run="ring2" data-net>
   <h2>Those papers drew 6,870 more</h2>
-  <p class="sub">The orange ring holds papers that cite a paper that cites the Hexad paper.</p>
+  <p class="sub">The magenta ring holds papers that cite a paper that cites the Hexad.</p>
   <div class="ticker" id="t-r2"></div>
 </section>
 
 <section class="slide" data-run="years2">
   <h2>The second ring kept growing every year through 2025</h2>
-  <div class="legend"><span><i style="background:var(--series-1)"></i>cite the Hexad paper</span><span><i style="background:var(--series-2)"></i>cite those papers</span></div>
+  <p class="sub">Hunch: review papers carry the Hexad into fields that never cite it directly. A quarter of the second ring (1,673 papers) arrives through a review, up from 14 in 2017 to 328 in 2025.</p>
+  <div class="legend" style="font-size:24px;margin-top:14px"><span><i style="background:var(--series-1)"></i>cite the Hexad paper</span><span><i style="background:var(--series-2)"></i>cite those papers</span></div>
   <div class="viz" id="v-y2"></div>
 </section>
 
-<section class="slide overlay" data-run="zoom" data-net>
-  <h2>One 2017 review pulled in 496 citations on its own</h2>
-  <p class="sub">Nacke and Deterding, “The maturing of gamification research,” Computers in Human Behavior</p>
+<section class="slide overlay" data-run="track" data-net>
+  <h2>Follow the biggest paper of each year around the track</h2>
+  <p class="sub">At each stop, the papers citing it light up.</p>
 </section>
 
 <section class="slide" data-run="chain">
-  <h2>Follow the most-cited descendant and the line runs nine generations to a 2026 museum study in Tashkent</h2>
+  <h2>The citation line runs nine generations deep, and new citers keep arriving</h2>
   <div class="viz" id="v-chain"></div>
-  <aside class="notes">Each step picks the most-cited paper published in or after its parent’s year. The line ends at a 2026 paper nobody has cited yet.</aside>
+  <p class="foot"><b>Newest citer, November 3, 2026:</b> <span data-cite="newest"></span></p>
+  <aside class="notes">The newest paper cites both the 2016 scale and Hexad‑12, and appears in PACM HCI 10(7), likely the CHI PLAY 2026 issue. A CHI PLAY 2026 Companion paper (Fifield et al.) also cites us.</aside>
 </section>
 
 <section class="slide" data-run="countries">
@@ -172,15 +213,14 @@
 </section>
 
 <section class="slide" data-run="langs">
-  <h2>The questionnaire now exists in 17 languages</h2>
-  <div class="langs" id="v-langs"></div>
-  <p class="foot">Documented minimum, October 26, 2026. Translation and validation are separate questions.</p>
+  <h2>The questionnaire speaks 17 languages, and 7 have a published validation</h2>
+  <div class="chips" id="v-langs"></div>
 </section>
 
 <section class="slide" data-run="lineage">
-  <h2>Gustavo and I kept rebuilding the scale, and Jeanine Krath made it shorter and stronger</h2>
+  <h2>The HCI Games Group refined the scale over time, then teamed up with Jeanine Krath on a shorter, more reliable version</h2>
   <div class="viz" id="v-lin"></div>
-  <aside class="notes">Credit Jeanine: 2021 player-types study, 2021 theory review (956 citations, generation two of the chain), and she led Hexad-12 with Maximilian Altmeyer.</aside>
+  <aside class="notes">Credit Jeanine: 2021 player-types study, 2021 theory review (956 citations, generation two of the chain), and she led Hexad‑12 with Maximilian Altmeyer.</aside>
 </section>
 
 <section class="slide" data-run="stats">
@@ -190,21 +230,41 @@
     <div class="stat"><b data-to="882">0</b><span>responses to choose items</span></div>
     <div class="stat"><b data-to="1101">0</b><span>new responses to confirm</span></div>
   </div>
-  <p class="foot">Krath, Altmeyer, Tondello, and Nacke (2023), CHI. Better model fit, reliability, and validity than the 24-item scale. 23,196 valid responses on the public Hexad-12 data page by October 26, 2026.</p>
+  <p class="foot" data-cite="W4366549291" data-pre="Better model fit, reliability, and validity than the 24-item scale. "></p>
 </section>
 
-<section class="slide" data-run="live1">
-  <h2>Twenty-three thousand Hexad‑12 tests later, the Disruptor is still rare</h2>
-  <p class="sub">Share of people whose single top type is each type: the 2016 study (133 people) and the public Hexad-12 test (12,454 people). Another 47% of the 23,502 test takers tie on two or more types. Cyan dots rose since 2016; magenta dots fell.</p>
-  <div class="viz" id="v-live1"></div>
-  <p class="foot">Live Hexad-12 test data, hexad.gamified.uk/data (Andrzej Marczewski), retrieved November 4, 2026.</p>
+<section class="slide" data-run="disruptor">
+  <h2>The Disruptor stayed the rarest type, in 2016 and across 23,502 Hexad‑12 tests</h2>
+  <p class="sub">Outlined dots: the 133 people of 2016 by top type. Filled dots: Hexad‑12 test shares rescaled to 133 people. Disruptor scores were the lowest both times.</p>
+  <div class="viz" id="v-dis"></div>
+  <p class="foot">Hexad‑12 data: hexad.gamified.uk/data (Andrzej Marczewski), 12,454 people with a single top type, retrieved November 4, 2026.</p>
 </section>
 
 <section class="slide" data-run="live2">
   <h2>Player motivation falls in every age band, while Philanthropist rises</h2>
-  <p class="sub">Mean proportional Hexad-12 scores by age, 18,423 test takers who shared their age. The lines cross in the 21–29 band.</p>
+  <p class="sub">Mean proportional Hexad‑12 scores by age, 18,423 test takers. The lines cross in the 21–29 band.</p>
   <div class="viz" id="v-live2"></div>
-  <aside class="notes">Proportional scores sum to 100% per person. These are self-selected visitors to a public test, not a sample of any population.</aside>
+  <aside class="notes">Self-selected visitors to a public test, not a population sample.</aside>
+</section>
+
+<section class="slide" data-run="profile">
+  <h2>The Hexad was a trait scale wearing type labels</h2>
+  <div class="profile">
+    <div class="label-one" id="lab1">Achiever</div>
+    <div class="bars6" id="bars6"></div>
+  </div>
+  <p class="foot">Hexad scores sit “on a continuous scale” (Tondello et al., 2019), and 47% of Hexad‑12 test takers tie on two or more types. We followed that logic to a trait model: Tondello, G. F., Arrambide, K., Ribeiro, G., Cen, A. J., &amp; Nacke, L. E. (2019). “I don’t fit into a single type”: A trait model and scale of game playing preferences. <i>INTERACT 2019</i>. https://doi.org/10.1007/978-3-030-29384-0_23</p>
+  <aside class="notes">Bars are the mean Hexad‑12 profile of 23,502 test takers. A label picks one bar; a profile keeps all six. The 2019 trait scale has five traits, 25 items, 332 participants.</aside>
+</section>
+
+<section class="slide" data-run="outlook">
+  <h2>Why a scale still matters when gamification moves on</h2>
+  <div class="points">
+    <div><b>3×</b><p>Gamification titles nearly tripled from 2019 to 2025, yet fewer of them measure who the players are.<small>1,315 to 3,374 titles; the Hexad share fell from 5% to 2% <span class="tag">hunch</span></small></p></div>
+    <div><b>17</b><p>Languages, a free short form, and 23,502 Hexad‑12 profiles give the field a shared yardstick for personalization.<small>Shared measures let studies add up instead of starting over</small></p></div>
+    <div><b>6</b><p>Motivations, read as a full profile, keep the Hexad useful as research moves from types to traits.<small>Tondello et al. (2019); Krath et al. (2023)</small></p></div>
+  </div>
+  <aside class="notes">Gamification lost the novelty it had a decade ago; the Hexad’s value now is measurement, not labels. Last point is interpretation.</aside>
 </section>
 
 <section class="slide">
@@ -213,92 +273,178 @@
 </section>
 
 <section class="slide" data-run="close">
+  <canvas class="field" id="field2" aria-hidden="true"></canvas>
   <h1 style="margin-top:auto">Thank you, Gustavo, Rina, Lisa, Marc, and Andrzej</h1>
   <p class="sub" style="margin-bottom:auto">Explore the citation network: acagamic.com/hexad</p>
 </section>
 
 </div>
 <div class="count" id="count"></div>
+<button class="fs" id="fs" aria-label="Full screen" title="Full screen (F)"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 8V3h5M14 3h5v5M19 14v5h-5M8 19H3v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
 <script src="viz.js"></script>
 <script>
-const slides = [...document.querySelectorAll('.slide')], stage = document.getElementById('stage');
-let cur = -1, data, study, live, net, viz = {}, stepped = false;
+const $ = id => document.getElementById(id);
+const slides = [...document.querySelectorAll('.slide')], stage = $('stage');
+let cur = -1, data, study, live, deck, net, viz = {}, stepped = false, hero, hero2;
 function fit() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `scale(${s}) translate(-50%,-50%)`; }
 addEventListener('resize', fit); fit();
 
+// Origin story as process steps (month level).
+const ORIGIN = [['2015-07', 'Gustavo and Rina rate candidate items'], ['2015-08', 'Questionnaire version 1'], ['2016-01', 'Validation study designed'],
+  ['2016-03', '133 people take the survey'], ['2016-04', '40 retake it; 30 items cut to 24'], ['2016-10', 'Presented at CHI PLAY 2016', 1]];
+// Share of gamification papers citing the Hexad (OpenAlex, November 5, 2026): Hexad citers / works with "gamification" in the title.
+const SHARE = { years: [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
+  hexad: [19, 36, 46, 65, 76, 76, 78, 78, 68], gamif: [957, 1119, 1315, 1462, 1546, 1616, 1959, 2537, 3374] };
+// Mean Hexad-12 profile across 23,502 tests (hexad.gamified.uk/data).
+const PROFILE = [['Achiever', 18.47], ['Free Spirit', 18.19], ['Philanthropist', 18.16], ['Player', 17.67], ['Socialiser', 16.31], ['Disruptor', 11.21]];
+
+// Callouts over the network canvas.
+const box = $('callouts');
+const clearCallouts = () => { box.querySelectorAll('.callout').forEach(e => e.remove()); lines.innerHTML = ''; };
+// Callout cards: each sits just outside its dot, never off screen, never over the headline column or another card,
+// and a leader line ties it back to its dot.
+const NS = 'http://www.w3.org/2000/svg';
+const lines = document.createElementNS(NS, 'svg'); lines.setAttribute('class', 'leaders'); box.appendChild(lines);
+function callout(n, ms, cls = '') {
+  const [x, y] = net.screen(n), [ox, oy] = net.screen(net.origin), d = Math.hypot(x - ox, y - oy) || 1, ux = (x - ox) / d;
+  const el = document.createElement('div'), title = (n.t || '').length > 64 ? n.t.slice(0, 62) + '…' : n.t;
+  el.className = 'callout ' + cls; el.style.visibility = 'hidden';
+  el.innerHTML = `<b>${n.a} (${n.y})</b>${title}<br><i>${HX.fmt(n.c)} citations</i>`;
+  box.appendChild(el);
+  const w = el.offsetWidth, h = el.offsetHeight, gap = 8, minX = innerWidth * 0.42, maxX = innerWidth - 80;
+  const taken = [...box.querySelectorAll('.callout:not(.out)')].filter(o => o !== el).map(o => o.getBoundingClientRect());
+  const free = (l, tp) => l >= minX && l + w <= maxX && tp >= 8 && tp + h <= innerHeight - 8 &&
+    !taken.some(o => l < o.right + gap && l + w > o.left - gap && tp < o.bottom + gap && tp + h > o.top - gap);
+  // Candidates: outward side first, stepping up and down; then the inward side.
+  const side = ux < 0 ? [x - 34 - w, x + 34] : [x + 34, x - 34 - w];
+  let best = null;
+  for (const l of side) { for (let k = 0; k < 24 && !best; k++) { const tp = y - h / 2 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * (h / 2 + gap); if (free(l, tp)) best = [l, tp]; } if (best) break; }
+  if (!best) best = [Math.min(Math.max(side[0], minX), maxX - w), Math.min(Math.max(y - h / 2, 8), innerHeight - 8 - h)];
+  el.style.left = best[0] + 'px'; el.style.top = best[1] + 'px'; el.style.visibility = '';
+  // Leader line from the dot to the nearest point on the card, with a ring on the dot.
+  const ex = Math.min(Math.max(x, best[0]), best[0] + w), ey = Math.min(Math.max(y, best[1]), best[1] + h);
+  const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'leader ' + cls);
+  g.innerHTML = `<line x1="${x}" y1="${y}" x2="${ex}" y2="${ey}"/><circle cx="${x}" cy="${y}" r="9"/>`;
+  lines.appendChild(g);
+  if (ms) setTimeout(() => { el.classList.add('out'); g.classList.add('out'); setTimeout(() => { el.remove(); g.remove(); }, 600); }, ms);
+  return [el, g];
+}
+// After a network animation finishes, hovering any dot shows its card.
+let netBusy = false, hoverN = null, hoverEls = [];
+const dropHover = () => { hoverEls.forEach(e => e.remove()); hoverEls = []; hoverN = null; };
+$('net').addEventListener('pointermove', e => {
+  if (netBusy || !net) return;
+  const [x, y] = net.k.invert([e.clientX, e.clientY]), n = net.qt.find(x, y, 12 / net.k.k + 3);
+  if (n === hoverN) return; dropHover(); hoverN = n;
+  if (n && n.deg > 0) hoverEls = callout(n, 0, 'hover');
+});
+$('net').addEventListener('pointerleave', dropHover);
+const topOf = y => net.d1.filter(n => n.y === y).sort((a, b) => b.c - a.c)[0];
+const onSlide = run => slides[cur]?.dataset.run === run;
+
 const runs = {
-  retest: () => (viz.rt ??= HX.dumbbell(document.getElementById('v-rt'), study.retest.rows, { W: 1600, rowH: 92, domain: [0.3, 0.9] })).play(),
-  crowd: () => (viz.cr ??= HX.crowd(document.getElementById('v-crowd'), study.dominant, { W: 1680, H: 640 })).play(),
-  elements: () => (viz.hm ??= HX.heatmap(document.getElementById('v-hm'), study.elements, study.types, { W: 1680, rowH: 23 })).play(),
-  phil: () => (viz.t7 ??= HX.dumbbell(document.getElementById('v-t7'), study.table7.rows, { W: 1600, rowH: 92, domain: [0, 0.5] })).play(),
-  hexagon: () => (viz.hex ??= HX.hexagon(document.getElementById('v-hex'))).play(),
-  stats: s => s.querySelectorAll('[data-to]').forEach((el, i) => setTimeout(() => HX.countUp(el, +el.dataset.to, 1200), i * 250)),
+  title: () => hero?.replay(),
+  close: () => hero2?.replay(),
+  timeline: () => (viz.tl ??= HX.timeline($('v-tl'), ORIGIN, { W: 1680, H: 640 })).play(),
+  hexagon: () => (viz.hex ??= HX.hexagon($('v-hex'), { W: 1100, H: 760, R: 280, profile: [0.62, 0.5, 0.92, 0.88, 0.8, 0.28], desc: {
+    Philanthropist: 'Wants purpose. Gives and helps others without expecting a reward.',
+    Socialiser: 'Wants relatedness. Interacts with others and builds social connections.',
+    'Free Spirit': 'Wants autonomy. Explores and creates on their own terms.',
+    Achiever: 'Wants competence. Learns, improves, and masters challenges.',
+    Player: 'Wants rewards. Does what it takes to earn points, prizes, and status.',
+    Disruptor: 'Wants change. Pushes the system, for better or for worse.' } })).play(),
+  stats: s => s.querySelectorAll('[data-to]').forEach((el, i) => setTimeout(() => HX.countUp(el, +el.dataset.to, 1300), 300 + i * 250)),
+  elements: () => (viz.hm ??= HX.heatmap($('v-hm'), study.elements, study.types, { W: 1680, rowH: 21 })).play(),
   scholar: () => {
-    HX.countUp(document.getElementById('v-big'), data.counts.google_scholar, 2400);
-    (viz.src ??= HX.hbars(document.getElementById('v-src'), [['Google Scholar', 1073], ['OpenAlex', data.counts.openalex], ['Semantic Scholar', 558], ['Crossref', 423]], { W: 1500, rowH: 70, stagger: 250 })).play();
+    const rows = deck.scholar.years, stagger = 330, big = $('v-big');
+    (viz.sch ??= HX.yearBars($('v-sch'), { years: rows.map(([y, n]) => [y, n, 0]) }, { W: 1680, H: 560, stagger, ramp: true })).play();
+    // The headline number climbs with the bars, from Scholar's 14 earliest citations to today's total.
+    let sum = deck.scholar.total - rows.reduce((s, r) => s + r[1], 0); big.textContent = HX.fmt(sum);
+    rows.forEach(([, n], i) => setTimeout(() => { if (!onSlide('scholar')) return; const from = sum; sum += n; const to = sum, t0 = performance.now();
+      const tick = now => { const p = Math.min(1, (now - t0) / 600); big.textContent = HX.fmt(Math.round(from + (to - from) * p)); if (p < 1) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick); }, i * stagger + 100));
   },
-  years1: () => (viz.y1 ??= HX.yearBars(document.getElementById('v-y1'), data, { ticker: document.getElementById('t-y1'), W: 1600, H: 640, stagger: 380 })).play(),
-  years2: () => (viz.y2 ??= HX.yearBars(document.getElementById('v-y2'), data, { series: ['d1', 'd2'], W: 1600, H: 660, stagger: 260 })).play(),
-  milestones: () => (viz.ms ??= HX.timeBars(document.getElementById('v-ms'), [...data.nodes].sort((a, b) => b[3] - a[3]).slice(0, 8),
-    { W: 1600, rowH: 78, label: r => `${r[4]} ${r[2]}`, total: r => r[3], years: r => r[9] })).play(),
-  countries: () => (viz.co ??= HX.hbars(document.getElementById('v-co'), data.countries.slice(0, 12),
-    { W: 1600, rowH: 58, label: r => HX.country(r[0]), stagger: 120 })).play(),
-  chain: () => (viz.ch ??= HX.chain(document.getElementById('v-chain'), data, { W: 1680, H: 760, stagger: 650 })).play(),
-  langs: () => {
-    const el = document.getElementById('v-langs');
-    const L = ['English', 'Arabic', 'Catalan', 'Chinese', 'Dutch', 'French', 'German', 'Hungarian', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Persian', 'Portuguese', 'Spanish', 'Swedish', 'Turkish'];
-    el.innerHTML = L.map((l, i) => `<span class="${i ? '' : 'en'}">${l}</span>`).join('');
-    [...el.children].forEach((s, i) => setTimeout(() => s.classList.add('in'), 120 + i * 160));
-  },
-  live1: () => (viz.l1 ??= HX.dumbbell(document.getElementById('v-live1'), live.singleType.rows.map(([t, v], i) => [t, live.study2016.rows[i][1], v]),
-    { W: 1600, rowH: 86, domain: [0, 30], fmtV: v => v.toFixed(1) + '%' })).play(),
-  live2: () => (viz.l2 ??= HX.lines(document.getElementById('v-live2'), live.age.bands, { Philanthropist: live.age.Philanthropist, Player: live.age.Player },
-    { W: 1600, H: 600, domain: [15, 20], note: j => ` · ${HX.fmt(live.age.n[j])} people` })).play(),
-  lineage: () => (viz.lin ??= HX.lineage(document.getElementById('v-lin'), { W: 1680, rowH: 70 })).play(),
+  share: () => (viz.sh ??= HX.lines($('v-share'), SHARE.years.map(String), { 'Hexad share': SHARE.years.map((y, i) => +(SHARE.hexad[i] / SHARE.gamif[i] * 100).toFixed(1)) },
+    { W: 1680, H: 520, domain: [0, 6], note: j => ` · ${SHARE.hexad[j]} of ${HX.fmt(SHARE.gamif[j])} gamification papers` })).play(),
+  milestones: () => (viz.ms ??= HX.timeBars($('v-ms'), [...data.nodes].sort((a, b) => b[3] - a[3]).slice(0, 7),
+    { W: 1680, rowH: 92, lw: 330, label: r => `${r[4]} (${r[2]})`, total: r => r[3], years: r => r[9], sub: r => `${r[1]} · doi.org/${r[6]}` })).play(),
   ring1: async () => {
-    net.focus = null; net.setRing2(false); net.T = 2016; net.draw(); await net.fit(0, 470);
-    const t = document.getElementById('t-r1');
-    await net.reveal({ dur: 10000, onYear: y => t.textContent = y });
+    netBusy = true; clearCallouts(); net.focus = null; net.comet = null; net.stars = false; net.setRing2(false); net.T = 2016; net.draw(); await net.fit(0, 470);
+    const t = $('t-r1'), h12 = net.byId.get(deck.hexad12); let last = 2016;
+    await net.reveal({ dur: 13000, onYear: y => { t.textContent = y; while (last < y) { const yy = last++; if (!onSlide('ring1') || yy < 2017 || yy > 2025) continue;
+      callout(topOf(yy), 2000); if (yy === 2023 && h12) setTimeout(() => onSlide('ring1') && callout(h12, 0, 'special'), 2200); } } });
+    netBusy = false;
   },
   ring2: async () => {
-    net.focus = null; net.T = 2027; net.T2 = 2016;
+    netBusy = true; clearCallouts(); net.focus = null; net.comet = null; net.T = 2027; net.T2 = 2016;
     net.fit(2500, 800);
-    const t = document.getElementById('t-r2');
-    await net.reveal({ dur: 9000, ring2: true, onYear: y => t.textContent = y });
+    await net.reveal({ dur: 9000, ring2: true, onYear: y => $('t-r2').textContent = y });
+    netBusy = false;
   },
-  zoom: async () => {
-    net.setRing2(true); net.focus = null; net.draw();
-    await net.fit(800, 800);
-    const n = net.byId.get('W2576624358'); net.focus = n; net.draw();
-    await net.zoomTo(n, 1.6, 2600);
+  years2: () => (viz.y2 ??= HX.yearBars($('v-y2'), data, { series: ['d1', 'd2'], W: 1680, H: 560, stagger: 260 })).play(),
+  track: async () => {
+    netBusy = true; clearCallouts(); net.setRing2(true); net.T = net.T2 = 2027; net.focus = null; net.comet = null; await net.fit(500, 800);
+    const stops = d3.range(2017, 2026).map(topOf).filter(Boolean);
+    await net.track(stops, { scale: 1.35, travel: 1000, hold: 1700, onStop: s => onSlide('track') && callout(s, 1600, 'big') });
+    if (onSlide('track')) { net.comet = null; net.focus = null; await net.fit(1800, 800); }
+    netBusy = false;
+  },
+  chain: () => (viz.ch ??= HX.chain($('v-chain'), data, { W: 1680, H: 640, stagger: 600 })).play(),
+  countries: () => (viz.co ??= HX.hbars($('v-co'), data.countries.slice(0, 12),
+    { W: 1680, rowH: 54, label: r => `${flag(r[0])}  ${HX.country(r[0])}`, stagger: 120 })).play(),
+  langs: () => {
+    const el = $('v-langs'), G = [['validated', 'Validated in a publication', 'var(--series-1)'], ['mixed', 'Adapted, mixed results', 'var(--series-3)'], ['site', 'Translation on our website', 'var(--muted)']];
+    el.innerHTML = G.map(([k, name, c]) => `<div class="g-${k}"><h3><i style="background:${c}"></i>${name}</h3>${deck.langs.filter(l => l[1] === k)
+      .map(l => `<div class="chip" ${k === 'validated' ? 'style="color:var(--series-1)"' : ''}>${l[0]}${l[2] ? `<small>${l[2]}</small>` : ''}</div>`).join('')}</div>`).join('');
+    [...el.querySelectorAll('.chip')].forEach((c, i) => setTimeout(() => c.classList.add('in'), 400 + i * 120));
+  },
+  lineage: () => (viz.lin ??= HX.lineage($('v-lin'), { W: 1680, rowH: 70 })).play(),
+  disruptor: () => (viz.dis ??= HX.crowdCompare($('v-dis'), study.dominant, live.singleType.rows, { W: 1680, H: 560 })).play(),
+  live2: () => (viz.l2 ??= HX.lines($('v-live2'), live.age.bands, { Philanthropist: live.age.Philanthropist, Player: live.age.Player },
+    { W: 1680, H: 600, domain: [15, 20], note: j => ` · ${HX.fmt(live.age.n[j])} people` })).play(),
+  profile: () => {
+    const lab = $('lab1'), bars = $('bars6');
+    bars.innerHTML = PROFILE.map(([t, v]) => `<div><span>${t}</span><span class="b" style="--v:${v / 20}"></span><em>${v}%</em></div>`).join('');
+    lab.classList.remove('gone'); bars.classList.remove('go');
+    setTimeout(() => { lab.classList.add('gone'); bars.classList.add('go'); }, 1600);
   },
 };
+const flag = code => String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt(0)));
 
 function go(i) {
   i = Math.max(0, Math.min(slides.length - 1, i)); if (i === cur) return;
-  slides[cur]?.classList.remove('on'); cur = i; stepped = false; const s = slides[i]; s.classList.add('on');
+  slides[cur]?.classList.remove('on'); cur = i; stepped = false; clearCallouts(); dropHover();
+  const s = slides[i]; void s.offsetWidth; s.classList.add('on');   // reflow restarts the entrance animation
   document.body.classList.toggle('net-on', s.hasAttribute('data-net'));
-  document.getElementById('count').textContent = `${i + 1} / ${slides.length}`;
+  $('count').textContent = `${i + 1} / ${slides.length}`;
   history.replaceState(null, '', '#' + (i + 1));
   if (data && runs[s.dataset.run]) runs[s.dataset.run](s);
 }
+function next() { if (slides[cur].hasAttribute('data-step') && !stepped) { stepped = true; viz.hm?.regroup(); } else go(cur + 1); }
 addEventListener('keydown', e => {
   if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
   else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); go(cur - 1); }
-  else if (e.key === 'r') { const i = cur; cur = -1; go(i); }            // replay the current animation
+  else if (e.key === 'r') { const i = cur; slides[i].classList.remove('on'); cur = -1; go(i); }   // replay the current slide
   else if (e.key === 'n') document.body.classList.toggle('show-notes');
-  else if (e.key === 'f') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  else if (e.key === 'f') toggleFs();
 });
-addEventListener('click', e => { if (e.target.closest('a')) return; e.clientX < innerWidth / 4 ? go(cur - 1) : next(); });
-// A slide marked data-step spends its first forward press on a second animation beat.
-function next() { if (slides[cur].hasAttribute('data-step') && !stepped) { stepped = true; viz.hm?.regroup(); } else go(cur + 1); }
-
+addEventListener('click', e => { if (e.target.closest('a, button')) return; e.clientX < innerWidth / 4 ? go(cur - 1) : next(); });
+const toggleFs = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+$('fs').onclick = toggleFs;
+// Hide the full-screen button while the mouse rests, like a slide viewer.
+let idleT; addEventListener('mousemove', () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 2500); });
 addEventListener('hashchange', () => { const i = (+location.hash.slice(1) || 1) - 1; if (i !== cur) go(i); });
-Promise.all([HX.load(), HX.loadStudy(), HX.loadLive()]).then(([d, st, lv]) => {
-  data = d; study = st; live = lv;
-  net = new HX.Net(document.getElementById("net"), d, { interactive: false });
+
+Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').then(r => r.json())]).then(([d, st, lv, dk]) => {
+  data = d; study = st; live = lv; deck = dk;
+  // Full APA citations from the deck data
+  document.querySelectorAll('[data-cite]').forEach(el => { const k = el.dataset.cite;
+    el.textContent = (el.dataset.pre || '') + (k === 'hexad2016' ? deck.hexad2016 : k === 'newest' ? deck.newest.apa : deck.apa[k] || ''); });
+  hero = HX.heroField($('field'), d); hero2 = HX.heroField($('field2'), d);
+  net = new HX.Net($('net'), d, { interactive: false });
   net.shiftX = 0.17;  // keep the network clear of the left-hand headline
+  const h12 = net.byId.get(deck.hexad12); if (h12) net.special = new Map([[h12, '--series-3']]);
   go((+location.hash.slice(1) || 1) - 1);
 });
 </script>
