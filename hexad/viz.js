@@ -83,15 +83,15 @@ const HX = (() => {
   }
 
   // Horizontal bars for countries or citation sources.
-  function hbars(host, rows, { W = 900, rowH = 34, label = r => r[0], value = r => r[1], cls = 'hx-d1', stagger = 70 } = {}) {
+  function hbars(host, rows, { W = 900, rowH = 34, label = r => r[0], value = r => r[1], cls = 'hx-d1', stagger = 70, lw: LW = 210, fs = 17, bar = 1 } = {}) {
     host.innerHTML = '';
-    const H = rows.length * rowH + 10, lw = 210;
+    const H = rows.length * rowH + 10, lw = LW, bh = (rowH - 12) * bar, by = (rowH - bh) / 2;
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img');
     const x = d3.scaleLinear([0, d3.max(rows, value)], [0, W - lw - 70]);
     const g = svg.selectAll('g').data(rows).join('g').attr('transform', (r, i) => `translate(0,${i * rowH})`);
-    g.append('text').attr('class', 'hx-lab').attr('x', lw - 12).attr('y', rowH / 2 + 5).attr('text-anchor', 'end').text(label);
-    const bars = g.append('rect').attr('class', `hx-bar ${cls}`).attr('x', lw).attr('y', 5).attr('height', rowH - 12).attr('rx', 4).attr('width', 0);
-    const vals = g.append('text').attr('class', 'hx-val').attr('y', rowH / 2 + 5).attr('x', lw + 8).style('opacity', 0).text(r => fmt(value(r)));
+    g.append('text').attr('class', 'hx-lab').style('font-size', fs + 'px').attr('x', lw - 16).attr('y', rowH / 2 + fs * 0.35).attr('text-anchor', 'end').text(label);
+    const bars = g.append('rect').attr('class', `hx-bar ${cls}`).attr('x', lw).attr('y', by).attr('height', bh).attr('rx', Math.min(6, bh / 2)).attr('width', 0);
+    const vals = g.append('text').attr('class', 'hx-val').style('font-size', Math.round(fs * 0.9) + 'px').attr('y', rowH / 2 + fs * 0.32).attr('x', lw + 8).style('opacity', 0).text(r => fmt(value(r)));
     function play() {
       bars.interrupt().attr('width', 0).transition().delay((r, i) => reduced ? 0 : i * stagger).duration(reduced ? 0 : 800).ease(d3.easeCubicOut).attr('width', r => x(value(r)));
       vals.interrupt().style('opacity', 0).attr('x', lw + 8).transition().delay((r, i) => reduced ? 0 : i * stagger + 300).duration(500)
