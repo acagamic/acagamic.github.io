@@ -56,7 +56,8 @@
   }
   function trunc(s, n) { if (s.length <= n) return s; var c = s.slice(0, n - 1), k = c.lastIndexOf(' '); return (k > n - 14 ? c.slice(0, k) : c).trim() + '…'; }
 
-  function build(container, chain, newest) {
+  function build(container, chain, newest, opts) {
+    opts = opts || {};
     var T = window.THREE;
     injectCSS();
     var data = chain.slice(0, 9);
@@ -79,7 +80,9 @@
       W = container.clientWidth || r.width || 1680; H = container.clientHeight || r.height || 700;
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
       renderer.setSize(Math.max(2, Math.round(r.width || W)), Math.max(2, Math.round(r.height || H)), false);
-      camera.aspect = W / H; camera.updateProjectionMatrix();
+      camera.aspect = W / H;
+      if (opts.offsetY) camera.setViewOffset(W, H, 0, -opts.offsetY * H, W, H);  // full-page use: push the line below the heading
+      camera.updateProjectionMatrix();
       if (!playing) render(curT);
     }
 
@@ -257,6 +260,7 @@
       cPos.set(cx - 2.6, 1.6, 9 * 2.312 * dolly);  // distances scaled so the narrower lens keeps the same framing
       var m = eio((t - O0) / OVD);
       if (m > 0) { cPos.lerp(END_P, m); cLook.lerp(END_C, m); }
+      cPos.z *= Math.max(1, 2.4 / camera.aspect) * (opts.zoomOut || 1);  // narrower stages pull back so the whole line still fits
       camera.position.copy(cPos); camera.lookAt(cLook);
       return m;
     }
@@ -375,18 +379,21 @@
     if (window.ResizeObserver) new ResizeObserver(resize).observe(container);
     else window.addEventListener('resize', resize);
     resize(); render(rm ? TOTAL : 0.0);
-    return { play: play, stop: stop, rewind: rewind, _render: render, TOTAL: TOTAL, _labels: labels, _yr: yrLabels };
+    function seek(t) { stop(); render(clamp(t, 0, TOTAL + 2)); }
+    return { play: play, stop: stop, rewind: rewind, seek: seek, _render: render, TOTAL: TOTAL, _labels: labels, _yr: yrLabels };
   }
 
   window.HXChain3D = {
     withThree: withThree,
-    create: function (container, chain, newest) {
-      var inst = null, want = null;
-      withThree(function () { inst = build(container, chain, newest); if (want === 'play') inst.play(); });
+    create: function (container, chain, newest, opts) {
+      var inst = null, want = null, at = null;
+      withThree(function () { inst = build(container, chain, newest, opts); if (want === 'play') inst.play(); else if (at !== null) inst.seek(at); });
       return {
         play: function () { want = 'play'; if (inst) inst.play(); },
         stop: function () { want = 'stop'; if (inst) inst.stop(); },
         rewind: function () { want = 'stop'; if (inst) inst.rewind(); },
+        seek: function (t) { want = null; at = t; if (inst) inst.seek(t); },
+        marks: { newest: T_NEW, arc: T_ARC },
         duration: TOTAL,
         _inst: function () { return inst; }
       };

@@ -71,3 +71,9 @@ path.hx-thread2 { stroke: var(--series-2); } circle.hx-thread2 { fill: var(--ser
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* lineage motion */
+.hx-cursor { stroke: var(--brand-pink); stroke-width: 2; stroke-dasharray: 4 6; }
+.hx-ring { fill: none; stroke: var(--brand-pink); stroke-width: 2; }
+.hx-h12frame { fill: rgb(176 32 112 / .06); stroke: var(--series-2); stroke-width: 2; opacity: 0; }
+.hx-h12tag { font: 700 22px var(--sans); fill: var(--series-2); opacity: 0; }
+.hx-final path.hx-thread1 { filter: drop-shadow(0 0 6px var(--series-1)); } .hx-final path.hx-thread2 { filter: drop-shadow(0 0 6px var(--series-2)); }
