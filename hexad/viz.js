@@ -175,6 +175,13 @@ const HX = (() => {
     }
     function grow() {
       if (card) card.interrupt().transition().duration(300).style('opacity', 0);
+      if (shape && !shape.tag) {
+        // Label the shape so nobody reads it as data: it is one example person.
+        shape.tag = svg.append('g').attr('class', 'hx-example').style('opacity', 0).attr('transform', `translate(${cx + R * 0.95},${cy + R * 0.55})`);
+        shape.tag.append('line').attr('x1', -R * 0.38).attr('y1', -R * 0.1).attr('x2', 0).attr('y2', 0);
+        shape.tag.append('text').attr('x', 10).attr('y', 6).text('Example: one person’s scores');
+      }
+      shape?.tag?.interrupt().style('opacity', 0).transition().delay(reduced ? 0 : 900).duration(500).style('opacity', 1);
       g.select('circle').interrupt().transition().duration(300).attr('r', 9);
       if (shape) shape.interrupt().transition().duration(reduced ? 0 : 1600).ease(d3.easeElasticOut.amplitude(1).period(0.5))
         .attr('points', profile.map((v, i) => shape.at(v, i).join(',')).join(' '));
@@ -182,6 +189,7 @@ const HX = (() => {
     function play() {
       if (card) card.interrupt().style('opacity', 0);
       if (shape) shape.interrupt().attr('points', profile.map((v, i) => shape.at(0, i).join(',')).join(' '));
+      shape?.tag?.interrupt().style('opacity', 0);
       poly.interrupt().attr('stroke-dasharray', `${len} ${len}`).attr('stroke-dashoffset', len)
         .transition().duration(reduced ? 0 : 1600).ease(d3.easeCubicInOut).attr('stroke-dashoffset', 0);
       g.interrupt().style('opacity', 0).transition().delay((d, i) => reduced ? 0 : 250 + i * 260).duration(450).style('opacity', 1);
@@ -748,9 +756,85 @@ const HX = (() => {
     return { play, regroup };
   }
 
+// Test-retest, explained in motion: 133 dots answer, 40 of them walk over to answer again, then their scores are compared.
+function retest(host) {
+  const W = 1680, H = 560, svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+    .attr('aria-label', '133 respondents; 40 answered again two weeks later; retest correlations by type');
+  const s = 26, L = { x: 90, y: 120, cols: 12 }, R = { x: 640, y: 120, cols: 8 };
+  const pick = new Set(d3.range(133).filter(i => (i * 37) % 133 < 40));
+  const dots = d3.range(133).map(i => ({ i, re: pick.has(i), x: L.x + (i % L.cols) * s, y: L.y + Math.floor(i / L.cols) * s }));
+  let k = 0; dots.filter(d => d.re).forEach(d => { d.rx = R.x + (k % R.cols) * s; d.ry = R.y + Math.floor(k / R.cols) * s; k++; });
+  const head = (x, a, b) => { const g = svg.append('g').attr('transform', `translate(${x},60)`);
+    g.append('text').attr('class', 'hx-lab hx-strong').style('font-size', '26px').text(a); g.append('text').attr('class', 'hx-muted').attr('y', 30).style('font-size', '20px').text(b); return g; };
+  head(L.x, 'March 2016', '133 people, 24 items'); const h2 = head(R.x, 'Two weeks later', 'The same 40 people, again').style('opacity', 0);
+  const c = svg.selectAll('circle.p').data(dots).join('circle').attr('class', 'p').attr('r', 9).attr('cx', d => d.x).attr('cy', d => d.y).attr('fill', 'var(--series-1)');
+  const T2 = [['Philanthropist', .852], ['Socialiser', .853], ['Free Spirit', .631], ['Achiever', .798], ['Disruptor', .782], ['Player', .357]];
+  const bx = 1040, bw = 520, bars = svg.append('g').style('opacity', 0);
+  bars.append('text').attr('class', 'hx-lab hx-strong').attr('x', bx).attr('y', 60).style('font-size', '26px').text('Do the two answers match?');
+  bars.append('text').attr('class', 'hx-muted').attr('x', bx).attr('y', 90).style('font-size', '20px').text('Retest correlation, 1 = identical');
+  const row = bars.selectAll('g').data(T2).join('g').attr('transform', (d, i) => `translate(${bx},${130 + i * 62})`);
+  row.append('text').attr('class', 'hx-lab').attr('y', 22).style('font-size', '21px').text(d => d[0]);
+  const bar = row.append('rect').attr('x', 170).attr('y', 4).attr('height', 26).attr('rx', 4).attr('width', 0).attr('fill', d => d[1] < .5 ? 'var(--series-2)' : 'var(--series-1)');
+  row.append('text').attr('class', 'hx-val').attr('x', d => 180 + d[1] * (bw - 200)).attr('y', 24).style('font-size', '20px').text(d => d[1].toFixed(2).replace(/^0/, ''));
+  return () => {
+    c.interrupt().attr('cx', d => d.x).attr('cy', d => d.y).attr('fill-opacity', 1).attr('r', 0)
+      .transition().delay(d => d.i * 6).duration(300).attr('r', 9)
+      .transition().delay(d => 900 + (d.re ? 0 : 0)).duration(d => d.re ? 1200 : 600).ease(d3.easeCubicInOut)
+      .attr('cx', d => d.re ? d.rx : d.x).attr('cy', d => d.re ? d.ry : d.y).attr('fill-opacity', d => d.re ? 1 : 0.22);
+    h2.interrupt().style('opacity', 0).transition().delay(2300).duration(500).style('opacity', 1);
+    bars.interrupt().style('opacity', 0).transition().delay(3200).duration(500).style('opacity', 1);
+    bar.interrupt().attr('width', 0).transition().delay((d, i) => 3400 + i * 180).duration(700).attr('width', d => d[1] * (bw - 200));
+  };
+}
+
+
+// Second ring per year (magenta) with the part that arrives through the four big reviews (pink), beside the direct citers (cyan).
+function reviewBars(host, rows, { W = 1680, H = 560, names = '' } = {}) {
+  host.innerHTML = '';
+  const m = { t: 40, r: 20, b: 46, l: 20 }, svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
+    .attr('aria-label', 'Per year: papers citing the Hexad, papers citing those, and the part arriving through four review papers');
+  const x = d3.scaleBand(rows.map(r => r[0]), [m.l, W - m.r]).padding(0.2), bw = x.bandwidth();
+  const y = d3.scaleLinear([0, d3.max(rows, r => r[2]) * 1.12], [H - m.b, m.t]), bp = (bx, top, h) => barPathR(bx, top, bw * 0.62, h);
+  svg.append('line').attr('class', 'hx-axis').attr('x1', m.l).attr('x2', W - m.r).attr('y1', H - m.b).attr('y2', H - m.b);
+  svg.append('g').selectAll('text').data(rows).join('text').attr('class', 'hx-tick').attr('x', r => x(r[0]) + bw / 2).attr('y', H - m.b + 28)
+    .attr('text-anchor', 'middle').text(r => r[0] === 2026 ? '2026*' : r[0]);
+  const g = svg.selectAll('g.y').data(rows).join('g').attr('class', 'y');
+  const d1 = g.append('rect').attr('x', r => x(r[0])).attr('width', bw * 0.3).attr('rx', 3).attr('fill', 'var(--series-1)');
+  const d2 = g.append('rect').attr('x', r => x(r[0]) + bw * 0.34).attr('width', bw * 0.66).attr('rx', 3).attr('fill', 'var(--series-2)').attr('fill-opacity', .55);
+  const via = g.append('rect').attr('x', r => x(r[0]) + bw * 0.34).attr('width', bw * 0.66).attr('rx', 3).attr('fill', 'var(--brand-pink)');
+  const pct = g.append('text').attr('class', 'hx-val').attr('text-anchor', 'middle').attr('x', r => x(r[0]) + bw * 0.67).style('font-size', '17px')
+    .text(r => Math.round(r[3] / r[2] * 100) + '%');
+  g.on('pointermove', (ev, r) => tooltip(`<b>${r[0]}</b><br>${fmt(r[1])} cite the Hexad<br>${fmt(r[2])} cite those papers<br>${fmt(r[3])} of them through the four reviews`, ev))
+    .on('pointerleave', () => tooltip(null));
+  function play() {
+    const grow = (sel, v, x0, delay) => sel.interrupt().attr('y', H - m.b).attr('height', 0).transition().delay((r, i) => (reduced ? 0 : delay + i * 160)).duration(reduced ? 0 : 700)
+      .ease(d3.easeCubicOut).attr('y', r => y(v(r))).attr('height', r => H - m.b - y(v(r)));
+    grow(d1, r => r[1], 0, 0); grow(d2, r => r[2], 0, 200); grow(via, r => r[3], 0, 1900);
+    pct.interrupt().style('opacity', 0).attr('y', r => y(r[3]) - 8).transition().delay((r, i) => reduced ? 0 : 2600 + i * 160).duration(400).style('opacity', 1);
+  }
+  return { play };
+}
+const barPathR = (x, y, w, h) => `M${x},${y}h${w}v${h}h${-w}Z`;
+
+// A soft bell for the race-track arrivals, synthesised so no audio file is needed; it rises one step per stop.
+let audio;
+function chime(i = 0) {
+  try {
+    audio ??= new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume();
+    const scale = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98], f = scale[i % scale.length], t = audio.currentTime;
+    [[1, 0.22], [2.76, 0.06], [5.4, 0.025]].forEach(([k, v]) => {
+      const o = audio.createOscillator(), gn = audio.createGain();
+      o.type = 'sine'; o.frequency.value = f * k; gn.gain.setValueAtTime(0, t);
+      gn.gain.linearRampToValueAtTime(v, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + 1.6 / Math.sqrt(k));
+      o.connect(gn).connect(audio.destination); o.start(t); o.stop(t + 1.7);
+    });
+  } catch (e) { /* audio is optional */ }
+}
+
   const region = new Intl.DisplayNames(['en-CA'], { type: 'region' });
   const country = code => { try { return region.of(code); } catch { return code; } };
   const loadStudy = () => fetch('data/study2016.json').then(r => r.json());
   const loadLive = () => fetch('data/hexad12live.json').then(r => r.json());
-  return { load, loadStudy, loadLive, lines, countUp, tooltip, yearBars, hbars, chain, hexagon, dumbbell, heroField, timeBars, lineage, crowdCompare, timeline, crowd, heatmap, Net, fmt, reduced, country, TYPES };
+  return { load, loadStudy, loadLive, lines, countUp, tooltip, yearBars, hbars, chain, hexagon, dumbbell, heroField, timeBars, lineage, crowdCompare, timeline, retest, reviewBars, chime, crowd, heatmap, Net, fmt, reduced, country, TYPES };
 })();
