@@ -207,7 +207,8 @@ const HX = (() => {
       this.build();
       this.resize(); new ResizeObserver(() => this.resize()).observe(canvas);
       // The deck drives zoom programmatically; the filter blocks wheel and drag there.
-      this.zoom = d3.zoom().scaleExtent([0.15, 40]).filter(e => interactive && !e.button)
+      this.free = true;  // false while embedded in the page: wheel and touch then scroll the page instead of the map
+      this.zoom = d3.zoom().scaleExtent([0.15, 40]).filter(e => interactive && !e.button && (this.free || (e.type !== 'wheel' && !e.type.startsWith('touch'))))
         .on('zoom', e => { this.k = e.transform; this.draw(); });
       d3.select(canvas).call(this.zoom).on('dblclick.zoom', null);
       if (interactive) {
@@ -571,33 +572,76 @@ const HX = (() => {
         au: ['Krath', 'Altmeyer', 'Tondello', 'Nacke'] },
     ],
     people: [['Nacke', 'Lennart Nacke', 1], ['Tondello', 'Gustavo Tondello', 1], ['Krath', 'Jeanine Krath', 2],
-      ['Marczewski', 'Andrzej Marczewski', 0], ['von Korflesch', 'Harald von Korflesch', 0], ['Altmeyer', 'Maximilian Altmeyer', 0]],
+      ['Marczewski', 'Andrzej Marczewski', 0], ['Altmeyer', 'Maximilian Altmeyer', 0]],
   };
   // Threads: one row per person, one column per paper; a thread links the papers that person co-wrote.
+  // Motion: a time cursor sweeps left to right; each paper's column lands, its authors' dots pop with a ring,
+  // and each thread grows into the new column. The finale lights up the four Hexad-12 authors and dims the rest.
   function lineage(host, { W = 1400, rowH = 62 } = {}) {
     host.innerHTML = '';
-    const { papers, people } = LINEAGE, lw = 250, top = 110, H = top + people.length * rowH + 120;
+    const { papers, people } = LINEAGE, lw = 250, top = 110, last = papers.length - 1, H = top + people.length * rowH + 150;
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
-      .attr('aria-label', papers.map(p => `${p.y} ${p.name}: ${p.au.join(', ')}`).join('; '));
+      .attr('aria-label', papers.map(p => `${p.y} ${p.name}: ${p.au.join(', ')}`).join('; ') + '. Hexad-12 authors: Jeanine Krath, Maximilian Altmeyer, Gustavo F. Tondello, Lennart E. Nacke.');
     const x = d3.scalePoint(papers.map((p, i) => i), [lw + 60, W - 140]), y = i => top + i * rowH + rowH / 2;
-    const cls = k => ['hx-thread0', 'hx-thread1', 'hx-thread2'][k];
-    const head = svg.selectAll('g.h').data(papers).join('g').attr('class', 'h').attr('transform', (p, i) => `translate(${x(i)},0)`);
+    const cls = k => ['hx-thread0', 'hx-thread1', 'hx-thread2'][k], h12 = new Set(papers[last].au), step = 700, t0 = 300;
+    const at = j => t0 + j * step;  // when column j lands
+    // finale frame around the Hexad-12 column
+    const frame = svg.append('rect').attr('class', 'hx-h12frame').attr('x', x(last) - 122).attr('y', 6).attr('width', 244).attr('height', top + people.length * rowH + 84).attr('rx', 18);
+    const cursor = svg.append('line').attr('class', 'hx-cursor').attr('y1', top - 30).attr('y2', top + people.length * rowH + 10);
+    const head = svg.selectAll('g.h').data(papers).join('g').attr('class', 'h');
     head.append('text').attr('class', 'hx-lab hx-strong').attr('text-anchor', 'middle').attr('y', 34).style('font-size', '24px').text(p => p.y);
     head.append('text').attr('class', 'hx-muted').attr('text-anchor', 'middle').attr('y', 62).style('font-size', '20px').text(p => p.name);
     head.append('line').attr('class', 'hx-axis').attr('y1', top - 14).attr('y2', top + people.length * rowH);
-    const foot = svg.selectAll('g.f').data(papers).join('g').attr('class', 'f').attr('transform', (p, i) => `translate(${x(i)},${top + people.length * rowH + 34})`);
-    foot.append('text').attr('class', 'hx-val').attr('text-anchor', 'middle').style('font-size', '20px').text(p => `${fmt(p.cites)} citations`);
+    const foot = svg.selectAll('g.f').data(papers).join('g').attr('class', 'f');
+    const cites = foot.append('text').attr('class', 'hx-val').attr('text-anchor', 'middle').style('font-size', '20px').text(p => `${fmt(p.cites)} citations`);
     foot.append('text').attr('class', 'hx-muted').attr('text-anchor', 'middle').attr('y', 26).text(p => p.note);
     const rows = svg.selectAll('g.p').data(people).join('g').attr('class', 'p');
-    rows.append('text').attr('class', d => 'hx-lab' + (d[2] ? ' hx-strong' : '')).attr('x', lw).attr('y', (d, i) => y(i) + 6).attr('text-anchor', 'end').text(d => d[1]);
-    const threads = rows.append('path').attr('class', d => 'hx-thread ' + cls(d[2]))
-      .attr('d', (d, i) => d3.line()(papers.map((p, j) => p.au.includes(d[0]) ? [x(j), y(i)] : null).filter(Boolean)));
-    const dots = rows.selectAll('circle').data((d, i) => papers.map((p, j) => ({ d, i, j, on: p.au.includes(d[0]) })).filter(e => e.on)).join('circle')
-      .attr('class', e => cls(e.d[2])).attr('cx', e => x(e.j)).attr('cy', e => y(e.i)).attr('r', e => e.d[2] ? 11 : 8);
+    const names = rows.append('text').attr('class', d => 'hx-lab' + (d[2] ? ' hx-strong' : '')).attr('x', lw).attr('y', (d, i) => y(i) + 6).attr('text-anchor', 'end').text(d => d[1]);
+    // one path per thread segment, so each segment can grow when its right-hand column lands
+    const segs = [];
+    people.forEach((d, i) => { const cols = papers.map((p, j) => p.au.includes(d[0]) ? j : -1).filter(j => j >= 0);
+      cols.slice(1).forEach((j, k) => segs.push({ d, i, a: cols[k], b: j })); });
+    const seg = svg.insert('g', 'g.p').selectAll('path').data(segs).join('path').attr('class', e => 'hx-thread ' + cls(e.d[2]))
+      .attr('d', e => `M${x(e.a)},${y(e.i)}L${x(e.b)},${y(e.i)}`);
+    const dotData = []; people.forEach((d, i) => papers.forEach((p, j) => { if (p.au.includes(d[0])) dotData.push({ d, i, j }); }));
+    const ringG = svg.append('g'), dotG = svg.append('g');
+    const ring = ringG.selectAll('circle').data(dotData).join('circle').attr('class', 'hx-ring').attr('cx', e => x(e.j)).attr('cy', e => y(e.i)).attr('r', 0);
+    const dots = dotG.selectAll('circle').data(dotData).join('circle').attr('class', e => cls(e.d[2])).attr('cx', e => x(e.j)).attr('cy', e => y(e.i));
+    const r0 = e => e.d[2] ? 11 : 8;
+    const tag = svg.append('text').attr('class', 'hx-h12tag').attr('text-anchor', 'middle').attr('x', W / 2 + 60).attr('y', H - 14)
+      .text('Hexad-12 authors: Jeanine Krath, Maximilian Altmeyer, Gustavo F. Tondello, Lennart E. Nacke');
     function play() {
-      threads.each(function () { const L = this.getTotalLength() || 1; d3.select(this).interrupt().attr('stroke-dasharray', `${L} ${L}`).attr('stroke-dashoffset', L)
-        .transition().delay(reduced ? 0 : 400).duration(reduced ? 0 : 2200).ease(d3.easeCubicInOut).attr('stroke-dashoffset', 0); });
-      dots.interrupt().attr('r', 0).transition().delay(e => reduced ? 0 : 300 + e.j * 420).duration(500).ease(d3.easeBackOut).attr('r', e => e.d[2] ? 11 : 8);
+      const D = reduced ? 0 : 1, lit = (d) => h12.has(d[0]);
+      svg.selectAll('*').interrupt();
+      svg.classed('hx-final', false);
+      cursor.attr('x1', x(0) - 60).attr('x2', x(0) - 60).style('opacity', D)
+        .transition().delay(t0 * D).duration(last * step * D).ease(d3.easeLinear).attr('x1', x(last)).attr('x2', x(last))
+        .transition().duration(400).style('opacity', 0);
+      head.attr('transform', (p, i) => `translate(${x(i)},${D * -24})`).style('opacity', 1 - D)
+        .transition().delay((p, j) => (at(j) - 200) * D).duration(500 * D).ease(d3.easeBackOut).attr('transform', (p, i) => `translate(${x(i)},0)`).style('opacity', 1);
+      foot.attr('transform', (p, i) => `translate(${x(i)},${top + people.length * rowH + 34 + D * 20})`).style('opacity', 1 - D)
+        .transition().delay((p, j) => (at(j) + 150) * D).duration(450 * D).ease(d3.easeCubicOut).attr('transform', (p, i) => `translate(${x(i)},${top + people.length * rowH + 34})`).style('opacity', 1);
+      cites.each(function (p, j) { const el = this; if (!D) return; el.textContent = '0 citations';
+        setTimeout(() => { const s0 = performance.now(); const f = now => { const k = Math.min(1, (now - s0) / 900), v = Math.round(p.cites * (1 - Math.pow(1 - k, 3)));
+          el.textContent = `${fmt(v)} citations`; if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }, at(j) + 150); });
+      names.style('opacity', 1).attr('transform', null);
+      seg.each(function () { const L = this.getTotalLength() || 1; d3.select(this).attr('stroke-dasharray', `${L} ${L}`).attr('stroke-dashoffset', D ? L : 0); })
+        .style('opacity', 1).transition().delay(e => (at(e.b) - step * 0.85) * D).duration(step * 0.85 * D).ease(d3.easeCubicInOut).attr('stroke-dashoffset', 0);
+      dots.attr('r', D ? 0 : r0).style('opacity', 1).transition().delay(e => at(e.j) * D).duration(520 * D).ease(d3.easeBackOut.overshoot(2.4)).attr('r', r0);
+      ring.attr('r', 0).style('opacity', 0).filter(() => D).transition().delay(e => at(e.j)).duration(0).style('opacity', 0.7)
+        .transition().duration(700).ease(d3.easeCubicOut).attr('r', 30).style('opacity', 0);
+      // finale
+      const fin = (at(last) + 700) * D;
+      frame.style('opacity', 0).attr('transform', `translate(0,0)`)
+        .transition().delay(fin).duration(600 * D || 1).style('opacity', 1);
+      tag.style('opacity', 0).transition().delay(fin + 300 * D).duration(600 * D || 1).style('opacity', 1);
+      setTimeout(() => {
+        svg.classed('hx-final', true);
+        names.transition().duration(500).style('opacity', d => lit(d) ? 1 : 0.32);
+        seg.transition().duration(500).style('opacity', e => lit(e.d) ? 1 : 0.22);
+        dots.transition().duration(500).style('opacity', e => lit(e.d) ? 1 : 0.3)
+          .filter(e => lit(e.d) && e.j === last).transition().duration(300).ease(d3.easeBackOut).attr('r', e => r0(e) * 1.7).transition().duration(400).attr('r', e => r0(e) * 1.35);
+      }, fin);
     }
     return { play };
   }
@@ -646,7 +690,30 @@ const HX = (() => {
     t.append('tspan').attr('class', 'hx-strong').text(e => d3.timeFormat('%B %Y')(e.d));
     t.append('tspan').attr('x', e => x(e.d) + 10).attr('dy', 28).attr('class', 'hx-muted').style('font-size', '21px').text(e => e.t);
     const stems = stemLayer.selectAll('line'), labels = g.select('text');
+    // The milestone dot (October 2016) sizzles like a candle: sparks rise, drift, and fade in a loop.
+    const hot = ev.findIndex(e => e.s), sparks = [];
+    let sizzle = null;
+    if (hot >= 0 && !reduced) {
+      const sx = x(ev[hot].d), sg = svg.append('g').attr('class', 'hx-sizzle').style('pointer-events', 'none');
+      const halo = sg.append('circle').attr('cx', sx).attr('cy', base).attr('r', 18).attr('fill', 'var(--series-2)').style('opacity', 0);
+      const cols = ['#ffd27a', '#ffb3d9', '#e090c0', '#de4f97', '#ffffff'], rnd = d3.randomLcg(7);
+      for (let i = 0; i < 34; i++) sparks.push({ el: sg.append('circle').attr('fill', cols[i % cols.length]).attr('r', 0), t0: rnd() * 1.2, life: 0.55 + rnd() * 0.75,
+        vx: (rnd() - 0.5) * 70, vy: -(70 + rnd() * 120), wob: rnd() * 6.28, r: 1.6 + rnd() * 3.4 });
+      let on = true;
+      new IntersectionObserver(([e]) => { on = e.isIntersecting; }).observe(host);
+      sizzle = { start: 0, halo, run: false };
+      sizzle.timer = d3.timer(() => {
+        if (!on || !sizzle.run) return;
+        const t = (performance.now() - sizzle.start) / 1000; if (t < 0) return;
+        halo.attr('r', 18 + 4 * Math.sin(t * 9) + 3 * Math.sin(t * 23)).style('opacity', Math.min(0.35, t * 0.5) * (0.75 + 0.25 * Math.sin(t * 13)));
+        for (const p of sparks) {
+          const a = ((t + p.t0) % p.life) / p.life, k = 1 - a;
+          p.el.attr('cx', sx + p.vx * a + Math.sin(t * 6 + p.wob) * 6 * a).attr('cy', base - 8 + p.vy * a + 40 * a * a).attr('r', p.r * k).style('opacity', k * Math.min(1, t * 2));
+        }
+      });
+    }
     function play() {
+      if (sizzle) { sizzle.run = true; sizzle.start = performance.now() + 300 + hot * stagger + 450; }  // sparks start once the dot has landed
       g.interrupt().style('opacity', 1);
       stems.interrupt().attr('y2', base).transition().delay((d, i) => reduced ? 0 : 300 + i * stagger).duration(reduced ? 0 : 380).ease(d3.easeCubicOut).attr('y2', e => base - 54 - e.row * rowStep);
       g.select('circle').interrupt().attr('r', 0).transition().delay((e, i) => reduced ? 0 : 300 + i * stagger).duration(reduced ? 0 : 420).ease(d3.easeBackOut).attr('r', 10);

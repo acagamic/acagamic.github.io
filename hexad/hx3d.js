@@ -42,25 +42,27 @@
       gl_FragColor = vec4(mix(vC, vec3(1.), core * .45), (glow * .8 + core) * vA); }`;
   const LINE_FRAG = `varying vec3 vC; varying float vA; void main() { gl_FragColor = vec4(vC, vA); }`;
 
-  // ---------- Hero: one particle per citing paper lands on a hexagon. Depth is the publication year: older papers sit further back.
+  // ---------- Hero: one particle per citing paper spirals in and lands on the edges of a cube. Seen along its diagonal,
+  // the cube is a hexagon (the Hexad); then it turns in 3D and the flat hexagon reveals its depth, Escher-style.
   async function hero(canvas, data) {
     const T = await three(), host = canvas.parentElement;
     const R = makeRenderer(T, canvas, 2), scene = new T.Scene(), cam = new T.PerspectiveCamera(35, 1, 0.1, 100), DIST = 6;
     cam.position.set(0, 0, DIST);
     const ramp = d3.scaleLinear([2016, 2021, 2026], ['--brand-cyan', '--brand-pink', '--brand-magenta'].map(v => getComputedStyle(host).getPropertyValue(v).trim()))
       .interpolate(d3.interpolateRgb).clamp(true);
-    const rnd = d3.randomLcg(11), N = data.nodes.length;
+    const rnd = d3.randomLcg(11), N = data.nodes.length, S = 1 / 1.633;  // half-size that gives the diagonal view a hexagon of radius 1
+    const V = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]].map(v => v.map(c => c * S));
+    const E = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
+    const K = [1, 1, 1].map(c => c / Math.sqrt(3));
     const pos = new Float32Array(N * 3), st = new Float32Array(N * 3), col = new Float32Array(N * 3), misc = new Float32Array(N * 4);
     data.nodes.forEach(([, , y, c], i) => {
-      const t = (i / N + rnd() * 0.004) * 6, k = Math.floor(t) % 6, f = t - Math.floor(t);
-      const a0 = -Math.PI / 2 + k * Math.PI / 3, a1 = a0 + Math.PI / 3, inset = 1 - Math.pow(rnd(), 2.2) * 0.32;
-      pos[i * 3] = (Math.cos(a0) * (1 - f) + Math.cos(a1) * f) * inset;
-      pos[i * 3 + 1] = -(Math.sin(a0) * (1 - f) + Math.sin(a1) * f) * inset;  // three's y points up
-      pos[i * 3 + 2] = (y - 2021) / 5 * 0.42;
-      const th = rnd() * Math.PI * 2, ph = Math.acos(2 * rnd() - 1), rr = 1.8 + rnd() * 1.6;
-      st.set([Math.sin(ph) * Math.cos(th) * rr * 1.4, Math.sin(ph) * Math.sin(th) * rr, Math.cos(ph) * rr], i * 3);
+      const f = i / N * 12, [ea, eb] = E[Math.floor(f)], u = f - Math.floor(f), A = V[ea], B = V[eb];
+      for (let k = 0; k < 3; k++) pos[i * 3 + k] = A[k] + (B[k] - A[k]) * u + (rnd() - 0.5) * 0.045;  // beams a little thick
+      // start: a wide disc facing the camera (perpendicular to the cube diagonal), spun in by the vortex
+      const th = rnd() * Math.PI * 2, rr = 1.6 + rnd() * 2.4, ux = [1, -1, 0].map(c => c / Math.SQRT2), uy = [K[1] * ux[2] - K[2] * ux[1], K[2] * ux[0] - K[0] * ux[2], K[0] * ux[1] - K[1] * ux[0]];
+      for (let k = 0; k < 3; k++) st[i * 3 + k] = (ux[k] * Math.cos(th) + uy[k] * Math.sin(th)) * rr + K[k] * (rnd() - 0.5) * 0.8;
       const cc = d3.rgb(ramp(y)); col.set([cc.r / 255, cc.g / 255, cc.b / 255], i * 3);
-      misc.set([i / N, (1.8 + Math.min(5.5, Math.sqrt(c) * 0.26)) * 4.4, rnd() * 6.283, 0], i * 4);
+      misc.set([i / N, (1.8 + Math.min(5.5, Math.sqrt(c) * 0.26)) * 4.4, rnd() * 6.283, 0.6 + rnd() * 0.8], i * 4);
     });
     const geo = new T.BufferGeometry();
     geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('aStart', new T.BufferAttribute(st, 3));
@@ -68,21 +70,28 @@
     const U = { uT: { value: 0 }, uTime: { value: 0 }, uPx: { value: 1 }, uDist: { value: DIST }, uScatter: { value: 0 }, uMouse: { value: new T.Vector3(9, 9, 0) }, uMouseOn: { value: 0 } };
     const pts = points(T, geo, U, `attribute vec3 aStart; attribute vec3 aCol; attribute vec4 aMisc;
       uniform float uT, uTime, uPx, uDist, uScatter, uMouseOn; uniform vec3 uMouse; varying vec3 vC; varying float vA;
+      vec3 spin(vec3 v, float a) { vec3 k = normalize(vec3(1.)); return v * cos(a) + cross(k, v) * sin(a) + k * dot(k, v) * (1. - cos(a)); }
       void main() {
-        float e = clamp((uT - aMisc.x * 1.6) / 1.8, 0., 1.); e = e >= 1. ? 1. : 1. - pow(2., -10. * e);
-        e *= 1. - uScatter * (.55 + .45 * fract(aMisc.z * 7.13));  // scrolling down sends each dot back out at its own pace
-        vec3 p = mix(aStart, position, e);
-        p += vec3(sin(uTime * .6 + aMisc.z), cos(uTime * .5 + aMisc.z * 1.3), sin(uTime * .4 + aMisc.z * .7)) * .02 * e;
-        vec2 d = p.xy - uMouse.xy; float dd = dot(d, d);
-        p.xy += normalize(d + 1e-5) * uMouseOn * .26 * exp(-dd * 14.);
+        float e = clamp((uT - aMisc.x * 1.3) / (1.6 * aMisc.w + .6), 0., 1.); e = 1. - pow(1. - e, 3.);
+        e *= 1. - uScatter * (.55 + .45 * fract(aMisc.z * 7.13));  // scrolling down flings each dot back out at its own pace
+        vec3 p = spin(mix(aStart, position, e), (1. - e) * (1. - e) * 7.5);  // the vortex: dots swirl as they fall in
+        p += vec3(sin(uTime * .6 + aMisc.z), cos(uTime * .5 + aMisc.z * 1.3), sin(uTime * .4 + aMisc.z * .7)) * .012 * e;
         vec4 mv = modelViewMatrix * vec4(p, 1.);
+        vec2 d = mv.xy - uMouse.xy; float dd = dot(d, d);
+        mv.xy += normalize(d + 1e-5) * uMouseOn * .2 * exp(-dd * 9.);
         gl_Position = projectionMatrix * mv;
         gl_PointSize = aMisc.y * uPx * uDist / -mv.z;
         vC = aCol; vA = (.35 + .65 * e) * (1. - .45 * uScatter);
       }`);
-    const g = new T.Group(); g.add(pts); scene.add(g);
+    // faint edge lines sharpen the cube once the dots have landed
+    const ep = new Float32Array(E.length * 6); E.forEach(([a, b], i) => ep.set(V[a].concat(V[b]), i * 6));
+    const eg = new T.BufferGeometry(); eg.setAttribute('position', new T.BufferAttribute(ep, 3));
+    const EU = { uEdge: { value: 0 }, uC: { value: new T.Vector3(...cssRGB(host, '--brand-pink')) } };
+    const edges = new T.LineSegments(eg, new T.ShaderMaterial({ uniforms: EU, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fragmentShader: LINE_FRAG,
+      vertexShader: `uniform float uEdge; uniform vec3 uC; varying vec3 vC; varying float vA; void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); vC = uC; vA = uEdge; }` }));
+    const g = new T.Group(); g.add(edges, pts); scene.add(g);
 
-    // Aurora: slow fbm noise in cyan and magenta behind the particles, strongest around the hexagon and faint behind the text.
+    // Aurora: slow fbm noise in cyan and magenta behind the particles, strongest around the cube and faint behind the text.
     const AU = { uTime: U.uTime, uScatter: U.uScatter, uC: { value: new T.Vector2(0.74, 0.5) }, uAsp: { value: 1 },
       uA: { value: new T.Vector3(...cssRGB(host, '--brand-cyan')) }, uB: { value: new T.Vector3(...cssRGB(host, '--brand-magenta')) } };
     const bgScene = new T.Scene(), bgCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -106,29 +115,30 @@
     function size() {
       const b = canvas.getBoundingClientRect(); W = b.width || 1; H = b.height || 1;
       R.setSize(W, H, false); cam.aspect = W / H; cam.updateProjectionMatrix();
-      AU.uAsp.value = W / H; AU.uC.value.set(W > 900 ? 0.74 : 0.5, W > 900 ? 0.5 : 1 - 150 / H);
       const perPx = 2 * Math.tan(cam.fov * D2R / 2) * DIST / H, wide = W > 900;
-      const cx = wide ? W * 0.74 : W / 2, cy = wide ? H * 0.5 : 150, Rp = wide ? Math.min(H * 0.36, W * 0.2) : Math.min(W * 0.26, 105);  // phones: the hexagon gets its own band above the text
+      const cx = wide ? W * 0.74 : W / 2, cy = wide ? H * 0.5 : 150, Rp = wide ? Math.min(H * 0.34, W * 0.19) : Math.min(W * 0.26, 105);  // phones: the cube gets its own band above the text
       g.position.set((cx - W / 2) * perPx, -(cy - H / 2) * perPx, 0); g.scale.setScalar(Rp * perPx);
+      AU.uAsp.value = W / H; AU.uC.value.set(cx / W, 1 - cy / H);
       U.uPx.value = R.getPixelRatio() * (wide ? 1 : 0.5);
       kick();
     }
-    const ray = new T.Raycaster(), ndc = new T.Vector2(9, 9), plane = new T.Plane(), hit = new T.Vector3(), nz = new T.Vector3();
     let mOnT = 0, px = 0, py = 0, rx = 0, ry = 0, t0 = -1, scatter = 0;
-    host.addEventListener('pointermove', e => { const b = canvas.getBoundingClientRect(); ndc.set((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1); px = ndc.x; py = ndc.y; mOnT = 1; kick(); });
+    const mTarget = new T.Vector3(9, 9, 0);
+    host.addEventListener('pointermove', e => { const b = canvas.getBoundingClientRect(); px = (e.clientX - b.left) / b.width * 2 - 1; py = -(e.clientY - b.top) / b.height * 2 + 1;
+      // pointer in view space at the cube's depth, for the push-aside effect
+      const hh = Math.tan(cam.fov * D2R / 2) * DIST; mTarget.set(px * hh * cam.aspect, py * hh, 0); mOnT = 1; kick(); });
     host.addEventListener('pointerleave', () => { mOnT = 0; px = py = 0; kick(); });
+    const ISO_X = Math.atan(1 / Math.SQRT2), ISO_Y = -Math.PI / 4;
     const kick = animator(canvas, (time, dt) => {
       if (t0 < 0) t0 = time;
       const el = time - t0, k = reduced ? 1 : 1 - Math.exp(-dt * 4);
       U.uT.value = reduced ? 100 : el; U.uTime.value = reduced ? 0 : time; U.uScatter.value = scatter;
-      const intro = reduced ? 0 : Math.pow(1 - Math.min(1, el / 3.4), 3);
-      ry += ((reduced ? 0 : Math.sin(time * 0.18) * 0.32) + px * 0.3 - ry) * k;
-      rx += ((reduced ? 0 : Math.sin(time * 0.13) * 0.1) - py * 0.2 - rx) * k;
-      g.rotation.set(rx + scatter * 0.7, ry + intro * 1.2, 0);
-      g.updateMatrixWorld();
-      nz.set(0, 0, 1).applyQuaternion(g.quaternion); plane.setFromNormalAndCoplanarPoint(nz, g.position);
-      ray.setFromCamera(ndc, cam);
-      if (ray.ray.intersectPlane(plane, hit)) { g.worldToLocal(hit); U.uMouse.value.lerp(hit, reduced ? 1 : 1 - Math.exp(-dt * 12)); }
+      // hold the flat hexagon view until the dots land, then turn the cube in 3D
+      const u = reduced ? 0 : Math.max(0, el - 3.4), on = u > 0 ? Math.min(1, u / 2.5) : 0, ease = on * on * (3 - 2 * on);
+      ry += (px * 0.25 - ry) * k; rx += (-py * 0.18 - rx) * k;
+      g.rotation.set(ISO_X + ease * 0.42 * Math.sin(u * 0.33) + rx + scatter * 0.6, ISO_Y + ease * u * 0.38 + ry, 0, 'XYZ');
+      EU.uEdge.value = 0.22 * Math.min(1, Math.max(0, (el - 2.6) / 1.2)) * (1 - scatter) + (reduced ? 0.22 : 0);
+      U.uMouse.value.lerp(mTarget, reduced ? 1 : 1 - Math.exp(-dt * 12));  // the camera has no rotation, so view xy equals world xy
       U.uMouseOn.value += (mOnT - U.uMouseOn.value) * (reduced ? 1 : 1 - Math.exp(-dt * 6));
       R.clear(); R.render(bgScene, bgCam); R.render(scene, cam);
       return !reduced;
@@ -156,22 +166,28 @@
       const ang = Math.atan2(d3.mean(par, p => Math.sin(p.ang)), d3.mean(par, p => Math.cos(p.ang))) + (rand() - 0.5) * 0.03, rad = (540 + rand() * 200) / 100;
       return { y, c, par, x: Math.cos(ang) * rad, yy: -Math.sin(ang) * rad, z: Z2 + (rand() - 0.5) * 0.6, r: 0.9 + Math.min(9, Math.sqrt(c) * 0.22), yf: y + rand() }; });
 
-    const all = [{ x: 0, yy: 0, z: Z0, r: 16, deg: 0, yf: 0, col: C0 }].concat(d1.map(n => Object.assign(n, { deg: 1, col: C1 })), r2.map(n => Object.assign(n, { deg: 2, col: C2 })));
+    const STAR = [1, 0.9, 0.97];
+    const all = [{ x: 0, yy: 0, z: Z0, r: 16, deg: 0, yf: 0, col: C0 }].concat(d1.map(n => Object.assign(n, { deg: 1, col: C1 })),
+      r2.map(n => { const k = rand() * 0.4; return Object.assign(n, { deg: 2, col: C2.map((c, i) => c + (STAR[i] - c) * k) }); }));  // ring 2 varies a little toward white, like a star field
     const M = all.length, pos = new Float32Array(M * 3), col = new Float32Array(M * 3), info = new Float32Array(M * 4);
     all.forEach((n, i) => { pos.set([n.x, n.yy, n.z], i * 3); col.set(n.col, i * 3); info.set([n.deg, n.yf, n.r * 0.044, rand() * 6.283], i * 4); });
     const geo = new T.BufferGeometry();
     geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('aCol', new T.BufferAttribute(col, 3)); geo.setAttribute('aInfo', new T.BufferAttribute(info, 4));
-    const U = { uT: { value: 2016 }, uT2: { value: 2016 }, uRing2: { value: 0 }, uScale: { value: 1 }, uTime: { value: 0 } };
-    const SHOW = `float show(float deg, float yf) { return deg < .5 ? 1. : deg < 1.5 ? clamp((uT - yf) / .3, 0., 1.) : clamp((uT2 - yf) / .3, 0., 1.) * uRing2; }`;
-    const pts = points(T, geo, U, `attribute vec3 aCol; attribute vec4 aInfo; uniform float uT, uT2, uRing2, uScale, uTime; varying vec3 vC; varying float vA; ${SHOW}
+    const U = { uT: { value: 2016 }, uT2: { value: 2016 }, uRing2: { value: 0 }, uScale: { value: 1 }, uTime: { value: 0 }, uTwist: { value: 0 }, uSizeK: { value: 1 } };
+    // show(): when a paper has appeared. tw(): the galaxy twist; outer papers turn further, so the rings wind into spiral arms
+    // while each paper keeps its place in time within its ring.
+    const SHOW = `uniform float uTwist;
+      float show(float deg, float yf) { return deg < .5 ? 1. : deg < 1.5 ? clamp((uT - yf) / .3, 0., 1.) : clamp((uT2 - yf) / .3, 0., 1.) * uRing2; }
+      vec3 tw(vec3 p) { float a = uTwist * max(0., length(p.xy) - 3.) * .45, c = cos(a), s = sin(a); return vec3(c * p.x - s * p.y, s * p.x + c * p.y, p.z); }`;
+    const pts = points(T, geo, U, `attribute vec3 aCol; attribute vec4 aInfo; uniform float uT, uT2, uRing2, uScale, uTime, uSizeK; varying vec3 vC; varying float vA; ${SHOW}
       void main() {
         float s = show(aInfo.x, aInfo.y);
         if (s <= 0.) { gl_Position = vec4(2., 2., 2., 1.); gl_PointSize = 0.; return; }
         float x = s - 1., pop = 1. + 2.70158 * x * x * x + 1.70158 * x * x;  // ease-out-back: each dot overshoots, then settles
-        vec4 mv = modelViewMatrix * vec4(position, 1.);
+        vec4 mv = modelViewMatrix * vec4(tw(position), 1.);
         gl_Position = projectionMatrix * mv;
         float pulse = aInfo.x < .5 ? 1. + .08 * sin(uTime * 2.2) : 1.;
-        gl_PointSize = clamp(aInfo.z * pop * pulse * uScale / -mv.z, 1.5, 140.);
+        gl_PointSize = clamp(aInfo.z * pop * pulse * uSizeK * uScale / -mv.z, 1.5, 90.);
         vC = aCol * (1. + 1.6 * (1. - s));
         vA = (.85 + .15 * sin(uTime * 1.7 + aInfo.w)) * (aInfo.x > 1.5 ? .75 : 1.);
       }`);
@@ -191,7 +207,7 @@
     const lines = new T.LineSegments(lg, new T.ShaderMaterial({ uniforms: U, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fragmentShader: LINE_FRAG,
       vertexShader: `attribute vec3 aFrom; attribute vec3 aCol; attribute vec2 aE; uniform float uT, uT2, uRing2; varying vec3 vC; varying float vA; ${SHOW}
         void main() { float s = show(aE.x, aE.y);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(mix(aFrom, position, s), 1.);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(tw(mix(aFrom, position, s)), 1.);
           vC = aCol; vA = s * (aE.x < 1.5 ? .12 : .035); }` }));
     lines.frustumCulled = false;
 
@@ -205,8 +221,8 @@
     agm.setAttribute('position', new T.BufferAttribute(ap, 3)); agm.setAttribute('aFrom', new T.BufferAttribute(ap, 3));
     agm.setAttribute('aCol', new T.BufferAttribute(ac, 3)); agm.setAttribute('aE', new T.BufferAttribute(ae, 2));
     const clock = new T.LineSegments(agm, new T.ShaderMaterial({ uniforms: U, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fragmentShader: LINE_FRAG,
-      vertexShader: `attribute vec3 aFrom; attribute vec3 aCol; attribute vec2 aE; uniform float uT; varying vec3 vC; varying float vA;
-        void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); vC = aCol; vA = .45 * step(aE.y, uT); }` }));
+      vertexShader: `attribute vec3 aFrom; attribute vec3 aCol; attribute vec2 aE; uniform float uT, uT2, uRing2; varying vec3 vC; varying float vA; ${SHOW}
+        void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(tw(position), 1.); vC = aCol; vA = .45 * step(aE.y, uT); }` }));
     clock.frustumCulled = false;
     const hg = new T.BufferGeometry();
     hg.setAttribute('position', new T.BufferAttribute(new Float32Array(3), 3)); hg.setAttribute('aCol', new T.BufferAttribute(new Float32Array([1, 1, 1]), 3));
@@ -214,7 +230,27 @@
     const head = points(T, hg, HU, `attribute vec3 aCol; uniform float uScale, uOn; varying vec3 vC; varying float vA;
       void main() { vec4 mv = modelViewMatrix * vec4(position, 1.); gl_Position = projectionMatrix * mv; gl_PointSize = .5 * uScale / -mv.z; vC = aCol; vA = uOn; }`);
 
-    const g = new T.Group(); g.add(lines, clock, pts, head); scene.add(g);
+    // Galaxy dressing, all decorative: a warm core glow, faint dust along two spiral arms, and distant stars.
+    const cg = new T.BufferGeometry(); cg.setAttribute('position', new T.BufferAttribute(new Float32Array([0, 0, 0.6]), 3));
+    cg.setAttribute('aCol', new T.BufferAttribute(new Float32Array([1, 0.86, 0.62]), 3));
+    const CU = { uScale: U.uScale, uRing2: U.uRing2 };
+    const core = points(T, cg, CU, `attribute vec3 aCol; uniform float uScale, uRing2; varying vec3 vC; varying float vA;
+      void main() { vec4 mv = modelViewMatrix * vec4(position, 1.); gl_Position = projectionMatrix * mv; gl_PointSize = min(520., 3.2 * uScale / -mv.z); vC = aCol; vA = .3 * uRing2; }`);
+    const DN = 5000, dp = new Float32Array(DN * 3), dc = new Float32Array(DN * 3), dr = d3.randomLcg(5), dn = d3.randomNormal.source(dr)(0, 1);
+    for (let i = 0; i < DN; i++) { const arm = i % 2, r = 1.2 + Math.pow(dr(), 0.7) * 8.2, a = arm * Math.PI + Math.log(r) * 2.1 + dn() * 0.32;
+      dp.set([Math.cos(a) * r, Math.sin(a) * r, Z2 * 0.55 + dn() * 0.22 * (1.4 - r / 10)], i * 3);
+      const w = dr(); dc.set([0.55 + 0.4 * w, 0.45 + 0.25 * w, 0.85], i * 3); }
+    const dg = new T.BufferGeometry(); dg.setAttribute('position', new T.BufferAttribute(dp, 3)); dg.setAttribute('aCol', new T.BufferAttribute(dc, 3));
+    const dust = points(T, dg, U, `attribute vec3 aCol; uniform float uScale, uRing2; varying vec3 vC; varying float vA;
+      void main() { vec4 mv = modelViewMatrix * vec4(position, 1.); gl_Position = projectionMatrix * mv; gl_PointSize = clamp(.05 * uScale / -mv.z, 1., 24.); vC = aCol; vA = .16 * uRing2; }`);
+    const SN = 2600, sp = new Float32Array(SN * 3), sc = new Float32Array(SN * 4);
+    for (let i = 0; i < SN; i++) { const u = dr() * 2 - 1, th = dr() * 6.283, r = 40 + dr() * 40, q = Math.sqrt(1 - u * u);
+      sp.set([q * Math.cos(th) * r, q * Math.sin(th) * r, u * r], i * 3); sc.set([0.75 + 0.25 * dr(), 0.8, 0.95, dr() * 6.283], i * 4); }
+    const sgeo = new T.BufferGeometry(); sgeo.setAttribute('position', new T.BufferAttribute(sp, 3)); sgeo.setAttribute('aCol', new T.BufferAttribute(sc, 4));
+    const stars = points(T, sgeo, U, `attribute vec4 aCol; uniform float uTime, uRing2; varying vec3 vC; varying float vA;
+      void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); gl_PointSize = 2.2 + 1.2 * aCol.x; vC = aCol.xyz; vA = (.25 + .2 * sin(uTime * 1.3 + aCol.w)) * (.35 + .65 * uRing2); }`);
+    scene.add(stars);
+    const g = new T.Group(); g.add(dust, lines, clock, core, pts, head); scene.add(g);
 
     // Year labels around ring 1, projected each frame.
     const yrs = d3.rollups(d1, v => [d3.mean(v, n => n.ang), v.length], n => n.y).filter(([, [, k]]) => k >= 5)
@@ -222,7 +258,8 @@
         return { y, el, v: new T.Vector3(Math.cos(ang) * 4.35, -Math.sin(ang) * 4.35, 0), on: -1 }; });
     const pv = new T.Vector3();
 
-    let W = 1, H = 1, ta = 0, tb = 0, ca = 0, cb = 0, mx = 0, my = 0, cmx = 0, cmy = 0;
+    let W = 1, H = 1, ta = 0, tb = 0, tc = 0, ca = 0, cb = 0, cc = 0, mx = 0, my = 0, cmx = 0, cmy = 0;
+    const P0 = new T.Vector3(), L0 = new T.Vector3(), P1 = new T.Vector3(0, -2.4, Z2 + 0.42), L1 = new T.Vector3(0, 7.5, Z2 - 0.25);
     function size() {
       const b = canvas.getBoundingClientRect(); W = b.width || 1; H = b.height || 1;
       R.setSize(W, H, false); cam.aspect = W / H;
@@ -233,23 +270,28 @@
     host.addEventListener('pointermove', e => { mx = e.clientX / innerWidth * 2 - 1; my = e.clientY / innerHeight * 2 - 1; kick(); });
     const kick = animator(canvas, (time, dt) => {
       const k = reduced ? 1 : 1 - Math.exp(-dt * 7);
-      ca += (ta - ca) * k; cb += (tb - cb) * k; cmx += (mx - cmx) * k * 0.4; cmy += (my - cmy) * k * 0.4;
+      ca += (ta - ca) * k; cb += (tb - cb) * k; cc += (tc - cc) * k; cmx += (mx - cmx) * k * 0.4; cmy += (my - cmy) * k * 0.4;
       U.uT.value = 2016 + ca * 11; U.uT2.value = 2016 + cb * 11; U.uRing2.value = clamp(cb * 20, 0, 1); U.uTime.value = reduced ? 0 : time;
       const e = easeInOut(cb), ext = 4.7 + 3.3 * cb, el = (90 - 54 * e) * D2R;
       const dist = ext / (Math.tan(cam.fov * D2R / 2) * Math.min(1, cam.aspect)) * 1.04;
       const tz = 0.2 - 1.1 * e;
+      const f = easeInOut(cc);
       cam.up.set(0, 1, 0);
-      cam.position.set(cmx * 0.8, -dist * Math.cos(el) + cmy * 0.5, tz + dist * Math.sin(el));
-      cam.lookAt(0, 0, tz);
-      g.rotation.z = -0.5 * e + (reduced ? 0 : Math.sin(time * 0.07) * 0.03);
+      P0.set(cmx * 0.8, -dist * Math.cos(el) + cmy * 0.5, tz + dist * Math.sin(el)); L0.set(0, 0, tz);
+      cam.position.copy(P0).lerp(P1, f); cam.position.x += cmx * 0.3 * f;
+      cam.lookAt(L0.lerp(L1, f));
+      cam.setViewOffset(W, H, -shift() * W * (1 - f), 0, W, H); cam.updateProjectionMatrix();  // the fly-through centres the view
+      g.rotation.z = -0.5 * e - 1.1 * f + (reduced ? 0 : Math.sin(time * 0.07) * 0.03);
+      U.uTwist.value = 1.6 * e + 0.6 * f; U.uSizeK.value = 1 - 0.45 * f;
       // clock head
       const T1 = U.uT.value, hu = (() => { let lo = 0, hi = N - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (d1[m].yf <= T1) lo = m; else hi = m - 1; } return (lo + 0.5) / N; })();
-      hg.attributes.position.array.set(arcPt(hu)); hg.attributes.position.needsUpdate = true;
+      const hp = arcPt(hu), ha = U.uTwist.value * (AR - 3) * 0.45, hc = Math.cos(ha), hs = Math.sin(ha);
+      hg.attributes.position.array.set([hc * hp[0] - hs * hp[1], hs * hp[0] + hc * hp[1], hp[2]]); hg.attributes.position.needsUpdate = true;
       HU.uOn.value = ca > 0.002 && ca < 0.998 ? 1 : 0;
       g.updateMatrixWorld(); cam.updateMatrixWorld();
       for (const Y of yrs) {
-        const op = clamp((T1 - Y.y - 0.2) / 0.5, 0, 1) * (1 - 0.6 * e);
-        pv.copy(Y.v).applyMatrix4(g.matrixWorld).project(cam);
+        const op = clamp((T1 - Y.y - 0.2) / 0.5, 0, 1) * (1 - 0.6 * e) * (1 - f);
+        const ya = U.uTwist.value * 1.35 * 0.45; pv.set(Y.v.x * Math.cos(ya) - Y.v.y * Math.sin(ya), Y.v.x * Math.sin(ya) + Y.v.y * Math.cos(ya), 0).applyMatrix4(g.matrixWorld).project(cam);
         const x = (pv.x * 0.5 + 0.5) * W, y = (-pv.y * 0.5 + 0.5) * H;
         Y.el.style.opacity = op.toFixed(3);
         Y.el.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-50%)`;
@@ -258,7 +300,7 @@
       return !reduced;
     });
     size(); new ResizeObserver(size).observe(canvas); addEventListener('resize', size);
-    return { scrub(a, b) { ta = clamp(a, 0, 1); tb = clamp(b, 0, 1); kick(); } };
+    return { scrub(a, b, c = 0) { ta = clamp(a, 0, 1); tb = clamp(b, 0, 1); tc = clamp(c, 0, 1); kick(); } };
   }
 
   // ---------- Globe: one spike per country, height = citing papers; arcs run from Waterloo, home of the HCI Games Group.
@@ -272,7 +314,7 @@
     RO: [45.9, 25], AE: [23.4, 53.8], JO: [30.6, 36.2] };
   const HOME = [43.47, -80.54];
 
-  async function globe(host, countries, land, { name = c => c, tip = () => {}, labels = 8 } = {}) {
+  async function globe(host, countries, land, { name = c => c, tip = () => {}, labels = 8, onPick = null } = {}) {
     const T = await three();
     const canvas = document.createElement('canvas'); canvas.className = 'g3-cv'; host.appendChild(canvas);
     const R = makeRenderer(T, canvas, 2), scene = new T.Scene(), cam = new T.PerspectiveCamera(30, 1, 0.1, 50);
@@ -351,8 +393,13 @@
     }
     const screen = (v, out) => { tv.copy(v).applyMatrix4(g.matrixWorld); nv.copy(tv).normalize(); const face = nv.dot(camDir.copy(cam.position).sub(tv).normalize());
       tv.project(cam); out.x = (tv.x * 0.5 + 0.5) * W; out.y = (-tv.y * 0.5 + 0.5) * H; out.face = face; return out; };
-    canvas.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); tip(null); });
-    canvas.addEventListener('pointerup', () => { drag = null; });
+    const nearest = (cx, cy) => { const b = canvas.getBoundingClientRect(), hx = cx - b.left, hy = cy - b.top; let best = null, bd = 22 * 22;
+      C.forEach(k => { if (!(k.gr > 0.3)) return; screen(k.top, o); const d = (o.x - hx) ** 2 + (o.y - hy) ** 2; if (o.face > 0.1 && d < bd) { bd = d; best = k; } }); return best; };
+    let down = null;
+    canvas.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY }; down = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); tip(null); });
+    canvas.addEventListener('pointerup', e => { drag = null;
+      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6 && onPick) { const k = nearest(e.clientX, e.clientY); if (k) onPick(k.c, k.n); }  // a click, not a drag
+      down = null; });
     canvas.addEventListener('pointermove', e => {
       if (drag) { vy = (e.clientX - drag.x) * 0.008; rotY += vy; rotX = clamp(rotX + (e.clientY - drag.y) * 0.006, -1.1, 1.1); drag = { x: e.clientX, y: e.clientY }; idle = 0; kick(); return; }
       hoverAt = e; kick();
@@ -382,9 +429,8 @@
         const ok = o.face > 0.25 && k.gr > 0.6 && !placed.some(b => r.x < b.x + b.w + 6 && b.x < r.x + r.w + 6 && r.y < b.y + b.h && b.y < r.y + r.h);
         if (ok) placed.push(r);
         k.el.style.opacity = ok ? 1 : 0; k.el.style.transform = `translate(${r.x.toFixed(1)}px,${r.y.toFixed(1)}px)`; });
-      if (hoverAt && !drag) { const b = canvas.getBoundingClientRect(), hx = hoverAt.clientX - b.left, hy = hoverAt.clientY - b.top; let best = null, bd = 22 * 22;
-        C.forEach(k => { if (k.gr <= 0.3) return; screen(k.top, o); const d = (o.x - hx) ** 2 + (o.y - hy) ** 2; if (o.face > 0.1 && d < bd) { bd = d; best = k; } });
-        tip(best ? `<b>${name(best.c)}</b><br>${best.n} citing paper${best.n === 1 ? '' : 's'} with an author there` : null, hoverAt); }
+      if (hoverAt && !drag) { const best = nearest(hoverAt.clientX, hoverAt.clientY); canvas.style.cursor = best ? 'pointer' : '';
+        tip(best ? `<b>${name(best.c)}</b><br>${best.n} citing paper${best.n === 1 ? '' : 's'} with an author there<br><i>Click to list the papers</i>` : null, hoverAt); }
       R.render(scene, cam);
       return !reduced || !!dir || !!drag;
     });
@@ -431,5 +477,96 @@
     return { kick };
   }
 
-  window.HX3D = { hero, network, globe, ripple, reduced };
+  // ---------- Hexad-12 universe: the 12 items float in from deep space and join a node graph. Each item ties to its type's hub,
+  // the two items of a type tie to each other, and the six hubs ring a Hexad-12 core. Labels are HTML for crisp, high-contrast text.
+  const TYPE_COL = { Philanthropist: '#e090c0', Socialiser: '#00b3eb', 'Free Spirit': '#5fd4a8', Achiever: '#f2c25a', Player: '#b98ad0', Disruptor: '#ff7a6b' };
+  async function universe(host, items, order) {
+    const T = await three();
+    const canvas = document.createElement('canvas'); canvas.className = 'u3-cv'; canvas.setAttribute('aria-hidden', 'true'); host.appendChild(canvas);
+    const R = makeRenderer(T, canvas, 2), scene = new T.Scene(), cam = new T.PerspectiveCamera(40, 1, 0.1, 200);
+    cam.position.set(0, 0, 10);
+    const col = t => { const c = d3.rgb(TYPE_COL[t] || '#ffffff'); return [c.r / 255, c.g / 255, c.b / 255]; };
+    const rnd = d3.randomLcg(12);
+    const nodes = [{ kind: 'core', label: 'Hexad-12', p: new T.Vector3(0, 0, 0), c: [1, 1, 1], s: 0.6, d: 0 }];
+    order.forEach((t, i) => { const a = Math.PI / 2 - i * Math.PI / 3;
+      nodes.push({ kind: 'hub', type: t, label: t, a, p: new T.Vector3(Math.cos(a) * 2.6, Math.sin(a) * 2.6, Math.sin(i * 1.7) * 0.6), c: col(t), s: 0.46, d: 0.15 + i * 0.09 }); });
+    items.forEach(([t, text], j) => {
+      const hub = nodes.find(n => n.type === t && n.kind === 'hub'), side = items.filter(x => x[0] === t)[0][1] === text ? -1 : 1;
+      const out = new T.Vector3(Math.cos(hub.a), Math.sin(hub.a), 0), perp = new T.Vector3(-out.y, out.x, 0);
+      const p = hub.p.clone().addScaledVector(out, 1.55).addScaledVector(perp, side * 0.8).add(new T.Vector3(0, 0, side * 0.8));
+      nodes.push({ kind: 'item', type: t, label: text, p, c: col(t), s: 0.3, d: 0.8 + j * 0.13 }); });
+    const hubOf = t => nodes.findIndex(n => n.kind === 'hub' && n.type === t);
+    const E = [];
+    order.forEach((t, i) => { E.push([0, hubOf(t)], [hubOf(t), hubOf(order[(i + 1) % order.length])]); });
+    nodes.forEach((n, i) => { if (n.kind === 'item') E.push([hubOf(n.type), i]); });
+    order.forEach(t => { const its = nodes.map((n, i) => n.kind === 'item' && n.type === t ? i : -1).filter(i => i >= 0); if (its.length === 2) E.push(its); });
+    nodes.forEach(n => { const dir = new T.Vector3(rnd() - 0.5, rnd() - 0.5, 0).normalize(); n.from = n.p.clone().addScaledVector(dir, 3 + rnd() * 3).add(new T.Vector3(0, 0, -22 - rnd() * 10));
+      n.ph = rnd() * 6.283; n.cur = n.from.clone(); n.arr = 0; });
+    const END = d3.max(nodes, n => n.d) + 1.5;
+
+    const M = nodes.length, np = new Float32Array(M * 3), nc = new Float32Array(M * 3), ns = new Float32Array(M * 2);
+    nodes.forEach((n, i) => nc.set(n.c, i * 3));
+    const ng = new T.BufferGeometry(); ng.setAttribute('position', new T.BufferAttribute(np, 3)); ng.setAttribute('aCol', new T.BufferAttribute(nc, 3)); ng.setAttribute('aS', new T.BufferAttribute(ns, 2));
+    const U = { uScale: { value: 1 }, uTime: { value: 0 } };
+    const npts = points(T, ng, U, `attribute vec3 aCol; attribute vec2 aS; uniform float uScale, uTime; varying vec3 vC; varying float vA;
+      void main() { vec4 mv = modelViewMatrix * vec4(position, 1.); gl_Position = projectionMatrix * mv; gl_PointSize = aS.x * uScale / -mv.z; vC = aCol; vA = aS.y; }`);
+    const ep = new Float32Array(E.length * 6), ec = new Float32Array(E.length * 6), ea = new Float32Array(E.length * 2);
+    E.forEach(([a, b], i) => ec.set(nodes[a].c.concat(nodes[b].c), i * 6));
+    const eg = new T.BufferGeometry(); eg.setAttribute('position', new T.BufferAttribute(ep, 3)); eg.setAttribute('aCol', new T.BufferAttribute(ec, 3)); eg.setAttribute('aA', new T.BufferAttribute(ea, 1));
+    const elines = new T.LineSegments(eg, new T.ShaderMaterial({ transparent: true, depthWrite: false, blending: T.AdditiveBlending, fragmentShader: LINE_FRAG,
+      vertexShader: `attribute vec3 aCol; attribute float aA; varying vec3 vC; varying float vA; void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); vC = aCol; vA = aA; }` }));
+    elines.frustumCulled = false;
+    const SN = 1400, sp = new Float32Array(SN * 3), sc = new Float32Array(SN * 4);
+    for (let i = 0; i < SN; i++) { sp.set([(rnd() - 0.5) * 60, (rnd() - 0.5) * 40, -10 - rnd() * 40], i * 3); sc.set([0.7 + 0.3 * rnd(), 0.8, 0.95, rnd() * 6.283], i * 4); }
+    const sg = new T.BufferGeometry(); sg.setAttribute('position', new T.BufferAttribute(sp, 3)); sg.setAttribute('aCol', new T.BufferAttribute(sc, 4));
+    scene.add(points(T, sg, U, `attribute vec4 aCol; uniform float uTime; varying vec3 vC; varying float vA;
+      void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); gl_PointSize = 1.8 + aCol.x; vC = aCol.xyz; vA = .28 + .18 * sin(uTime * 1.1 + aCol.w); }`));
+    const g = new T.Group(); g.add(elines, npts); scene.add(g);
+
+    const labs = nodes.map(n => { const el = document.createElement('span'); el.className = 'u3-lab u3-' + n.kind; el.textContent = n.kind === 'item' ? `“${n.label}”` : n.label;
+      if (n.kind !== 'core') el.style.setProperty('--c', TYPE_COL[n.type]); host.appendChild(el); return el; });
+    const pv = new T.Vector3();
+    let W = 1, H = 1, p = 0, dir = 0, mx = 0, my = 0, cmx = 0, cmy = 0, wide = true;
+    function size() {
+      const b = canvas.getBoundingClientRect(); W = b.width || 1; H = b.height || 1; wide = W > 900;
+      R.setSize(W, H, false); cam.aspect = W / H;
+      cam.setViewOffset(W, H, wide ? -0.13 * W : 0, 0, W, H); cam.position.z = wide ? 18 : 19; cam.updateProjectionMatrix();
+      U.uScale.value = R.getPixelRatio() * H / (2 * Math.tan(cam.fov * D2R / 2));
+      kick();
+    }
+    host.addEventListener('pointermove', e => { mx = e.clientX / innerWidth * 2 - 1; my = e.clientY / innerHeight * 2 - 1; kick(); });
+    const kick = animator(canvas, (time, dt) => {
+      if (dir) { p = clamp(p + dt * dir, 0, END); if ((dir > 0 && p === END) || (dir < 0 && p === 0)) dir = 0; }
+      const k = reduced ? 1 : 1 - Math.exp(-dt * 3); cmx += (mx - cmx) * k; cmy += (my - cmy) * k;
+      g.rotation.set((reduced ? 0 : Math.sin(time * 0.09) * 0.16) + cmy * 0.15, (reduced ? 0 : Math.sin(time * 0.12) * 0.38) + cmx * 0.3, 0);
+      U.uTime.value = reduced ? 0 : time;
+      nodes.forEach((n, i) => {
+        const a = clamp((p - n.d) / 1.1, 0, 1), e = 1 - Math.pow(1 - a, 4); n.arr = a;
+        const bob = reduced ? 0 : 0.09;
+        n.cur.copy(n.from).lerp(n.p, e); n.cur.x += Math.sin(time * 0.6 + n.ph) * bob * e; n.cur.y += Math.cos(time * 0.5 + n.ph) * bob * e;
+        np.set([n.cur.x, n.cur.y, n.cur.z], i * 3);
+        const pop = a > 0 && a < 1 ? 1 + 0.6 * Math.sin(a * Math.PI) : 1;
+        ns.set([n.s * pop * (a > 0 ? 1 : 0), Math.min(1, a * 2)], i * 2);
+      });
+      E.forEach(([a, b], i) => { const A = nodes[a].cur, B = nodes[b].cur; ep.set([A.x, A.y, A.z, B.x, B.y, B.z], i * 6);
+        const v = Math.min(nodes[a].arr, nodes[b].arr); ea[i * 2] = ea[i * 2 + 1] = v * v * (nodes[a].kind === 'core' ? 0.35 : 0.6); });
+      ng.attributes.position.needsUpdate = ng.attributes.aS.needsUpdate = true; eg.attributes.position.needsUpdate = eg.attributes.aA.needsUpdate = true;
+      g.updateMatrixWorld(); cam.updateMatrixWorld();
+      nodes.forEach((n, i) => {
+        pv.copy(n.cur).applyMatrix4(g.matrixWorld); const depth = pv.z; pv.project(cam);
+        const x = (pv.x * 0.5 + 0.5) * W, y = (-pv.y * 0.5 + 0.5) * H, op = clamp((n.arr - 0.55) / 0.45, 0, 1) * (depth < -1.2 ? 0.75 : 1);
+        const el = labs[i]; el.style.opacity = op.toFixed(3);
+        if (op > 0 && !n.w) n.w = el.offsetWidth;
+        const left = n.kind === 'item' && (n.cur.x < 0 || x + (n.w || 200) + 24 > W);  // flip a label inward when it would run off the edge
+        el.style.transform = n.kind === 'item' ? `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(${left ? 'calc(-100% - 14px)' : '14px'},-50%)`
+          : `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,${n.kind === 'core' ? '-50%' : 'calc(-100% - 14px)'})`;
+      });
+      R.render(scene, cam);
+      return !reduced || !!dir;
+    });
+    size(); new ResizeObserver(size).observe(canvas);
+    return { play() { if (reduced) { p = END; kick(); return; } dir = 1; kick(); }, rewind() { if (reduced) { p = 0; kick(); return; } dir = -2.2; kick(); } };
+  }
+
+  window.HX3D = { hero, network, globe, ripple, universe, reduced };
 })();
