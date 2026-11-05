@@ -13,14 +13,16 @@
   function arrival(k) { return A0 + STEP * k; }
 
   var threeWaiters = null;
-  function withThree(cb) {
+  var threeFailed = false;
+  function withThree(cb, onErr) {  // shared with hx3d.js so the page loads three.js once
     if (window.THREE) return cb();
-    if (threeWaiters) return threeWaiters.push(cb);
-    threeWaiters = [cb];
+    if (threeFailed) return onErr && onErr();
+    if (threeWaiters) return threeWaiters.push([cb, onErr]);
+    threeWaiters = [[cb, onErr]];
     var s = document.createElement('script');
     s.src = THREE_URL;
-    s.onload = function () { var w = threeWaiters; threeWaiters = null; w.forEach(function (f) { f(); }); };
-    s.onerror = function () { console.error('chain3d: three.js failed to load'); };
+    s.onload = function () { var w = threeWaiters; threeWaiters = null; w.forEach(function (f) { f[0](); }); };
+    s.onerror = function () { console.error('chain3d: three.js failed to load'); threeFailed = true; var w = threeWaiters; threeWaiters = null; w.forEach(function (f) { if (f[1]) f[1](); }); };
     document.head.appendChild(s);
   }
 
@@ -362,20 +364,29 @@
       playing = true; t0 = performance.now(); raf = requestAnimationFrame(loop);
     }
     function stop() { playing = false; cancelAnimationFrame(raf); }
+    // Scrolling back up plays the graphic backwards at eight times speed.
+    function rewind() {
+      stop();
+      if (rm) { render(0); return; }
+      var from = Math.min(curT, TOTAL), s0 = performance.now(), d = Math.max(0.4, from / 8);
+      (function f(now) { var k = Math.min(1, (now - s0) / 1000 / d); render(from * (1 - k)); if (k < 1) raf = requestAnimationFrame(f); })(s0);
+    }
 
     if (window.ResizeObserver) new ResizeObserver(resize).observe(container);
     else window.addEventListener('resize', resize);
     resize(); render(rm ? TOTAL : 0.0);
-    return { play: play, stop: stop, _render: render, TOTAL: TOTAL, _labels: labels, _yr: yrLabels };
+    return { play: play, stop: stop, rewind: rewind, _render: render, TOTAL: TOTAL, _labels: labels, _yr: yrLabels };
   }
 
   window.HXChain3D = {
+    withThree: withThree,
     create: function (container, chain, newest) {
       var inst = null, want = null;
       withThree(function () { inst = build(container, chain, newest); if (want === 'play') inst.play(); });
       return {
         play: function () { want = 'play'; if (inst) inst.play(); },
         stop: function () { want = 'stop'; if (inst) inst.stop(); },
+        rewind: function () { want = 'stop'; if (inst) inst.rewind(); },
         duration: TOTAL,
         _inst: function () { return inst; }
       };
