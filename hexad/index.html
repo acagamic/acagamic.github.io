@@ -264,7 +264,7 @@
 
 <div class="wrap">
   <section class="reveal" data-run="chain">
-    <h2>The citation line runs eight generations deep, and the newest paper comes straight back to the Hexad</h2>
+    <h2>The trail of top papers runs eight steps deep, and the newest paper cites the Hexad itself</h2>
     <p class="lede">Each step picks the most-cited paper, published in or after its parent’s year, that cites the step before. The newest paper citing the Hexad, published November 3, 2026, cites it directly: Zhang, G. X., Altmeyer, M., &amp; Seaborn, K. (2026). Measuring what motivates maldaimonia in play with the Inventory on Maldaimonic Motivations in Player Experiences (IMPEX). <i>Proceedings of the ACM on Human-Computer Interaction, 10</i>(7), 1–29. <a href="https://doi.org/10.1145/3831291">doi.org/10.1145/3831291</a></p>
     <div class="viz chain3d stage" id="v-chain"></div>
   </section>
@@ -276,20 +276,20 @@
   </section>
 
   <section class="reveal">
-    <h2>The questionnaire exists in 17 languages, and 7 have a published validation</h2>
+    <h2>You can take the Hexad in 17 languages, and published studies have tested 7 of them</h2>
     <p class="lede">Translation and validation are separate questions. Seven versions have a peer-reviewed validation, three adaptations report weaker fit or reliability problems, and seven are translations offered on the HCI Games Group website.</p>
     <div class="chips" id="v-langs"></div>
     <details class="refbox"><summary>Full references for the published versions</summary><ol class="refs" id="v-refs"></ol></details>
   </section>
 
   <section class="reveal" data-run="lineage">
-    <h2>The HCI Games Group refined the scale over time, then teamed up with Jeanine Krath and Max Altmeyer on a shorter, more reliable version</h2>
+    <h2>We kept improving the scale, then made a short version with Jeanine Krath and Max Altmeyer</h2>
     <p class="lede">Two threads run unbroken from the 2016 paper to Hexad-12. Jeanine Krath’s thread starts in 2021 with a study comparing player typologies with the Hexad and a review of theory in gamification research that 956 papers now cite, two generations below the Hexad paper in the descent chain. In 2023 she led the short form with Maximilian Altmeyer, Gustavo, and Lennart.</p>
     <div class="viz" id="v-lin"></div>
   </section>
 
   <section class="reveal" data-run="hexfacts">
-    <h2>Hexad‑12 halved the questionnaire and measured the six types more cleanly</h2>
+    <h2>Hexad‑12 cut the questions in half and measured the six types better</h2>
     <div class="facts">
       <div><b data-to="12">12</b><p>items instead of 24, because long questionnaires raise dropout and screen fatigue inside bigger surveys</p></div>
       <div><b data-to="882">882</b><p>responses used to choose the items through exploratory factor analysis</p></div>
@@ -318,21 +318,21 @@
   </section>
 
   <section class="reveal" data-run="impact">
-    <h2>The Hexad’s impact shows in three places: research reuse, design decisions, and effects on people</h2>
+    <h2>The Hexad shows its impact in three places: new research, design choices, and effects on people</h2>
     <div class="impact">
-      <div><h3>Research reuse</h3><b class="n">1,082</b><p>citations on Google Scholar, 17 languages, 7 published validations, and 23,502 Hexad‑12 tests on the public site</p></div>
-      <div><h3>Design decisions</h3><ul>
-        <li><b>Lernnavi:</b> answers from 1,246 pupils shaped a team-mechanics decision <i>(Schultze et al., 2026)</i></li>
+      <div><h3>New research</h3><b class="n">1,082</b><p>citations on Google Scholar, 17 languages, 7 published validations, and 23,502 Hexad‑12 tests on the public site</p></div>
+      <div><h3>Design choices</h3><ul>
+        <li><b>Lernnavi:</b> answers from 1,246 pupils led to a decision to add team features <i>(Schultze et al., 2026)</i></li>
         <li><b>Xiphias:</b> answers shaped badges for a programming course <i>(Ateneo Laboratory for the Learning Sciences, 2021)</i></li>
-        <li><b>Ludilearn for Moodle:</b> assigns game elements from a Hexad‑12 intake <i>(MoodleDocs, 2025)</i></li>
-        <li><b>Wiski:</b> switched to learner choice after pupils found the questionnaire a burden <i>(Ooge, 2019)</i></li></ul></div>
+        <li><b>Ludilearn for Moodle:</b> picks game features for each learner from a Hexad‑12 quiz <i>(MoodleDocs, 2025)</i></li>
+        <li><b>Wiski:</b> let pupils choose for themselves after the questionnaire felt like too much work <i>(Ooge, 2019)</i></li></ul></div>
       <div><h3>Effects on people</h3><ul>
         <li><b>Fitness:</b> 40 people over 60 days; activity rose in the personalized groups and stayed flat in the others <i>(Zhao et al., 2020)</i></li>
-        <li><b>Science class:</b> higher post-test scores, 17 versus 18 pupils <i>(Zourmpakis et al., 2024)</i></li>
+        <li><b>Science class:</b> a class of 17 scored higher on the final test than a class of 18 <i>(Zourmpakis et al., 2024)</i></li>
         <li><b>Sokoon:</b> depression and anxiety scores fell in a two-week pilot with 30 adults <i>(Amer et al., 2024)</i></li>
-        <li><b>Null results too:</b> Wiski found no difference in exercise counts <i>(Ooge, 2019)</i></li></ul></div>
+        <li><b>Some found nothing:</b> Wiski saw no change in how much pupils practised <i>(Ooge, 2019)</i></li></ul></div>
     </div>
-    <p class="lede">Most of this evidence is small, and the Hexad usually arrives bundled with other changes, so it documents use better than it documents benefit. As gamification research moves on, the Hexad still gives studies a common measure of player motivation, so studies from different countries and years can be compared and pooled.</p>
+    <p class="lede">Most of this evidence is small, and the Hexad usually arrives bundled with other changes, so they show it was used more than they show it helped. As gamification research moves on, the Hexad still gives studies a common measure of player motivation, so studies from different countries and years can be compared and pooled.</p>
   </section>
 
   <section class="reveal">
@@ -379,7 +379,7 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
   HX.countUp($('big'), deck.scholar.total, 2400);
   $('oa-n').textContent = HX.fmt(data.counts.openalex);
   // Languages: validated, mixed, and website-only groups, with full references in a disclosure.
-  const G = [['validated', 'Validated in a publication', 'var(--series-1)'], ['mixed', 'Adapted, mixed results', 'var(--series-3)'], ['site', 'Translation on our website', 'var(--muted)']];
+  const G = [['validated', 'Tested in a published study', 'var(--series-1)'], ['mixed', 'Tried, with mixed results', 'var(--series-3)'], ['site', 'Translated, not yet tested', 'var(--muted)']];
   $('v-langs').innerHTML = G.map(([k, name, c]) => `<div class="g-${k}"><h3><i style="background:${c}"></i>${name}</h3>${deck.langs.filter(l => l[1] === k)
     .map(l => `<div class="chip">${l[0]}${l[2] ? `<small>${l[2]}</small>` : ''}</div>`).join('')}</div>`).join('');
   $('v-refs').innerHTML = [...new Set(Object.values(deck.langrefs).flat())].map(r => `<li>${esc(r)}</li>`).join('');
