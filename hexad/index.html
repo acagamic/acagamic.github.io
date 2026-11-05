@@ -147,7 +147,7 @@
 <main>
 <div class="wrap">
   <section class="reveal" id="start">
-    <h2>Six authors turned a practitioner’s model into a questionnaire</h2>
+    <h2>Six of us turned a game designer’s model into a survey</h2>
     <div class="team">
       <dl class="who">
         <dt>HCI Games Group, University of Waterloo</dt><dd>Gustavo F. Tondello</dd><dd>Rina R. Wehbe</dd><dd>Lennart E. Nacke</dd>
@@ -283,7 +283,7 @@
   </section>
 
   <section class="reveal" data-run="lineage">
-    <h2>We kept improving the scale, then made a short version with Jeanine Krath and Max Altmeyer</h2>
+    <h2>We kept improving the scale. Then we made a short version with Jeanine Krath and Max Altmeyer</h2>
     <p class="lede">Two threads run unbroken from the 2016 paper to Hexad-12. Jeanine Krath’s thread starts in 2021 with a study comparing player typologies with the Hexad and a review of theory in gamification research that 956 papers now cite, two generations below the Hexad paper in the descent chain. In 2023 she led the short form with Maximilian Altmeyer, Gustavo, and Lennart.</p>
     <div class="viz" id="v-lin"></div>
   </section>
@@ -413,7 +413,7 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
     milestones: HX.timeBars($('v-ms'), top, { W: 1000, label: r => `${r[4]} ${r[2]}`, total: r => r[3], years: r => r[9] }),
     chain: window.HXChain3D ? (c => ({ play: () => c.play() }))(HXChain3D.create($('v-chain'), data.chain, { who: 'Zhang, Altmeyer, & Seaborn', year: 2026, cites: 0, date: 'November 3, 2026', title: 'Measuring What Motivates Maldaimonia in Play with the Inventory on Maldaimonic Motivations in Player Experiences (IMPEX)' }))
       : HX.chain($('v-chain'), data, { W: 1100, H: 640 }),
-    countries: HX.hbars($('v-co'), data.countries.slice(0, 15), { W: 1000, label: r => `${flag(r[0])}  ${HX.country(r[0])}` }),
+    countries: HX.hbars($('v-co'), data.countries.slice(0, 15), { W: 1000, rowH: 38, lw: 240, fs: 18, bar: 0.6, label: r => `${HX.country(r[0])}  ${flag(r[0])}` }),
     lineage: HX.lineage($('v-lin'), { W: 1400 }),
     live1: HX.crowdCompare($('v-live1'), study.dominant, live.singleType.rows, { W: 1400, H: 520 }),
     live2: HX.lines($('v-live2'), live.age.bands, { Philanthropist: live.age.Philanthropist, Player: live.age.Player }, { W: 1300, H: 520, domain: [15, 20], note: j => ` · ${HX.fmt(live.age.n[j])} people` }),
