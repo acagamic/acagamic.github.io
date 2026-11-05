@@ -36,7 +36,7 @@
       '.hx3-l .g{flex:none;min-width:1.5em;height:1.5em;border-radius:1em;display:inline-flex;align-items:center;justify-content:center;' +
       'font:700 .72em/1 "Montserrat",sans-serif;color:#0a2530;background:var(--c)}' +
       '.hx3-l .t,.hx3-l .c{display:none;white-space:normal}' +
-      '.hx3-l.cur{max-width:660px;background:var(--bg,#0a2530);padding:12px 18px;border-radius:12px}.hx3-l.cur .n{font-size:32px;font-weight:700}' +
+      '.hx3-l.cur{max-width:660px;background:var(--bg,#0a2530);padding:12px 18px;border-radius:12px;box-shadow:0 0 18px 10px var(--bg,#0a2530)}.hx3-l.cur .n{font-size:32px;font-weight:700}' +
       '.hx3-l.cur .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hx3-l.cur .t,.hx3-l.cur .c{padding-left:44px}.hx3-l.cur .t{display:block;font-size:20px;line-height:1.35;margin-top:8px}' +
       '.hx3-l.cur .c{display:block;font-size:18px;color:#a9bec7;margin-top:6px}' +
       '.hx3-l.short{background:var(--bg,#0a2530);padding:2px 8px;border-radius:8px}.hx3-l.short .n{font-size:20px;font-weight:600;line-height:1.3;gap:8px}.hx3-l.short .g{font-size:18px}' +  // step numbers stay so the room can count the eight steps
@@ -291,7 +291,7 @@
       setDraw(arcCore, aeased, ARC_SEG, RAD); setDraw(arcGlow, aeased, ARC_SEG, RAD);
       if (t >= T_ARC) { // the only motion after the finale: a light pulse on the arc
         var hu = au < 1 ? aeased : ((t - T_IMP) / 2.4) % 1;
-        arcHead.visible = true; arcHead.position.copy(arc.getPoint(hu)); arcHead.scale.setScalar(au < 1 ? 2.6 : 0.9 * Math.sin(Math.PI * hu) + 0.2);
+        arcHead.visible = true; arcHead.position.copy(arc.getPoint(hu)); arcHead.scale.setScalar(au < 1 ? 2.6 * Math.min(1, au * 5) : 0.9 * Math.sin(Math.PI * hu) + 0.2);
       } else arcHead.visible = false;
       bursts.forEach(function (b) { b.upd(t); });
 
