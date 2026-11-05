@@ -45,7 +45,7 @@ const HX = (() => {
     const bw = x.bandwidth() / series.length;
     svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', H - m.b).attr('y2', H - m.b).attr('class', 'hx-axis');
     svg.append('g').selectAll('text').data(rows).join('text').attr('class', 'hx-tick')
-      .attr('x', r => x(r.y) + x.bandwidth() / 2).attr('y', H - m.b + 26).attr('text-anchor', 'middle').text(r => r.y);
+      .attr('x', r => x(r.y) + x.bandwidth() / 2).attr('y', H - m.b + 26).attr('text-anchor', 'middle').text(r => r.y === 2026 ? '2026 so far' : r.y);
     const groups = series.map((s, si) => {
       const g = svg.append('g');
       const bars = g.selectAll('path').data(rows).join('path')
@@ -56,7 +56,7 @@ const HX = (() => {
         .style('opacity', 0).text(r => fmt(r[s]));
       // ramp: colour each year on the site's time scale (cyan 2016 to magenta 2026)
       if (ramp) { const c = d3.piecewise(d3.interpolateLab, ['--series-1', '--ramp-mid', '--series-2'].map(v => css(v, host)));
-        bars.style('fill', (r, i) => c(i / (rows.length - 1))).style('opacity', 1); }
+        bars.style('fill', (r, i) => c(i / (rows.length - 1))).style('opacity', r => r.y === 2026 ? 0.5 : 1); }  // 2026 is a partial year
       return { s, si, bars, labels };
     });
     // Hit targets wider than the marks.
@@ -527,7 +527,7 @@ const HX = (() => {
     }
     const g = svg.selectAll('g.b').data(rows).join('g').attr('class', 'b').attr('transform', (r, i) => `translate(0,${top + i * rowH})`);
     g.append('text').attr('class', 'hx-lab hx-strong').attr('x', lw - 14).attr('y', by + bh / 2 + 6).attr('text-anchor', 'end').text(label);
-    if (sub) g.append('text').attr('class', 'hx-muted').attr('x', lw).attr('y', by + bh + 24).style('font-size', '18px').text(sub);
+    if (sub) g.append('text').attr('class', 'hx-muted').attr('x', lw).attr('y', by + bh + 24).style('font-size', '19px').text(sub);
     const segs = g.selectAll('rect').data(r => { let acc = 0; return years(r).map((v, i) => ({ r, i, v, x0: (acc += v) - v })); }).join('rect')
       .attr('y', by).attr('height', bh).attr('fill', d => colour(d.i)).attr('stroke', 'var(--bg)').attr('stroke-width', 1.5)
       .attr('x', d => lw + x(d.x0)).attr('width', 0)
@@ -570,7 +570,7 @@ const HX = (() => {
     const cls = k => ['hx-thread0', 'hx-thread1', 'hx-thread2'][k];
     const head = svg.selectAll('g.h').data(papers).join('g').attr('class', 'h').attr('transform', (p, i) => `translate(${x(i)},0)`);
     head.append('text').attr('class', 'hx-lab hx-strong').attr('text-anchor', 'middle').attr('y', 34).style('font-size', '24px').text(p => p.y);
-    head.append('text').attr('class', 'hx-muted').attr('text-anchor', 'middle').attr('y', 60).style('font-size', '17px').text(p => p.name);
+    head.append('text').attr('class', 'hx-muted').attr('text-anchor', 'middle').attr('y', 62).style('font-size', '20px').text(p => p.name);
     head.append('line').attr('class', 'hx-axis').attr('y1', top - 14).attr('y2', top + people.length * rowH);
     const foot = svg.selectAll('g.f').data(papers).join('g').attr('class', 'f').attr('transform', (p, i) => `translate(${x(i)},${top + people.length * rowH + 34})`);
     foot.append('text').attr('class', 'hx-val').attr('text-anchor', 'middle').style('font-size', '20px').text(p => `${fmt(p.cites)} citations`);
@@ -645,7 +645,7 @@ const HX = (() => {
   // Disruptor story: 2016 respondents (outlined dots) beside Hexad-12 test shares rescaled to 133 people (filled dots).
   function crowdCompare(host, a, b, { W = 1600, H = 560, highlight = 'Disruptor', n = 133 } = {}) {
     host.innerHTML = '';
-    const types = a.map(r => r[0]), s = 30, cols = 3, base = H - 100;
+    const types = a.map(r => r[0]), s = 32, cols = 3, base = H - 96;
     const x = d3.scaleBand(types, [40, W - 40]).padding(0.12);
     const bN = Object.fromEntries(b.map(([t, p]) => [t, Math.round(p / 100 * n)]));
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
@@ -657,15 +657,15 @@ const HX = (() => {
       d3.range(bN[t]).forEach(i => dots.push({ t, set: 1, i, x: cx1 + ((i % cols) - 1) * s, y: base - 12 - Math.floor(i / cols) * s }));
     });
     const hot = d => d.t === highlight;
-    const c = svg.selectAll('circle').data(dots).join('circle').attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 12)
+    const c = svg.selectAll('circle').data(dots).join('circle').attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 13)
       .attr('fill', d => d.set ? (hot(d) ? 'var(--series-2)' : 'var(--series-1)') : 'none')
       .attr('stroke', d => d.set ? 'none' : (hot(d) ? 'var(--series-2)' : 'var(--muted)')).attr('stroke-width', 2);
     const lab = svg.selectAll('g.l').data(types).join('g').attr('class', 'l').attr('transform', t => `translate(${x(t) + x.bandwidth() / 2},${base + 34})`);
-    lab.append('text').attr('class', t => 'hx-lab hx-strong' + (t === highlight ? ' hx-moved' : '')).attr('text-anchor', 'middle').style('font-size', '22px').text(t => t);
-    lab.append('text').attr('class', 'hx-muted').attr('text-anchor', 'middle').attr('y', 34).style('font-size', '24px')
+    lab.append('text').attr('class', t => 'hx-lab hx-strong' + (t === highlight ? ' hx-moved' : '')).attr('text-anchor', 'middle').style('font-size', '25px').text(t => t);
+    lab.append('text').attr('class', 'hx-muted').attr('text-anchor', 'middle').attr('y', 36).style('font-size', '25px')
       .text((t, i) => `${(a[i][1] / n * 100).toFixed(1)}% → ${b[i][1]}%`);
     function play() {
-      c.interrupt().attr('r', 0).transition().delay(d => reduced ? 0 : d.set * 1500 + d.i * 22).duration(350).ease(d3.easeBackOut).attr('r', 12);
+      c.interrupt().attr('r', 0).transition().delay(d => reduced ? 0 : d.set * 1500 + d.i * 22).duration(350).ease(d3.easeBackOut).attr('r', 13);
     }
     return { play };
   }
@@ -815,19 +815,23 @@ function reviewBars(host, rows, { W = 1680, H = 560, names = '' } = {}) {
   const y = d3.scaleLinear([0, d3.max(rows, r => r[2]) * 1.12], [H - m.b, m.t]), bp = (bx, top, h) => barPathR(bx, top, bw * 0.62, h);
   svg.append('line').attr('class', 'hx-axis').attr('x1', m.l).attr('x2', W - m.r).attr('y1', H - m.b).attr('y2', H - m.b);
   svg.append('g').selectAll('text').data(rows).join('text').attr('class', 'hx-tick').attr('x', r => x(r[0]) + bw / 2).attr('y', H - m.b + 28)
-    .attr('text-anchor', 'middle').text(r => r[0] === 2026 ? '2026*' : r[0]);
+    .attr('text-anchor', 'middle').text(r => r[0] === 2026 ? '2026 so far' : r[0]);
   const g = svg.selectAll('g.y').data(rows).join('g').attr('class', 'y');
   const d1 = g.append('rect').attr('x', r => x(r[0])).attr('width', bw * 0.3).attr('rx', 3).attr('fill', 'var(--series-1)');
   const d2 = g.append('rect').attr('x', r => x(r[0]) + bw * 0.34).attr('width', bw * 0.66).attr('rx', 3).attr('fill', 'var(--series-2)').attr('fill-opacity', .55);
   const via = g.append('rect').attr('x', r => x(r[0]) + bw * 0.34).attr('width', bw * 0.66).attr('rx', 3).attr('fill', 'var(--brand-pink)');
-  const pct = g.append('text').attr('class', 'hx-val').attr('text-anchor', 'middle').attr('x', r => x(r[0]) + bw * 0.67).style('font-size', '17px')
-    .text(r => Math.round(r[3] / r[2] * 100) + '%');
+  const pct = g.append('text').attr('class', 'hx-val').attr('text-anchor', 'middle').attr('x', r => x(r[0]) + bw * 0.67).style('font-size', '20px')
+    .text(r => r[2] < 50 ? '' : Math.round(r[3] / r[2] * 100) + '%');  // no share on a base under 50 papers
+  // Totals on the first year and the peak give the bars a scale without a y-axis.
+  const peak = d3.max(rows, r => r[2]), tot = g.filter((r, i) => i === 0 || i === rows.length - 1 || r[2] === peak).append('text').attr('class', 'hx-val hx-strong')
+    .attr('text-anchor', 'middle').attr('x', r => x(r[0]) + bw * 0.67).attr('y', r => y(r[2]) - 10).style('font-size', '22px').text(r => fmt(r[2]));
   g.on('pointermove', (ev, r) => tooltip(`<b>${r[0]}</b><br>${fmt(r[1])} cite the Hexad<br>${fmt(r[2])} cite those papers<br>${fmt(r[3])} of them through the four reviews`, ev))
     .on('pointerleave', () => tooltip(null));
   function play() {
     const grow = (sel, v, x0, delay) => sel.interrupt().attr('y', H - m.b).attr('height', 0).transition().delay((r, i) => (reduced ? 0 : delay + i * 110)).duration(reduced ? 0 : 700)
       .ease(d3.easeCubicOut).attr('y', r => y(v(r))).attr('height', r => H - m.b - y(v(r)));
     grow(d1, r => r[1], 0, 0); grow(d2, r => r[2], 0, 200); grow(via, r => r[3], 0, 1900);
+    tot.interrupt().style('opacity', 0).transition().delay(r => reduced ? 0 : 900 + rows.indexOf(r) * 110).duration(400).style('opacity', 1);
     pct.interrupt().style('opacity', 0).attr('y', r => y(r[3]) - 8).transition().delay((r, i) => reduced ? 0 : 2300 + i * 110).duration(400).style('opacity', 1);
   }
   return { play };
