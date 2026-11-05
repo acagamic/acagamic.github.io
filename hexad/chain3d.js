@@ -29,7 +29,7 @@
     var st = document.createElement('style');
     st.id = 'hx3-css';
     st.textContent =
-      '.hx3-ov{position:absolute;inset:0;overflow:hidden;pointer-events:none}' +
+      '.hx3-ov{position:absolute;inset:0;overflow:visible;pointer-events:none}' +
       '.hx3-l{position:absolute;left:0;top:0;opacity:0;color:#f2f5f7;white-space:nowrap;font-size:20px;' +
       'font-family:"Montserrat",system-ui,sans-serif;text-shadow:0 2px 12px #0a2530,0 0 3px #0a2530,0 0 6px #0a2530}' +
       '.hx3-l .n{display:flex;align-items:center;gap:12px;font-family:"Wix Madefor Display","Montserrat",sans-serif}' +
@@ -42,6 +42,7 @@
       '.hx3-l.short .n{font-size:20px;font-weight:600;line-height:1.3;gap:8px}.hx3-l.short .g{font-size:18px}' +  // step numbers stay so the room can count the eight steps
       '.hx3-l.new .n{font-size:24px;font-weight:700;color:#f2c25a;line-height:1.3}.hx3-l.new .g{display:none}' +
       '.hx3-l.yr{color:#a9bec7;font:500 18px/1 "Montserrat",sans-serif}' +
+      '.hx3-l.arc{color:#f2c25a;font:600 20px/1 "Montserrat",sans-serif}' +
       '.hx3-ld{position:absolute;left:0;top:0;width:1px;background:#a9bec7;opacity:0}';
     document.head.appendChild(st);
   }
@@ -219,6 +220,7 @@
     }
     data.forEach(function (d, i) { mk(d, i, false); });
     var nLabel = mk(newest, 9, true);
+    var arcLabel = mkEl('arc'); arcLabel.textContent = 'cites the Hexad paper';
     for (var yy = 0; yy <= YEARS; yy++) { var ye = mkEl('yr'); ye.textContent = 2016 + yy; yrLabels.push({ el: ye, w: 0, h: 0, st: '' }); }
     function measure(L) { L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; }
     function setState(L, st) {
@@ -233,7 +235,7 @@
 
     // camera
     var cPos = new T.Vector3(), cLook = new T.Vector3(), v = new T.Vector3(), v2 = new T.Vector3();
-    var END_C = new T.Vector3(XEND / 2 + 0.8, 2.4, 0), END_P = new T.Vector3(XEND / 2 + 0.8, 2.4, 25);
+    var END_C = new T.Vector3(XEND / 2 + 1.6, 2.4, 0), END_P = new T.Vector3(XEND / 2 + 1.6, 2.4, 25);  // nudged left so the last label fits past the line's end
     function camX(t) {
       var x = pos[0].x;
       for (var k = 1; k < N; k++) { var s = arrival(k) - TRAVEL; if (t >= s) x = lerp(pos[k - 1].x, pos[k].x, eio((t - s) / TRAVEL)); }
@@ -281,7 +283,7 @@
       setDraw(arcCore, aeased, ARC_SEG, RAD); setDraw(arcGlow, aeased, ARC_SEG, RAD);
       if (t >= T_ARC) { // the only motion after the finale: a light pulse on the arc
         var hu = au < 1 ? aeased : ((t - T_IMP) / 2.4) % 1;
-        arcHead.visible = true; arcHead.position.copy(arc.getPoint(hu)); arcHead.scale.setScalar(au < 1 ? 2.6 : 1.6 * Math.sin(Math.PI * hu) + 0.3);
+        arcHead.visible = true; arcHead.position.copy(arc.getPoint(hu)); arcHead.scale.setScalar(au < 1 ? 2.6 : 0.9 * Math.sin(Math.PI * hu) + 0.2);
       } else arcHead.visible = false;
       bursts.forEach(function (b) { b.upd(t); });
 
@@ -293,11 +295,18 @@
         Y.el.style.transform = 'translate(' + Y.x.toFixed(1) + 'px,' + Y.y.toFixed(1) + 'px)';
         if (shortOp > 0) placed.push(Y);
       });
+      var axisY = H; if (shortOp > 0) { proj(new T.Vector3(0, AY, 0), pt); axisY = pt.sy; placed.push({ x: 0, y: pt.sy - 2, w: W, h: 4 }); }  // the axis line itself
+      if (aeased > 0) {  // width read once: a layout read every frame would cost smoothness
+        var aw = arcLabel._w || (arcLabel._w = arcLabel.offsetWidth); proj(arc.getPoint(0.5), pt);
+        arcLabel.style.transform = 'translate(' + (pt.sx - aw / 2).toFixed(1) + 'px,' + (pt.sy + 34).toFixed(1) + 'px)';  // just inside the arc
+        placed.push({ x: pt.sx - aw / 2, y: pt.sy + 34, w: aw, h: 24 });
+      }
+      arcLabel.style.opacity = aeased;
       var nOp = clamp((t - T_NEW - 0.3) / 0.6, 0, 1);
       proj(nPos, pt);
       nLabel.x = clamp(pt.sx + 36 - nLabel.w, 8, W - nLabel.w - 8); nLabel.y = pt.sy + 34;
       nLabel.el.style.opacity = nOp; nLabel.el.style.transform = 'translate(' + nLabel.x.toFixed(1) + 'px,' + nLabel.y.toFixed(1) + 'px)';
-      if (nOp > 0) placed.push(nLabel);
+      if (nOp > 0) { placed.push(nLabel); placed.push({ x: pt.sx - 32, y: pt.sy - 32, w: 64, h: 64 }); }  // the amber node keeps its own space
       labels.forEach(function (L) {
         if (L.isNew) return;
         var i = L.i, show = arrival(i) - 0.35, hide = arrival(i) + 0.9, state, op = 0;
@@ -315,17 +324,19 @@
       if (aeased > 0) for (var q = 0; q <= 32; q++) { var u = aeased * q / 32; proj(arc.getPoint(u), pt); placed.push({ x: pt.sx - 5, y: pt.sy - 5, w: 10, h: 10 }); }
       vis.sort(function (p, q) { return p.sx - q.sx; });
       vis.forEach(function (L) {
-        var off = 22, hit = function () { return placed.some(function (o) { return overlap(L, o, 14); }); }, done = false;
-        for (var g = 0; g < 16 && !done; g++) for (var sd = 0; sd < 2 && !done; sd++) for (var ax = 0; ax < 3 && !done; ax++) {
+        var off = 22, done = false, hit = function () {  // stay inside the stage and above the year axis
+          return L.y < 8 || L.y + L.h > axisY - 10 || placed.some(function (o) { return overlap(L, o, 14); }); };
+        if (L.i === data.length - 1) { L.x = L.sx + 28; L.y = L.sy - L.h / 2; if (!hit() && L.x + L.w < W + 100) { done = true; L.cs = 0; } }  // last paper: inline past the line's end, using the slide's side padding if needed
+        for (var g = 0; g < 24 && !done; g++) for (var sd = 0; sd < 2 && !done; sd++) for (var ax = 0; ax < 3 && !done; ax++) {
           var side = sd ? -L.side : L.side;
           L.x = clamp(ax === 0 ? L.sx - L.w / 2 : ax === 1 ? L.sx - 12 : L.sx - L.w + 12, 8, W - L.w - 8);
-          L.y = side < 0 ? L.sy - off - L.h - g * 10 : L.sy + off + g * 10;
+          L.y = side < 0 ? L.sy - off - L.h - g * 8 : L.sy + off + g * 8;
           if (!hit()) { done = true; L.cs = side; }
         }
         if (!done) { L.cs = L.side; L.x = clamp(L.sx - L.w / 2, 8, W - L.w - 8); L.y = L.side < 0 ? L.sy - off - L.h : L.sy + off; }
         placed.push(L);
         L.el.style.transform = 'translate(' + L.x.toFixed(1) + 'px,' + L.y.toFixed(1) + 'px)';
-        var y1 = L.cs < 0 ? L.y + L.h : L.sy + 8, y2 = L.cs < 0 ? L.sy - 8 : L.y;
+        var y1 = L.cs < 0 ? L.y + L.h : L.sy + 8, y2 = L.cs < 0 ? L.sy - 8 : L.cs === 0 ? 0 : L.y;  // inline labels need no leader
         if (y2 > y1) { L.ld.style.transform = 'translate(' + L.sx.toFixed(1) + 'px,' + y1.toFixed(1) + 'px)'; L.ld.style.height = (y2 - y1).toFixed(1) + 'px'; L.ld.style.opacity = 0.35 * L.op; }
       });
       renderer.render(scene, camera);
