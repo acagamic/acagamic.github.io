@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>10 years of The Hexad Scale</title>
+<title>10 years of the Hexad Scale</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Wix+Madefor+Display:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="hexad.css">
@@ -40,6 +40,8 @@
   .slide canvas.field { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
   .kicker-line { font: 600 30px var(--sans); color: var(--muted); margin: 0; }
   .play { align-self: flex-start; margin-top: 40px; display: inline-flex; align-items: center; gap: 12px; font: 700 26px var(--sans); color: var(--ink); background: none; border: 2px solid var(--series-1); border-radius: 999px; padding: 14px 30px 14px 24px; cursor: pointer; transition: opacity .4s, transform .4s var(--ease-out), background .2s; }
+  .qr { position: absolute; right: 100px; bottom: 90px; display: flex; flex-direction: row-reverse; align-items: flex-end; gap: 16px; font: 600 18px var(--sans); color: var(--muted); }
+  .qr img { width: 170px; height: 170px; border-radius: 12px; display: block; } .slide.on .qr { animation: rise .9s .6s var(--ease-out) both; }
   .play:hover { background: color-mix(in srgb, var(--series-1) 20%, transparent); } .play.gone { opacity: 0; transform: scale(.92); pointer-events: none; }
 
   #v-live2 svg text { font-size: 22px !important; }  /* this chart renders at 0.82 scale */
@@ -140,37 +142,38 @@
 
 <section data-secs="60" class="slide" data-run="title" data-steps="1">
   <canvas class="field" id="field" aria-hidden="true"></canvas>
-  <p class="kicker-line">CHI PLAY 2026 · 10-Year Award</p>
-  <h1 style="margin-top:auto">10 years of The Hexad Scale</h1>
+  <p class="kicker-line">CHI PLAY 2026 · Lasting Impact Award</p>
+  <h1 style="margin-top:auto">10 years of the Hexad Scale</h1>
   <p class="sub">Lennart Nacke · Waterloo</p>
+  <div class="qr"><img src="img/qr-hexad.svg" alt="QR code linking to acagamic.com/hexad"><span>acagamic.com/hexad</span></div>
   <button class="play" id="play" aria-label="Play the intro animation"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3.5v15l12-7.5z" fill="currentColor"/></svg>Play</button>
   <p class="foot" data-cite="hexad2016" style="margin-top:28px;margin-bottom:auto;max-width:900px"></p>
   <aside class="notes">Thank the committee. Name Gustavo first. Each dot is one of the 594 papers that cite us, cyan for 2016, magenta for 2026.</aside>
 </section>
 
 <section data-secs="120" class="slide" data-run="authors">
-  <h2>Six of us turned a game designer’s model into a scale</h2>
+  <h2>We turned a conceptual gamification model into a scale</h2>
   <div class="team">
     <dl class="who">
       <dt>Waterloo, Canada</dt><dd>Gustavo F. Tondello</dd><dd>Rina R. Wehbe</dd><dd>Lennart E. Nacke</dd>
       <dt>Vienna, Austria</dt><dd>Lisa Diamond</dd><dd>Marc Busch</dd>
       <dt>Gamified UK, who made the Hexad model</dt><dd>Andrzej Marczewski</dd>
     </dl>
-    <figure class="ph ph-a"><img src="img/questionnaire-talk.webp" alt="A presenter in front of a screen showing the title The HEXAD Gamification User Types Questionnaire"><figcaption><b>Before we published</b>It was still the Hexad Questionnaire</figcaption></figure>
+    <figure class="ph ph-a"><img src="img/questionnaire-talk.webp" alt="A presenter in front of a screen showing the title The HEXAD Gamification User Types Questionnaire"><figcaption><b>Before we published</b>We showed early work on the Hexad Questionnaire in a workshop</figcaption></figure>
     <figure class="ph ph-b"><img src="img/chiplay2016-austin.webp" alt="Gustavo Tondello at the lectern beside a projected slide titled Gamification User Types Hexad Scale"><figcaption><b>CHI PLAY 2016, Austin</b>Gustavo shows the Hexad scale</figcaption></figure>
   </div>
   <aside class="notes">Gustavo wanted to study gamification and personalization through work industry could use. Andrzej’s framework. BrainHex with Chris Bateman, Bartle’s player types. Left photo: the early talk, when it was still a questionnaire; we renamed it a scale before publication.</aside>
 </section>
 
 <section data-secs="90" class="slide" data-run="timeline">
-  <h2>We wrote the items first, tested them on 133 people, then cut what did not hold</h2>
+  <h2>We wrote the items first, tested them on 133 people, then cut weakest fits</h2>
   <p class="sub">We went from a rating form in July 2015 to the CHI PLAY stage in October 2016. We cut six of the 30 items. Two fit poorly: “I look out for my own interests” for Player and “I like to take changing things into my own hands” for Disruptor. The other four were the weakest item of each other type.</p>
   <div class="viz" id="v-tl"></div>
   <aside class="notes">Gustavo and Rina rated candidate items for each type in July 2015. Version 1 in August. Survey in March 2016, retest in April, then the analysis cut 30 items to 24.</aside>
 </section>
 
 <section data-secs="120" class="slide" data-run="hexagon" data-steps="7">
-  <h2>Twenty-four items score six motivations, and one person can score high on several</h2>
+  <h2>24 items score six motivations, and one person can score high on several</h2>
   <div class="viz hexad" id="v-hex"></div>
   <p class="foot">Click through the six types. The last click shows one sample person, high on Free Spirit, Achiever, and Player at once. Farther from the centre means a higher score.</p>
   <aside class="notes">Six clicks: one type each. Seventh click: the magenta profile. Eighth click: next slide.</aside>
@@ -178,10 +181,9 @@
 
 <section data-secs="60" class="slide" data-run="retest">
   <h2>Five types gave the same answers two weeks later. The Player type did not</h2>
-  <p class="sub">Of 133 people, 40 took the survey again two weeks later. When answers match, the scale measures something stable. Player matched least (.36), so we flagged it to fix.</p>
+  <p class="sub">Of 133 people, 40 took the survey again two weeks later. When answers match, the scale measures something stable. Player matched least (.36). Its four questions also agreed least with each other, so its score was the shakiest. We flagged it to fix.</p>
   <div class="viz" id="v-rt"></div>
-  <p class="foot" data-cite="hexad2016"></p>
-  <aside class="notes">Students at Waterloo, March 2016. 40 of 133 agreed to a follow-up two weeks later. Retest correlations ran from .85 (Philanthropist, Socialiser) down to .36 (Player). The paper flagged the Player scale for improvement in future work.</aside>
+  <aside class="notes">Students at Waterloo, March 2016. 40 of 133 agreed to a follow-up two weeks later. Retest correlations ran from .85 (Philanthropist, Socialiser) down to .36 (Player). The paper flagged the Player scale for improvement in future work: its internal reliability (.698) was also the lowest of the six.</aside>
 </section>
 
 <section data-secs="90" class="slide" data-run="elements" data-steps="1">
