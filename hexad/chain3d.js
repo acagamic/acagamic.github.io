@@ -208,7 +208,7 @@
       el.style.setProperty('--c', css);
       var short = d.who + ' (' + d.year + ')';
       var L = { el: el, i: i, isNew: isNew, w: 0, h: 0, st: '', side: i % 2 ? -1 : 1, ld: isNew ? null : mkLeader(), op: 0, x: 0, y: 0 };
-      if (isNew) { el.innerHTML = '<div class="n"></div>'; el.firstChild.textContent = 'Newest paper citing the Hexad scale, ' + (d.date || d.year) + ': ' + short; }
+      if (isNew) { el.innerHTML = '<div class="n"></div>'; el.firstChild.textContent = 'Newest direct citation, ' + (d.date || d.year) + ': ' + short; }
       else {
         el.innerHTML = '<div class="n"><span class="g"></span><b></b></div><div class="t"></div><div class="c"></div>';
         el.querySelector('.g').textContent = i === 0 ? '★' : i;
@@ -220,7 +220,7 @@
     }
     data.forEach(function (d, i) { mk(d, i, false); });
     var nLabel = mk(newest, 9, true);
-    var arcLabel = mkEl('arc'); arcLabel.textContent = 'cites the Hexad scale paper';
+    var arcLabel = mkEl('arc'); arcLabel.textContent = 'cites the Hexad scale directly';
     for (var yy = 0; yy <= YEARS; yy++) { var ye = mkEl('yr'); ye.textContent = 2016 + yy; yrLabels.push({ el: ye, w: 0, h: 0, st: '' }); }
     function measure(L) { L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; }
     // Sizes for both label states are measured up front, so a state change mid-animation never forces a layout.
