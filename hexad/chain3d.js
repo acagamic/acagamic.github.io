@@ -39,7 +39,7 @@
       '.hx3-l.cur{max-width:660px}.hx3-l.cur .n{font-size:32px;font-weight:700}' +
       '.hx3-l.cur .t,.hx3-l.cur .c{padding-left:44px}.hx3-l.cur .t{display:block;font-size:20px;line-height:1.35;margin-top:8px}' +
       '.hx3-l.cur .c{display:block;font-size:18px;color:#a9bec7;margin-top:6px}' +
-      '.hx3-l.short .n{font-size:20px;font-weight:600;line-height:1.3}.hx3-l.short .g{display:none}' +
+      '.hx3-l.short .n{font-size:20px;font-weight:600;line-height:1.3;gap:8px}.hx3-l.short .g{font-size:18px}' +  // step numbers stay so the room can count the eight steps
       '.hx3-l.new .n{font-size:24px;font-weight:700;color:#f2c25a;line-height:1.3}.hx3-l.new .g{display:none}' +
       '.hx3-l.yr{color:#a9bec7;font:500 18px/1 "Montserrat",sans-serif}' +
       '.hx3-ld{position:absolute;left:0;top:0;width:1px;background:#a9bec7;opacity:0}';
@@ -233,7 +233,7 @@
 
     // camera
     var cPos = new T.Vector3(), cLook = new T.Vector3(), v = new T.Vector3(), v2 = new T.Vector3();
-    var END_C = new T.Vector3(XEND / 2 + 0.8, 2.4, 0), END_P = new T.Vector3(XEND / 2 + 0.8, 2.4, 31);
+    var END_C = new T.Vector3(XEND / 2 + 0.8, 2.4, 0), END_P = new T.Vector3(XEND / 2 + 0.8, 2.4, 25);
     function camX(t) {
       var x = pos[0].x;
       for (var k = 1; k < N; k++) { var s = arrival(k) - TRAVEL; if (t >= s) x = lerp(pos[k - 1].x, pos[k].x, eio((t - s) / TRAVEL)); }
@@ -308,19 +308,24 @@
         if (op <= 0) return;
         proj(pos[i], pt);
         if (state === 'cur') {
-          L.x = clamp(pt.sx - 16, 8, W - L.w - 8); L.y = clamp(pt.sy - L.h - 70, 8, H - L.h - 8); // above the line, clear of the beam
+          L.x = clamp(pt.sx - 16, 8, W - L.w - 8); L.y = clamp(pt.sy - L.h - 120, 8, H - L.h - 8); // above the line, clear of the beam
           L.el.style.transform = 'translate(' + L.x.toFixed(1) + 'px,' + L.y.toFixed(1) + 'px)';
         } else { L.sx = pt.sx; L.sy = pt.sy; vis.push(L); }
       });
+      if (aeased > 0) for (var q = 0; q <= 32; q++) { var u = aeased * q / 32; proj(arc.getPoint(u), pt); placed.push({ x: pt.sx - 5, y: pt.sy - 5, w: 10, h: 10 }); }
       vis.sort(function (p, q) { return p.sx - q.sx; });
       vis.forEach(function (L) {
-        var off = 22;
-        L.x = clamp(L.sx - L.w / 2, 8, W - L.w - 8);
-        L.y = L.side < 0 ? L.sy - off - L.h : L.sy + off;
-        for (var g = 0; g < 60 && placed.some(function (o) { return overlap(L, o, 14); }); g++) L.y += L.side * 8; // nudge away from the line
+        var off = 22, hit = function () { return placed.some(function (o) { return overlap(L, o, 14); }); }, done = false;
+        for (var g = 0; g < 16 && !done; g++) for (var sd = 0; sd < 2 && !done; sd++) for (var ax = 0; ax < 3 && !done; ax++) {
+          var side = sd ? -L.side : L.side;
+          L.x = clamp(ax === 0 ? L.sx - L.w / 2 : ax === 1 ? L.sx - 12 : L.sx - L.w + 12, 8, W - L.w - 8);
+          L.y = side < 0 ? L.sy - off - L.h - g * 10 : L.sy + off + g * 10;
+          if (!hit()) { done = true; L.cs = side; }
+        }
+        if (!done) { L.cs = L.side; L.x = clamp(L.sx - L.w / 2, 8, W - L.w - 8); L.y = L.side < 0 ? L.sy - off - L.h : L.sy + off; }
         placed.push(L);
         L.el.style.transform = 'translate(' + L.x.toFixed(1) + 'px,' + L.y.toFixed(1) + 'px)';
-        var y1 = L.side < 0 ? L.y + L.h : L.sy + 8, y2 = L.side < 0 ? L.sy - 8 : L.y;
+        var y1 = L.cs < 0 ? L.y + L.h : L.sy + 8, y2 = L.cs < 0 ? L.sy - 8 : L.y;
         if (y2 > y1) { L.ld.style.transform = 'translate(' + L.sx.toFixed(1) + 'px,' + y1.toFixed(1) + 'px)'; L.ld.style.height = (y2 - y1).toFixed(1) + 'px'; L.ld.style.opacity = 0.35 * L.op; }
       });
       renderer.render(scene, camera);
