@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hexad at Ten</title>
+<title>Hexad Scale at Ten</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Wix+Madefor+Display:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="hexad.css">
@@ -101,6 +101,7 @@
   .team { display: grid; grid-template-columns: 440px 390px 1fr; gap: 0 40px; align-items: start; margin-top: 44px; }
   .who { margin: 0; } .who dt { font: 600 19px var(--sans); color: var(--muted); margin: 22px 0 6px; text-transform: uppercase; letter-spacing: .05em; }
   .who dt:first-child { margin-top: 0; } .who dd { margin: 0; font: 700 34px/1.25 var(--display); }
+  .close-ph { position: absolute; right: 120px; top: 180px; width: 720px; } .close-ph img { height: 720px; }
   .ph { margin: 0; } .ph img { display: block; width: 100%; height: 640px; object-fit: cover; border-radius: 14px; }
   .ph figcaption { margin-top: 14px; font-size: 20px; color: var(--muted); } .ph figcaption b { display: block; color: var(--ink); font: 700 22px var(--sans); }
   @keyframes reveal { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
@@ -131,7 +132,7 @@
 </style>
 </head>
 <body>
-<canvas id="net" aria-label="Radial citation network of the Hexad paper"></canvas>
+<canvas id="net" aria-label="Radial citation network of the Hexad scale paper"></canvas>
 <div id="callouts"></div>
 <div class="stage" id="stage">
 
@@ -145,7 +146,7 @@
 </section>
 
 <section data-secs="120" class="slide" data-run="authors">
-  <h2>Six of us turned a game designer’s model into a survey</h2>
+  <h2>Six of us turned a game designer’s model into a scale</h2>
   <div class="team">
     <dl class="who">
       <dt>Waterloo, Canada</dt><dd>Gustavo F. Tondello</dd><dd>Rina R. Wehbe</dd><dd>Lennart E. Nacke</dd>
@@ -153,7 +154,7 @@
       <dt>Gamified UK, who made the Hexad model</dt><dd>Andrzej Marczewski</dd>
     </dl>
     <figure class="ph ph-a"><img src="img/questionnaire-talk.webp" alt="A presenter in front of a screen showing the title The HEXAD Gamification User Types Questionnaire"><figcaption><b>Before we published</b>It was still the Hexad Questionnaire</figcaption></figure>
-    <figure class="ph ph-b"><img src="img/chiplay2016-austin.webp" alt="Gustavo Tondello at the lectern beside a projected slide titled Gamification User Types Hexad"><figcaption><b>CHI PLAY 2016, Austin</b>Gustavo shows the Hexad scale</figcaption></figure>
+    <figure class="ph ph-b"><img src="img/chiplay2016-austin.webp" alt="Gustavo Tondello at the lectern beside a projected slide titled Gamification User Types Hexad Scale"><figcaption><b>CHI PLAY 2016, Austin</b>Gustavo shows the Hexad scale</figcaption></figure>
   </div>
   <aside class="notes">Gustavo wanted to study gamification and personalization through work industry could use. Andrzej’s framework. BrainHex with Chris Bateman, Bartle’s player types. Left photo: the early talk, when it was still a questionnaire; we renamed it a scale before publication.</aside>
 </section>
@@ -194,10 +195,10 @@
 </section>
 
 <section data-secs="90" class="slide" data-run="share">
-  <h2>After 2021, gamification papers doubled while Hexad citations held steady</h2>
-  <p class="sub">Both lines start at 100 in 2021, because we divide each year’s count by the 2021 count. Until 2021, Hexad citations grew faster than the field. Since then the field has doubled, but Hexad citations stayed near 75 a year. So the Hexad’s share fell from 5% to 2%.</p>
+  <h2>After 2021, gamification papers doubled while Hexad scale citations held steady</h2>
+  <p class="sub">Both lines start at 100 in 2021, because we divide each year’s count by the 2021 count. Until 2021, Hexad scale citations grew faster than the field. Since then the field has doubled, but Hexad scale citations stayed near 75 a year. So the Hexad scale’s share fell from 5% to 2%.</p>
   <div class="viz" id="v-share"></div>
-  <p class="foot">OpenAlex, November 5, 2026: works with “gamification” in the title, and papers citing the Hexad. Both lines are set to 100 in 2021.</p>
+  <p class="foot">OpenAlex, November 5, 2026: works with “gamification” in the title, and papers citing the Hexad scale. Both lines are set to 100 in 2021.</p>
   <aside class="notes">Why the share fell, three hunches: (1) citations split across versions, as the 2019 validation and Hexad‑12 drew about 51 citations in 2026; (2) the boom brought education and AI work that rarely personalizes; (3) COVID paused the lab and classroom studies that use questionnaires. Google Scholar still shows growth every year to 149 in 2025, so only the share fell; raw citations kept rising. Chart note: an earlier version overlaid bars and a line on two scales; this version uses one scale so the comparison is honest.</aside>
 </section>
 
@@ -208,7 +209,7 @@
 </section>
 
 <section data-secs="75" class="slide overlay" data-run="ring1" data-net>
-  <h2>594 papers cite the Hexad paper directly</h2>
+  <h2>594 papers cite the Hexad scale paper directly</h2>
   <p class="sub">Each dot is a paper, clockwise by year. Bigger dots have more citations; amber marks Hexad‑12.</p>
   <div class="ticker" id="t-r1"></div>
 </section>
@@ -220,9 +221,9 @@
 </section>
 
 <section data-secs="75" class="slide" data-run="years2">
-  <h2>Papers that cite the Hexad drew more citations every year through 2025</h2>
-  <p class="sub">Review papers carry the Hexad into fields that never cite it directly. Four reviews alone lead to 1,025 papers (15%): Nacke &amp; Deterding (2017), Klock et al. (2020), Vermeir et al. (2020), and Bennani et al. (2021). All 32 review papers that cite the Hexad lead to a quarter of them.</p>
-  <div class="legend" style="font-size:24px;margin-top:14px"><span><i style="background:var(--series-1)"></i>cite the Hexad paper</span><span><i style="background:var(--series-2);opacity:.55"></i>cite those papers</span><span><i style="background:var(--brand-pink)"></i>arrive through the four reviews, with their share on each bar</span></div>
+  <h2>Papers that cite the Hexad scale drew more citations every year through 2025</h2>
+  <p class="sub">Review papers carry the Hexad scale into fields that never cite it directly. Four reviews alone lead to 1,025 papers (15%): Nacke &amp; Deterding (2017), Klock et al. (2020), Vermeir et al. (2020), and Bennani et al. (2021). All 32 review papers that cite the Hexad scale lead to a quarter of them.</p>
+  <div class="legend" style="font-size:24px;margin-top:14px"><span><i style="background:var(--series-1)"></i>cite the Hexad scale paper</span><span><i style="background:var(--series-2);opacity:.55"></i>cite those papers</span><span><i style="background:var(--brand-pink)"></i>arrive through the four reviews, with their share on each bar</span></div>
   <div class="viz" id="v-y2"></div>
 </section>
 
@@ -232,9 +233,9 @@
 </section>
 
 <section data-secs="60" class="slide" data-run="chain">
-  <h2>The trail of top papers runs eight steps deep. The newest paper cites the Hexad itself</h2>
+  <h2>The trail of top papers runs eight steps deep. The newest paper cites the Hexad scale itself</h2>
   <div class="viz" id="v-chain" style="position:relative"></div>
-  <p class="foot">Each paper cites the one before it; bigger dots have more citations. <b>Newest paper citing the Hexad, November 3, 2026:</b> <span data-cite="newest"></span></p>
+  <p class="foot">Each paper cites the one before it; bigger dots have more citations. <b>Newest paper citing the Hexad scale, November 3, 2026:</b> <span data-cite="newest"></span></p>
   <aside class="notes">The newest paper cites both the 2016 scale and Hexad‑12, and appears in PACM HCI 10(7), likely the CHI PLAY 2026 issue. A CHI PLAY 2026 Companion paper (Fifield et al.) also cites us.</aside>
 </section>
 
@@ -245,7 +246,7 @@
 </section>
 
 <section data-secs="75" class="slide" data-run="langs" data-steps="1">
-  <h2>You can take the Hexad in 17 languages, and published studies have tested 7 of them</h2>
+  <h2>You can take the Hexad scale in 17 languages, and published studies have tested 7 of them</h2>
   <div class="chips" id="v-langs"></div>
   <ol class="refs" id="v-refs"></ol>
   <aside class="notes">Click once to show the full references for the published versions.</aside>
@@ -265,7 +266,7 @@
     <div class="stat"><b data-to="882">0</b><span>answers used to pick the items</span></div>
     <div class="stat"><b data-to="1101">0</b><span>new answers used to check them</span></div>
   </div>
-  <p class="sub" style="margin-top:56px">Researchers can now add the Hexad to a big survey and still trust the scores. Hexad‑12 matched people’s answers better and gave steadier scores than the 24-item version. In the authors’ words, it “resolves issues found in studies using the original Hexad scale.”</p>
+  <p class="sub" style="margin-top:56px">Researchers can now add the Hexad scale to a big survey and still trust the scores. Hexad‑12 matched people’s answers better and gave steadier scores than the 24-item version. In the authors’ words, it “resolves issues found in studies using the original Hexad scale.”</p>
   <p class="foot" data-cite="W4366549291"></p>
 </section>
 
@@ -287,49 +288,50 @@
 </section>
 
 <section data-secs="75" class="slide" data-run="profile">
-  <h2>Most people are a mix of Hexad types, so the scale works best as a six-score profile</h2>
+  <h2>Most people are a mix of types, so the Hexad scale works best as a six-score profile</h2>
   <p class="sub">Why: everyone scores on all six motivations, and the top score often wins by a hair. Across 23,502 Hexad‑12 tests the three highest shares sit within 0.3 points, and 47% of people tie on two or more types. A single label keeps one number and throws away five.</p>
   <div class="profile">
     <div><small class="cap">One type label</small><div class="label-one" id="lab1">Achiever</div></div>
     <div><small class="cap">The full profile</small><div class="bars6" id="bars6"></div></div>
   </div>
-  <p class="foot">Hexad scores sit on a sliding scale (Tondello et al., 2019), and 47% of Hexad‑12 test takers tie on two or more types. We followed that idea to a model of traits, the steady parts of a person: Tondello, G. F., Arrambide, K., Ribeiro, G., Cen, A. J., &amp; Nacke, L. E. (2019). “I don’t fit into a single type”: A trait model and scale of game playing preferences. <i>INTERACT 2019</i>. https://doi.org/10.1007/978-3-030-29384-0_23</p>
+  <p class="foot">Scores on the Hexad scale sit on a sliding range (Tondello et al., 2019), and 47% of Hexad‑12 test takers tie on two or more types. We followed that idea to a model of traits, the steady parts of a person: Tondello, G. F., Arrambide, K., Ribeiro, G., Cen, A. J., &amp; Nacke, L. E. (2019). “I don’t fit into a single type”: A trait model and scale of game playing preferences. <i>INTERACT 2019</i>. https://doi.org/10.1007/978-3-030-29384-0_23</p>
   <aside class="notes">Bars are the mean Hexad‑12 profile of 23,502 test takers. A label picks one bar; a profile keeps all six. The 2019 trait scale has five traits, 25 items, 332 participants.</aside>
 </section>
 
 <section data-secs="75" class="slide" data-run="outlook">
-  <h2>Gamification research has moved on. The Hexad still gives studies one shared measure</h2>
+  <h2>Gamification research has moved on. The Hexad scale still gives studies one shared measure</h2>
   <div class="points">
-    <div><div class="viz mini" id="v-mini"></div><p>Gamification titles grew 2.6 times from 2019 to 2025. The share citing the Hexad fell from 5% in 2021 to 2% in 2025.</p></div>
+    <div><div class="viz mini" id="v-mini"></div><p>Gamification titles grew 2.6 times from 2019 to 2025. The share citing the Hexad scale fell from 5% in 2021 to 2% in 2025.</p></div>
     <div><b>17</b><p>languages, a free short form, and 23,502 Hexad‑12 results give researchers one shared way to measure what motivates players.<small>Studies that use the same scale can be compared and added together</small></p></div>
-    <div><b>6</b><p>motivations, read together as a profile, keep the Hexad useful as research moves from fixed types to steady traits.<small>Tondello et al. (2019); Krath et al. (2023)</small></p></div>
+    <div><b>6</b><p>motivations, read together as a profile, keep the Hexad scale useful as research moves from fixed types to steady traits.<small>Tondello et al. (2019); Krath et al. (2023)</small></p></div>
   </div>
-  <aside class="notes">Gamification lost the novelty it had a decade ago; the Hexad’s value now lies in measurement. Hunch: fewer of today’s gamification papers measure who their players are. The last point is interpretation.</aside>
+  <aside class="notes">Gamification lost the novelty it had a decade ago; the Hexad scale’s value now lies in measurement. Hunch: fewer of today’s gamification papers measure who their players are. The last point is interpretation.</aside>
 </section>
 
 <section data-secs="90" class="slide" data-run="impact">
-  <h2>The Hexad shows its impact in three places: new research, design choices, and effects on people</h2>
+  <h2>The Hexad scale shows its impact in three places: new research, design choices, and effects on people</h2>
   <div class="impact">
     <div><h3>New research</h3><b class="n" id="n-impact">1,082</b><p>citations on Google Scholar, 17 languages, 7 published checks of the scale, and 23,502 Hexad‑12 tests on the public site</p></div>
     <div><h3>Design choices</h3><ul>
       <li><b>Lernnavi:</b> answers from 1,246 pupils led to a decision to add team features <i>(Schultze et al., 2026)</i></li>
       <li><b>Xiphias:</b> answers shaped badges for a programming course <i>(Ateneo Laboratory for the Learning Sciences, 2021)</i></li>
       <li><b>Ludilearn for Moodle:</b> picks game features for each learner from a Hexad‑12 quiz <i>(MoodleDocs, 2025)</i></li>
-      <li><b>Wiski:</b> let pupils choose for themselves after the questionnaire felt like too much work <i>(Ooge, 2019)</i></li></ul></div>
+      <li><b>Wiski:</b> let pupils choose for themselves after the scale felt like too much work <i>(Ooge, 2019)</i></li></ul></div>
     <div><h3>Effects on people</h3><ul>
       <li><b>Fitness:</b> 40 people over 60 days; activity rose in the personalized groups and stayed flat in the others <i>(Zhao et al., 2020)</i></li>
       <li><b>Science class:</b> a class of 17 scored higher on the final test than a class of 18 <i>(Zourmpakis et al., 2024)</i></li>
       <li><b>Sokoon:</b> depression and anxiety scores fell in a two-week pilot with 30 adults <i>(Amer et al., 2024)</i></li>
       <li><b>Some found nothing:</b> Wiski saw no change in how much pupils practised <i>(Ooge, 2019)</i></li></ul></div>
   </div>
-  <p class="foot" style="color:var(--ink)">Most of these studies are small, and the Hexad usually comes with other changes. So they show people used it, but they don’t prove it helped.</p>
-  <aside class="notes">Sources: Schultze et al. (2026) CHB Reports §6; Ateneo ALLS (2021); MoodleDocs Ludilearn (2025); Ooge (2019) thesis; Zhao et al. (2020) JMIR; Zourmpakis et al. (2024) Computers; Amer et al. (2024) Digital Health. The fitness trial cannot separate the Hexad from the other components; Sokoon was uncontrolled.</aside>
+  <p class="foot" style="color:var(--ink)">Most of these studies are small, and the Hexad scale usually comes with other changes. So they show people used it, but they don’t prove it helped.</p>
+  <aside class="notes">Sources: Schultze et al. (2026) CHB Reports §6; Ateneo ALLS (2021); MoodleDocs Ludilearn (2025); Ooge (2019) thesis; Zhao et al. (2020) JMIR; Zourmpakis et al. (2024) Computers; Amer et al. (2024) Digital Health. The fitness trial cannot separate the Hexad scale from the other components; Sokoon was uncontrolled.</aside>
 </section>
 
 <section data-secs="45" class="slide" data-run="close">
   <canvas class="field" id="field2" aria-hidden="true"></canvas>
   <h1 style="margin-top:auto;max-width:860px">Thank you, Gustavo, Rina, Lisa, Marc, and Andrzej</h1>
   <p class="sub" style="margin-bottom:auto">See every paper that cites us at acagamic.com/hexad</p>
+  <figure class="ph ph-a close-ph"><img src="img/team-dinner.webp" alt="Nine people smile at the camera around a long restaurant table"></figure>
 </section>
 
 </div>
@@ -348,15 +350,15 @@ addEventListener('resize', fit); fit();
 // Origin story as process steps (month level).
 const ORIGIN = [['2015-07', 'Gustavo and Rina rate possible items'], ['2015-08', 'Questionnaire version 1'], ['2016-01', 'Study planned'],
   ['2016-03', '133 people take the survey'], ['2016-04', '40 retake it; 30 items cut to 24'], ['2016-10', 'Presented at CHI PLAY 2016', 1]];
-// Share of gamification papers citing the Hexad (OpenAlex, November 5, 2026): Hexad citers / works with "gamification" in the title.
+// Share of gamification papers citing the Hexad scale (OpenAlex, November 5, 2026): Hexad scale citers / works with "gamification" in the title.
 // Both series indexed to 2021 = 100 so they share one honest scale.
 const INDEX_OF = a => a.map(v => Math.round(v / a[4] * 100));
 const SHARE = { years: [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
   hexad: [19, 36, 46, 65, 76, 76, 78, 78, 68], gamif: [957, 1119, 1315, 1462, 1546, 1616, 1959, 2537, 3374] };
-// Newest paper citing the Hexad (Crossref, published November 3, 2026), for the 3D chain finale.
+// Newest paper citing the Hexad scale (Crossref, published November 3, 2026), for the 3D chain finale.
 const NEWEST = { who: 'Zhang, Altmeyer, & Seaborn', year: 2026, cites: 0, date: 'November 3, 2026',
   title: 'Measuring What Motivates Maldaimonia in Play with the Inventory on Maldaimonic Motivations in Player Experiences (IMPEX)' };
-const INDEX = { 'Hexad citations': INDEX_OF(SHARE.hexad), 'Gamification papers': INDEX_OF(SHARE.gamif) };
+const INDEX = { 'Hexad scale citations': INDEX_OF(SHARE.hexad), 'Gamification papers': INDEX_OF(SHARE.gamif) };
 // Mean Hexad-12 profile across 23,502 tests (hexad.gamified.uk/data).
 const PROFILE = [['Achiever', 18.47], ['Free Spirit', 18.19], ['Philanthropist', 18.16], ['Player', 17.67], ['Socialiser', 16.31], ['Disruptor', 11.21]];
 
@@ -440,7 +442,7 @@ const runs = {
       requestAnimationFrame(tick); }, i * stagger));  // same delay, duration, and easing as each bar
   },
   share: () => (viz.sh ??= HX.lines($('v-share'), SHARE.years.map(String), INDEX, { W: 1680, H: 540, domain: [0, 230], unit: '',
-    note: j => ` · index ${SHARE.hexad[j]} papers citing the Hexad, ${HX.fmt(SHARE.gamif[j])} gamification titles` })).play(),
+    note: j => ` · index ${SHARE.hexad[j]} papers citing the Hexad scale, ${HX.fmt(SHARE.gamif[j])} gamification titles` })).play(),
   milestones: () => (viz.ms ??= HX.timeBars($('v-ms'), [...data.nodes].sort((a, b) => b[3] - a[3]).slice(0, 7),
     { W: 1680, rowH: 92, lw: 330, label: r => `${r[4]} (${r[2]})`, total: r => r[3], years: r => r[9], sub: r => `${r[1]} · doi.org/${r[6]}` })).play(),
   ring1: async () => {
@@ -482,9 +484,9 @@ const runs = {
       return m ? `<li><b>${m[1]}</b><span>${m[2]}.</span><i>${m[3]}</i></li>` : `<li>${r}</li>`; }).join('');
   },
   outlook: () => (viz.mini ??= HX.lines($('v-mini'), SHARE.years.slice(2).map(String), {
-    [`Hexad citations ${(SHARE.hexad[8] / SHARE.hexad[2]).toFixed(1)}×`]: SHARE.hexad.slice(2).map(v => v / SHARE.hexad[2]),
+    [`Hexad scale citations ${(SHARE.hexad[8] / SHARE.hexad[2]).toFixed(1)}×`]: SHARE.hexad.slice(2).map(v => v / SHARE.hexad[2]),
     [`Gamification papers ${(SHARE.gamif[8] / SHARE.gamif[2]).toFixed(1)}×`]: SHARE.gamif.slice(2).map(v => v / SHARE.gamif[2]) },  // same order as slide 8, so colours match
-    { W: 640, H: 380, domain: [0.8, 2.8], unit: '×', minimal: true, yTicks: true })).play(),
+    { W: 640, H: 380, domain: [0.8, 2.8], unit: '×', minimal: true, yTicks: true, mr: 310 })).play(),
   lineage: () => (viz.lin ??= HX.lineage($('v-lin'), { W: 1680, rowH: 70 })).play(),
   disruptor: () => (viz.dis ??= HX.crowdCompare($('v-dis'), study.dominant, live.singleType.rows, { W: 1680, H: 520 })).play(),
   live2: () => (viz.l2 ??= HX.lines($('v-live2'), live.age.bands, { Philanthropist: live.age.Philanthropist, Player: live.age.Player },
