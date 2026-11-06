@@ -276,6 +276,15 @@
       kick();
     }
     host.addEventListener('pointermove', e => { mx = e.clientX / innerWidth * 2 - 1; my = e.clientY / innerHeight * 2 - 1; kick(); });
+    // Drag turns the network and lets go with momentum; each node trails on a spring, so the graph wobbles as it turns and settles.
+    let drag = null, dx = 0, dy = 0, vx = 0, vy = 0;
+    canvas.addEventListener('pointerdown', e => { if (e.button) return; drag = { x: e.clientX, y: e.clientY, t: performance.now() }; canvas.setPointerCapture(e.pointerId); vx = vy = 0; kick(); });
+    canvas.addEventListener('pointermove', e => { if (!drag) return;
+      const now = performance.now(), dt = Math.max(0.008, (now - drag.t) / 1000), ax = (e.clientY - drag.y) * 0.006, ay = (e.clientX - drag.x) * 0.006;
+      dx = clamp(dx + ax, -1.2, 1.2); dy += ay; vx = clamp(vx * 0.5 + ax / dt * 0.5, -5, 5); vy = clamp(vy * 0.5 + ay / dt * 0.5, -5, 5);
+      drag.x = e.clientX; drag.y = e.clientY; drag.t = now; kick(); });
+    const drop = () => { drag = null; kick(); };
+    canvas.addEventListener('pointerup', drop); canvas.addEventListener('pointercancel', drop);
     const kick = animator(canvas, (time, dt) => {
       const k = reduced ? 1 : 1 - Math.exp(-dt * 7);
       ca += (ta - ca) * k; cb += (tb - cb) * k; cc += (tc - cc) * k; cmx += (mx - cmx) * k * 0.4; cmy += (my - cmy) * k * 0.4;
@@ -534,24 +543,42 @@
     const labs = nodes.map(n => { const el = document.createElement('span'); el.className = 'u3-lab u3-' + n.kind; el.textContent = n.kind === 'item' ? `“${n.label}”` : n.label;
       if (n.kind !== 'core') el.style.setProperty('--c', TYPE_COL[n.type]); host.appendChild(el); return el; });
     const pv = new T.Vector3();
-    let W = 1, H = 1, p = 0, dir = 0, mx = 0, my = 0, cmx = 0, cmy = 0, wide = true;
+    let W = 1, H = 1, p = 0, dir = 0, mx = 0, my = 0, cmx = 0, cmy = 0, wide = true, minX = 0;
     function size() {
       const b = canvas.getBoundingClientRect(); W = b.width || 1; H = b.height || 1; wide = W > 900;
       R.setSize(W, H, false); cam.aspect = W / H;
-      cam.setViewOffset(W, H, wide ? -0.13 * W : 0, 0, W, H); cam.position.z = wide ? 18 : 19; cam.updateProjectionMatrix();
+      const pan = host.parentElement.querySelector('.inner'); minX = wide && pan ? pan.getBoundingClientRect().right - b.left + 8 : 0;
+      cam.setViewOffset(W, H, wide ? -0.17 * W : 0, 0, W, H); cam.position.z = wide ? 20 : 19; cam.updateProjectionMatrix();
       U.uScale.value = R.getPixelRatio() * H / (2 * Math.tan(cam.fov * D2R / 2));
       kick();
     }
     host.addEventListener('pointermove', e => { mx = e.clientX / innerWidth * 2 - 1; my = e.clientY / innerHeight * 2 - 1; kick(); });
+    // Drag turns the network and lets go with momentum; each node trails on a spring, so the graph wobbles as it turns and settles.
+    let drag = null, dx = 0, dy = 0, vx = 0, vy = 0;
+    canvas.addEventListener('pointerdown', e => { if (e.button) return; drag = { x: e.clientX, y: e.clientY, t: performance.now() }; canvas.setPointerCapture(e.pointerId); vx = vy = 0; kick(); });
+    canvas.addEventListener('pointermove', e => { if (!drag) return;
+      const now = performance.now(), dt = Math.max(0.008, (now - drag.t) / 1000), ax = (e.clientY - drag.y) * 0.006, ay = (e.clientX - drag.x) * 0.006;
+      dx = clamp(dx + ax, -1.2, 1.2); dy += ay; vx = clamp(vx * 0.5 + ax / dt * 0.5, -5, 5); vy = clamp(vy * 0.5 + ay / dt * 0.5, -5, 5);
+      drag.x = e.clientX; drag.y = e.clientY; drag.t = now; kick(); });
+    const drop = () => { drag = null; kick(); };
+    canvas.addEventListener('pointerup', drop); canvas.addEventListener('pointercancel', drop);
     const kick = animator(canvas, (time, dt) => {
       if (dir) { p = clamp(p + dt * dir, 0, END); if ((dir > 0 && p === END) || (dir < 0 && p === 0)) dir = 0; }
       const k = reduced ? 1 : 1 - Math.exp(-dt * 3); cmx += (mx - cmx) * k; cmy += (my - cmy) * k;
-      g.rotation.set((reduced ? 0 : Math.sin(time * 0.09) * 0.16) + cmy * 0.15, (reduced ? 0 : Math.sin(time * 0.12) * 0.38) + cmx * 0.3, 0);
+      if (!drag) { const f = Math.exp(-dt * 2.2); dx = clamp(dx + vx * dt, -1.2, 1.2); dy += vy * dt; vx *= f; vy *= f; }
+      else if (performance.now() - drag.t > 60) { vx *= 0.8; vy *= 0.8; }  // holding still under the pointer
+      const spin = Math.abs(vx) + Math.abs(vy) > 0.01;
+      g.rotation.set((reduced ? 0 : Math.sin(time * 0.09) * 0.16) + cmy * 0.15 + dx, (reduced ? 0 : Math.sin(time * 0.12) * 0.38) + cmx * 0.3 + dy, 0);
       U.uTime.value = reduced ? 0 : time;
       nodes.forEach((n, i) => {
         const a = clamp((p - n.d) / 1.1, 0, 1), e = 1 - Math.pow(1 - a, 4); n.arr = a;
         const bob = reduced ? 0 : 0.09;
         n.cur.copy(n.from).lerp(n.p, e); n.cur.x += Math.sin(time * 0.6 + n.ph) * bob * e; n.cur.y += Math.cos(time * 0.5 + n.ph) * bob * e;
+        // wobble: the node lags the turn (opposite to omega x p) on a damped spring, scaled by distance from the core
+        if (!n.o) { n.o = new T.Vector3(); n.ov = new T.Vector3(); }
+        if (!reduced && dt) { const P = n.cur, tx = -(vy * P.z) * 0.07, ty = (vx * P.z) * 0.07, tz = -(vx * P.y - vy * P.x) * 0.07, K = 70, C = 6;
+          n.ov.x += (K * (tx - n.o.x) - C * n.ov.x) * dt; n.ov.y += (K * (ty - n.o.y) - C * n.ov.y) * dt; n.ov.z += (K * (tz - n.o.z) - C * n.ov.z) * dt;
+          n.o.addScaledVector(n.ov, dt); n.cur.add(n.o); }
         np.set([n.cur.x, n.cur.y, n.cur.z], i * 3);
         const pop = a > 0 && a < 1 ? 1 + 0.6 * Math.sin(a * Math.PI) : 1;
         ns.set([n.s * pop * (a > 0 ? 1 : 0), Math.min(1, a * 2)], i * 2);
@@ -565,12 +592,12 @@
         const x = (pv.x * 0.5 + 0.5) * W, y = (-pv.y * 0.5 + 0.5) * H, op = clamp((n.arr - 0.55) / 0.45, 0, 1) * (depth < -1.2 ? 0.75 : 1);
         const el = labs[i]; el.style.opacity = op.toFixed(3);
         if (op > 0 && !n.w) n.w = el.offsetWidth;
-        const left = n.kind === 'item' && (n.cur.x < 0 || x + (n.w || 200) + 24 > W);  // flip a label inward when it would run off the edge
+        const w = n.w || 200, left = n.kind === 'item' && ((n.cur.x < 0 && x - w - 14 >= minX) || x + w + 24 > W);  // left-side labels point outward unless that hides them under the text panel
         el.style.transform = n.kind === 'item' ? `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(${left ? 'calc(-100% - 14px)' : '14px'},-50%)`
           : `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,${n.kind === 'core' ? '-50%' : 'calc(-100% - 14px)'})`;
       });
       R.render(scene, cam);
-      return !reduced || !!dir;
+      return !reduced || !!dir || !!drag || spin;
     });
     size(); new ResizeObserver(size).observe(canvas);
     return { play() { if (reduced) { p = END; kick(); return; } dir = 1; kick(); }, rewind() { if (reduced) { p = 0; kick(); return; } dir = -2.2; kick(); } };

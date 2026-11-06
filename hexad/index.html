@@ -184,15 +184,21 @@
   /* Hexad-12 universe behind the facts */
   .dark .u3 { position: absolute; left: 0; right: 0; bottom: 0; height: 100svh; }  /* a tall pin sticks by its bottom, so the bottom screenful is what shows */
   .u3-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  .dark .inner { position: relative; z-index: 2; width: min(620px, calc(100% - 32px)); margin-left: max(16px, calc(50vw - 580px)); padding: 28px 30px; border-radius: 18px;
+  .dark .inner { position: relative; z-index: 2; width: min(560px, calc(100% - 32px)); margin-left: max(16px, calc(50vw - 660px)); padding: 20px 24px; border-radius: 18px;
     background: rgb(10 37 48 / .74); backdrop-filter: blur(8px); border: 1px solid rgb(255 255 255 / .06); }
-  .dark .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
-  .dark h2 { max-width: 16ch; }
+  .dark .facts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 16px; margin: 4px 0 16px; }
+  .dark h2 { max-width: 24ch; font-size: clamp(24px, 2.3vw, 34px); }
+  .dark .facts b { font-size: clamp(24px, 2.1vw, 32px); }
+  .dark .facts p { font-size: 12.5px; line-height: 1.35; margin-top: 6px; }
+  .js main section.dark > .pin { padding: 28px 0 92px; }
+  .dark .lede { font-size: 15px; line-height: 1.55; }
+  .dark .help { font-size: 12.5px; margin: 0; }
+  .u3 { user-select: none; -webkit-user-select: none; } .u3-cv { cursor: grab; touch-action: pan-y; } .u3-cv:active { cursor: grabbing; }
   .u3-lab { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; white-space: nowrap; will-change: transform; }
   .u3-item { font: 600 13px/1.3 var(--sans); color: #f2f5f7; background: rgb(10 37 48 / .88); border: 1px solid var(--c); border-radius: 10px; padding: 5px 10px; }
   .u3-hub { font: 800 13px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--c); text-shadow: 0 0 8px #0a2530, 0 0 3px #0a2530; }
   .u3-core { font: 800 16px var(--display); color: #fff; text-shadow: 0 0 10px #0a2530; }
-  @media (max-width: 900px) { .dark .u3 { inset: 0 0 auto 0; height: 440px; } .dark .inner { margin: 420px 16px 0; padding: 20px; } .u3-item { font-size: 11px; white-space: normal; width: max-content; max-width: 140px; } }
+  @media (max-width: 900px) { .dark .u3 { inset: 0 0 auto 0; height: 440px; } .dark .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dark .inner { margin: 420px 16px 0; padding: 20px; } .u3-item { font-size: 11px; white-space: normal; width: max-content; max-width: 140px; } }
   /* thank-you page */
   .thanks #field2 { position: absolute; inset: 0; width: 100%; height: 100%; }
   .thanks .inner { position: relative; z-index: 1; width: 100%; max-width: 1160px; margin: 0 auto; padding: 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
@@ -408,7 +414,7 @@
       <div><b data-to="23196">23,196</b><p>valid responses on the public Hexad-12 data page by October 26, 2026</p></div>
     </div>
     <p class="lede">Researchers can now add the Hexad scale to larger studies without weakening the measure. Krath, Altmeyer, Tondello, and Nacke (CHI 2023) report better model fit, reliability, and convergent and discriminant validity than the 24-item scale, and in their words Hexad-12 “resolves issues found in studies using the original Hexad scale.” Better fit in development samples does not prove fewer dropouts, and independent teams keep testing it: a <a href="https://doi.org/10.1007/s11469-024-01367-0">Hong Kong study</a> validated it with 1,610 young gamers, a <a href="https://doi.org/10.1016/j.chbr.2026.100970">German validation</a> recommended five dimensions after the Disruptor scale failed its criteria, and the Chinese 12-item form in that Hong Kong study shares only 10 of its items. <a href="https://doi.org/10.1145/3544548.3580968">Read the Hexad-12 paper</a>.</p>
-    <p class="help">Behind this text, the 12 Hexad-12 statements float in, each tied to its type and the six types tied around the scale.</p>
+    <p class="help">Behind this text, the 12 Hexad-12 statements float in, each tied to its type and the six types tied around the scale. Drag the network to turn it.</p>
     </div>
   </section>
 
@@ -435,15 +441,15 @@
     <div class="impact">
       <div><h3>New research</h3><b class="n">1,082</b><p>citations on Google Scholar, 17 languages, 7 published checks of the scale, and 23,502 Hexad‑12 tests on the public site</p></div>
       <div><h3>Design choices</h3><ul>
-        <li><b>Lernnavi:</b> answers from 1,246 pupils led to a decision to add team features <i>(Schultze et al., 2026)</i></li>
-        <li><b>Xiphias:</b> answers shaped badges for a programming course <i>(Ateneo Laboratory for the Learning Sciences, 2021)</i></li>
-        <li><b>Ludilearn for Moodle:</b> picks game features for each learner from a Hexad‑12 quiz <i>(MoodleDocs, 2025)</i></li>
-        <li><b>Wiski:</b> let pupils choose for themselves after the scale felt like too much work <i>(Ooge, 2019)</i></li></ul></div>
+        <li><b>Lernnavi:</b> answers from 1,246 pupils led to a decision to add team features <i>(<a href="https://doi.org/10.1016/j.chbr.2026.101011">Schultze et al., 2026</a>)</i></li>
+        <li><b>Xiphias:</b> answers shaped badges for a programming course <i>(<a href="https://alls.ateneo.edu/archives/5746">Ateneo Laboratory for the Learning Sciences, 2021</a>)</i></li>
+        <li><b>Ludilearn for Moodle:</b> picks game features for each learner from a Hexad‑12 quiz <i>(<a href="https://docs.moodle.org/503/en/ludilearn">MoodleDocs, 2025</a>)</i></li>
+        <li><b>Wiski:</b> let pupils choose for themselves after the scale felt like too much work <i>(<a href="https://jeroenooge.be/research/masters-thesis-personalising-motivational-strategies-and-gamification-techniques">Ooge, 2019</a>)</i></li></ul></div>
       <div><h3>Effects on people</h3><ul>
-        <li><b>Fitness:</b> 40 people over 60 days; activity rose in the personalized groups and stayed flat in the others <i>(Zhao et al., 2020)</i></li>
-        <li><b>Science class:</b> a class of 17 scored higher on the final test than a class of 18 <i>(Zourmpakis et al., 2024)</i></li>
-        <li><b>Sokoon:</b> depression and anxiety scores fell in a two-week pilot with 30 adults <i>(Amer et al., 2024)</i></li>
-        <li><b>Some found nothing:</b> Wiski saw no change in how much pupils practised <i>(Ooge, 2019)</i></li></ul></div>
+        <li><b>Fitness:</b> 40 people over 60 days; activity rose in the personalized groups and stayed flat in the others <i>(<a href="https://doi.org/10.2196/19968">Zhao et al., 2020</a>)</i></li>
+        <li><b>Science class:</b> a class of 17 scored higher on the final test than a class of 18 <i>(<a href="https://doi.org/10.3390/computers13120324">Zourmpakis et al., 2024</a>)</i></li>
+        <li><b>Sokoon:</b> depression and anxiety scores fell in a two-week pilot with 30 adults <i>(<a href="https://doi.org/10.1177/20552076241263317">Amer et al., 2024</a>)</i></li>
+        <li><b>Some found nothing:</b> Wiski saw no change in how much pupils practised <i>(<a href="https://jeroenooge.be/research/masters-thesis-personalising-motivational-strategies-and-gamification-techniques">Ooge, 2019</a>)</i></li></ul></div>
     </div>
     <p class="lede">Most of this evidence is small, and the Hexad scale usually arrives bundled with other changes, so they show it was used more than they show it helped. As gamification research moves on, the Hexad scale still gives studies a common measure of player motivation, so studies from different countries and years can be compared and pooled.</p>
   </section>
