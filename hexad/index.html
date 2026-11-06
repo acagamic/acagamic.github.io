@@ -369,7 +369,7 @@
     <div class="viz chain3d" id="v-chain"></div>
     <div class="chain-cap">
       <h2>The Hexad scale’s family tree runs eight generations deep</h2>
-      <p class="lede" id="chain-l1">Like a family tree, each paper cites the one before it, its parent. Generation 1 cites the Hexad scale directly, and at each step we follow the most-cited child published in or after its parent’s year. Scroll to travel down the line: by generation 8, it reaches a 2026 study on AI.</p>
+      <p class="lede" id="chain-l1">Like a family tree, each paper cites the one before it, its parent. Generation 1 cites the Hexad scale directly, and at each step we follow the most-cited child published in or after its parent’s year. The line plays on its own, and scrolling moves you along it or back: by generation 8, it reaches a 2026 study on AI.</p>
       <p class="lede" id="chain-l2">The gold arc is not part of the tree. It marks the newest paper citing the Hexad scale directly, published November 3, 2026: Zhang, G. X., Altmeyer, M., &amp; Seaborn, K. (2026). Measuring what motivates maldaimonia in play with the Inventory on Maldaimonic Motivations in Player Experiences (IMPEX). <i>Proceedings of the ACM on Human-Computer Interaction, 10</i>(7), 1–29. <a href="https://doi.org/10.1145/3831291">doi.org/10.1145/3831291</a></p>
     </div>
   </section>
@@ -718,7 +718,13 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
 
   // Explorer overlay: embedded, the map ignores wheel and touch so the page scrolls past it; full screen, it takes them.
   const ex = document.querySelector('.explorer');
+  // The pinned section traps position: fixed under the theme toggle and stepper, so the overlay moves to <body> while open;
+  // an empty div of the same height holds its place so the page does not jump.
+  const stand = document.createElement('div');
   const full = on => {
+    if (on === ex.classList.contains('full')) return;
+    if (on) { stand.style.cssText = `height:${ex.offsetHeight}px;margin-top:8px`; ex.replaceWith(stand); document.body.append(ex); }
+    else stand.replaceWith(ex);
     ex.classList.toggle('full', on); net.free = on; $('b-max').hidden = on; $('b-close').hidden = !on;
     document.documentElement.style.overflow = on ? 'hidden' : '';
     (on ? $('b-close') : $('b-max')).focus({ preventScroll: true });
@@ -728,16 +734,26 @@ Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').t
   $('b-max').onclick = () => full(true); $('b-close').onclick = () => full(false);
   addEventListener('keydown', e => { if (e.key === 'Escape' && ex.classList.contains('full')) full(false); });
 
-  // Family tree: progress through the tall section drives the scene's clock, eased so each scroll step glides.
+  // Family tree: once the section fills the screen the scene plays on its own, and scrolling still scrubs it.
+  // Scroll moves the clock by the distance scrolled; scrolling back rewinds and pauses the autoplay until you scroll forward.
   if (chain3d) {
     const cs = $('chain-sec'), T_END = chain3d.duration + 1.2, l1 = $('chain-l1'), l2 = $('chain-l2');
-    let target = 0, cur = -1, raf = 0;
-    const glide = () => { raf = 0; cur = cur < 0 || HX.reduced ? target : cur + (target - cur) * 0.14;
+    let clock = 0, cur = -1, raf = 0, lastS = null, back = false, last = 0;
+    const frac = () => { const r = cs.getBoundingClientRect(); return { r, s: Math.min(1, Math.max(0, -r.top / (cs.offsetHeight - innerHeight))) }; };
+    const tick = now => { raf = 0; const dt = last ? Math.min(0.05, (now - last) / 1000) : 0; last = now;
+      const { r } = frac(), inView = r.top <= innerHeight * 0.25 && r.bottom > innerHeight * 0.5;
+      const leaving = back && r.top > innerHeight * 0.25 && r.top < innerHeight;  // scrolled back up out of the section: rewind
+      if (inView && !back && !HX.reduced) clock = Math.min(T_END, clock + dt);
+      if (leaving) clock = Math.max(0, clock - dt * 3);
+      cur = cur < 0 || HX.reduced ? clock : cur + (clock - cur) * 0.14;
       chain3d.seek(cur);
       l1.classList.toggle('off', cur > 7.5); l2.classList.toggle('off', cur < chain3d.marks.newest);
-      if (Math.abs(target - cur) > 0.002) raf = requestAnimationFrame(glide); };
-    const chainScroll = () => { const r = cs.getBoundingClientRect(), span = cs.offsetHeight - innerHeight;
-      target = Math.min(1, Math.max(0, -r.top / span)) * T_END; if (!raf) raf = requestAnimationFrame(glide); };
+      if ((inView && clock < T_END && !back) || (leaving && clock > 0) || Math.abs(clock - cur) > 0.002) raf = requestAnimationFrame(tick); else last = 0; };
+    const chainScroll = () => { const { r, s } = frac();
+      if (r.top > innerHeight) { clock = 0; back = false; }  // below the fold: wait at the start
+      else if (r.bottom < 0) clock = T_END;  // scrolled past: show the end
+      else if (lastS !== null && s !== lastS) { back = s < lastS; clock = Math.min(T_END, Math.max(0, clock + (s - lastS) * T_END)); }
+      lastS = s; if (!raf) raf = requestAnimationFrame(tick); };
     addEventListener('scroll', chainScroll, { passive: true }); addEventListener('resize', chainScroll); chainScroll();
   }
 
