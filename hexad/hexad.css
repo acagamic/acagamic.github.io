@@ -1,0 +1,80 @@
+/* Hexad at Ten: CHI PLAY 2026 palette (cyan, magenta, pink, navy, charcoal) and type (Wix Madefor, Montserrat). */
+:root {
+  color-scheme: light;
+  --bg: #fbfafc; --panel: #ffffff; --ink: #23272b; --muted: #5b6068; --grid: #e4e2ea;
+  --series-1: #0096c7; --series-2: #b02070; --series-3: #a87400; --ramp-mid: #a868a8; --text-2: #b02070;
+  --brand-cyan: #00b3eb; --brand-pink: #e090c0; --brand-magenta: #b02070; --navy: #0a2530;
+  --display: 'Wix Madefor Display', 'Montserrat', sans-serif;
+  --sans: 'Montserrat', system-ui, sans-serif;
+  --mono: 'Montserrat', system-ui, sans-serif; /* numbers use tabular figures, not a monospace costume */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Navy values, used by dark mode and by .stage sections in light mode. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0a2530; --panel: #0f303d; --ink: #f2f5f7; --muted: #a9bec7; --grid: #1f4350;
+    --series-1: #1a9ccb; --series-2: #de4f97; --series-3: #c2871c; --ramp-mid: #b98ad0; --text-2: #ef8fc0;
+  }
+}
+:root[data-theme="dark"], .stage {
+  color-scheme: dark;
+  --bg: #0a2530; --panel: #0f303d; --ink: #f2f5f7; --muted: #a9bec7; --grid: #1f4350;
+  --series-1: #1a9ccb; --series-2: #de4f97; --series-3: #c2871c; --ramp-mid: #b98ad0; --text-2: #ef8fc0;
+}
+* { box-sizing: border-box; }
+html { scrollbar-color: var(--muted) var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 18px/1.6 var(--sans); caret-color: var(--brand-cyan);
+  font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+::selection { background: var(--brand-pink); color: #23272b; }
+a { color: var(--series-1); text-underline-offset: 0.2em; text-decoration-thickness: 1.5px; }
+:focus-visible { outline: 2px solid var(--brand-cyan); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -0.025em; line-height: 1.08; margin: 0 0 0.45em; text-wrap: balance; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* chart marks */
+.hx-axis { stroke: var(--grid); stroke-width: 1.5; }
+.hx-tick, .hx-gen { fill: var(--muted); font: 500 15px var(--sans); }
+.hx-val { fill: var(--ink); font: 700 15px var(--sans); }
+.hx-lab { fill: var(--ink); font: 500 17px var(--sans); }
+.hx-strong { font-weight: 700; } .hx-muted { fill: var(--muted); font-size: 14px; font-weight: 400; }
+.hx-bar.hx-d1, .hx-node1 { fill: var(--series-1); }
+.hx-bar.hx-d2, .hx-node2 { fill: var(--series-2); }
+.hx-node3 { fill: var(--series-3); } .hx-origin { fill: var(--ink); }
+.hx-bar.hx-partial { opacity: 0.55; }
+.hx-chain { fill: none; stroke: var(--muted); stroke-width: 2; }
+.hx-thread { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+path.hx-thread0 { stroke: var(--grid); } circle.hx-thread0 { fill: var(--muted); }
+path.hx-thread1 { stroke: var(--series-1); } circle.hx-thread1 { fill: var(--series-1); }
+path.hx-thread2 { stroke: var(--series-2); } circle.hx-thread2 { fill: var(--series-2); }
+.hx-halo { paint-order: stroke; stroke: var(--bg); stroke-width: 8px; stroke-linejoin: round; }
+.hx-lab.hx-moved { fill: var(--text-2); font-weight: 700; }
+.hx-tip { position: fixed; z-index: 50; pointer-events: none; opacity: 0; transition: opacity .12s; max-width: 340px;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--grid); border-radius: 10px; padding: 9px 13px; font: 14px/1.45 var(--sans);
+  box-shadow: 0 8px 28px rgb(10 37 48 / .22); }
+.legend { display: flex; gap: 22px; flex-wrap: wrap; font-size: 15px; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+
+/* hexagon of six user types */
+.hexad svg text { fill: var(--ink); }
+.hexad .ty { font: 700 22px var(--display); } .hexad .mo { font: 500 16px var(--sans); fill: var(--muted); }
+.hexad polygon { fill: none; stroke: var(--muted); stroke-width: 2.5; stroke-opacity: .6; }
+.hexad polygon.hx-profile { fill: var(--series-3); fill-opacity: .25; stroke: var(--series-3); stroke-width: 3; stroke-opacity: 1; stroke-dasharray: 10 6; }
+@keyframes hx-march { to { stroke-dashoffset: -32; } }  /* two dash periods: the dashes run round the example outline */
+.hexad .hx-example text { fill: var(--series-3); font: 700 22px var(--sans); } .hexad .hx-example line { stroke: var(--series-3); stroke-width: 2; }
+.hexad .hx-card rect { fill: var(--panel); stroke: var(--series-1); stroke-width: 2; }
+.hexad .hx-card-t { font: 800 34px var(--display); fill: var(--series-1); } .hexad .hx-card-d { font: 500 22px var(--sans); fill: var(--ink); }
+.hexad circle { fill: var(--series-1); stroke: var(--bg); stroke-width: 4; }
+
+/* film grain on navy stages */
+.grain { position: relative; isolation: isolate; }
+.grain::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: .09; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* lineage motion */
+.hx-cursor { stroke: var(--brand-pink); stroke-width: 2; stroke-dasharray: 4 6; }
+.hx-ring { fill: none; stroke: var(--brand-pink); stroke-width: 2; }
+.hx-h12frame { fill: rgb(176 32 112 / .06); stroke: var(--series-2); stroke-width: 2; opacity: 0; }
+.hx-h12tag { font: 700 22px var(--sans); fill: var(--series-2); opacity: 0; }
+.hx-final path.hx-thread1 { filter: drop-shadow(0 0 6px var(--series-1)); } .hx-final path.hx-thread2 { filter: drop-shadow(0 0 6px var(--series-2)); }
