@@ -129,6 +129,27 @@ const HX = (() => {
   // The six user types and the motivation each one scores (Tondello et al., 2016).
   const TYPES = [['Philanthropist', 'purpose'], ['Socialiser', 'belonging'], ['Free Spirit', 'freedom'],
     ['Achiever', 'mastery'], ['Player', 'rewards'], ['Disruptor', 'change']];
+  // One-shot sizzle at (x, y): a halo flash and sparks that rise, drift, and fade, like the October 2016 dot on the timeline.
+  const SPARK = ['#ffd27a', '#ffb3d9', '#e090c0', '#de4f97', '#ffffff'];
+  function sparkle(svg, x, y, { n = 26, k = 1 } = {}) {
+    if (reduced) return null;
+    const sg = svg.append('g').attr('class', 'hx-sizzle').style('pointer-events', 'none'), rnd = Math.random;
+    const halo = sg.append('circle').attr('cx', x).attr('cy', y).style('fill', 'var(--series-2)').style('stroke', 'none').attr('r', 0);
+    const ps = d3.range(n).map(i => ({ el: sg.append('circle').style('fill', SPARK[i % SPARK.length]).style('stroke', 'none').attr('r', 0), t0: rnd() * 0.45, life: 0.5 + rnd() * 0.7,
+      vx: (rnd() - 0.5) * 90 * k, vy: -(60 + rnd() * 130) * k, wob: rnd() * 6.28, r: (1.6 + rnd() * 3.4) * k }));
+    const tm = d3.timer(ms => {
+      const t = ms / 1000;
+      if (t > 1.7) { tm.stop(); sg.remove(); return; }
+      halo.attr('r', (6 + 14 * Math.min(1, t / 0.4)) * k).style('opacity', 0.3 * Math.max(0, 1 - t / 0.5));
+      for (const p of ps) {
+        const a = (t - p.t0) / p.life, q = 1 - a;
+        if (a < 0 || a > 1) { p.el.attr('r', 0); continue; }
+        p.el.attr('cx', x + p.vx * a + Math.sin(t * 6 + p.wob) * 6 * k * a).attr('cy', y - 8 * k + p.vy * a + 40 * k * a * a).attr('r', p.r * q).style('opacity', q);
+      }
+    });
+    return { stop() { tm.stop(); sg.remove(); } };
+  }
+
   function hexagon(host, { W = 900, H = 640, R: R0 = 220, profile = null, desc = null } = {}) {
     host.innerHTML = '';
     const R = R0, cx = W / 2, cy = H / 2;
@@ -136,7 +157,8 @@ const HX = (() => {
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
       .attr('aria-label', 'Hexagon of six user types: ' + TYPES.map(t => `${t[0]} (${t[1]})`).join(', '));
     const poly = svg.append('polygon').attr('points', pts.map(p => p.slice(0, 2).join(',')).join(' '));
-    const len = R * 6;
+    const len = R * 6, SK = W / 420;  // spark scale: the viewBox is wider than the timeline's
+    let fizz = [];
     const g = svg.selectAll('g').data(TYPES).join('g').attr('transform', (d, i) => `translate(${pts[i][0]},${pts[i][1]})`).style('opacity', 0);
     g.append('circle').attr('r', 9);
     const lab = g.append('text').attr('text-anchor', (d, i) => [1, 2].includes(i) ? 'start' : [4, 5].includes(i) ? 'end' : 'middle')
@@ -172,6 +194,7 @@ const HX = (() => {
           .attr('transform', `translate(${cx},${cy}) scale(1)`).style('opacity', 1);
       });
       g.select('circle').interrupt().transition().duration(300).attr('r', (d, j) => j === i ? 22 : 9);
+      fizz.push(sparkle(svg, pts[i][0], pts[i][1], { k: SK }));
     }
     function grow() {
       if (card) card.interrupt().transition().duration(300).style('opacity', 0);
@@ -191,7 +214,11 @@ const HX = (() => {
       shape?.tag?.interrupt().style('opacity', 0);
       poly.interrupt().attr('stroke-dasharray', `${len} ${len}`).attr('stroke-dashoffset', len)
         .transition().duration(reduced ? 0 : 1600).ease(d3.easeCubicInOut).attr('stroke-dashoffset', 0);
-      g.interrupt().style('opacity', 0).transition().delay((d, i) => reduced ? 0 : 250 + i * 260).duration(450).style('opacity', 1);
+      // each dot appears, and sizzles, the moment the drawing line reaches it
+      const hit = i => 1600 * (i / 6 < 0.5 ? Math.cbrt(i / 24) : 1 - Math.cbrt(2 * (1 - i / 6)) / 2);
+      fizz.forEach(f => f?.stop()); fizz = [];
+      g.interrupt().style('opacity', 0).transition().delay((d, i) => reduced ? 0 : hit(i)).duration(300).style('opacity', 1)
+        .on('start', (d, i) => fizz.push(sparkle(svg, pts[i][0], pts[i][1], { k: SK })));
     }
     return { play, show, grow };
   }
@@ -696,7 +723,7 @@ const HX = (() => {
     if (hot >= 0 && !reduced) {
       const sx = x(ev[hot].d), sg = svg.append('g').attr('class', 'hx-sizzle').style('pointer-events', 'none');
       const halo = sg.append('circle').attr('cx', sx).attr('cy', base).attr('r', 18).attr('fill', 'var(--series-2)').style('opacity', 0);
-      const cols = ['#ffd27a', '#ffb3d9', '#e090c0', '#de4f97', '#ffffff'], rnd = d3.randomLcg(7);
+      const cols = SPARK, rnd = d3.randomLcg(7);
       for (let i = 0; i < 34; i++) sparks.push({ el: sg.append('circle').attr('fill', cols[i % cols.length]).attr('r', 0), t0: rnd() * 1.2, life: 0.55 + rnd() * 0.75,
         vx: (rnd() - 0.5) * 70, vy: -(70 + rnd() * 120), wob: rnd() * 6.28, r: 1.6 + rnd() * 3.4 });
       let on = true;
