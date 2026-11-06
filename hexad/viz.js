@@ -169,7 +169,7 @@ const HX = (() => {
     let shape = null;
     if (profile) {
       const at = (v, i) => [cx + Math.cos(pts[i][2]) * R * v, cy + Math.sin(pts[i][2]) * R * v];
-      shape = svg.insert('polygon', 'g').attr('class', 'hx-profile');
+      shape = svg.insert('polygon', 'g').attr('class', 'hx-profile').style('animation', 'hx-march 1.6s linear infinite');  // keyframes in hexad.css
       shape.datum(profile);
       shape.at = at;
     }

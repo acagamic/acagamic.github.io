@@ -59,7 +59,7 @@ path.hx-thread2 { stroke: var(--series-2); } circle.hx-thread2 { fill: var(--ser
 .hexad svg text { fill: var(--ink); }
 .hexad .ty { font: 700 22px var(--display); } .hexad .mo { font: 500 16px var(--sans); fill: var(--muted); }
 .hexad polygon { fill: none; stroke: var(--muted); stroke-width: 2.5; stroke-opacity: .6; }
-.hexad polygon.hx-profile { fill: var(--series-3); fill-opacity: .25; stroke: var(--series-3); stroke-width: 3; stroke-opacity: 1; stroke-dasharray: 10 6; animation: hx-march 1.6s linear infinite; }
+.hexad polygon.hx-profile { fill: var(--series-3); fill-opacity: .25; stroke: var(--series-3); stroke-width: 3; stroke-opacity: 1; stroke-dasharray: 10 6; }
 @keyframes hx-march { to { stroke-dashoffset: -32; } }  /* two dash periods: the dashes run round the example outline */
 .hexad .hx-example text { fill: var(--series-3); font: 700 22px var(--sans); } .hexad .hx-example line { stroke: var(--series-3); stroke-width: 2; }
 .hexad .hx-card rect { fill: var(--panel); stroke: var(--series-1); stroke-width: 2; }
