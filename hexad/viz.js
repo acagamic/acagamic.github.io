@@ -752,19 +752,20 @@ const HX = (() => {
   // Disruptor story: 2016 respondents (outlined dots) beside Hexad-12 test shares rescaled to 133 people (filled dots).
   function crowdCompare(host, a, b, { W = 1600, H = 560, highlight = 'Disruptor', n = 133 } = {}) {
     host.innerHTML = '';
-    const types = a.map(r => r[0]), s = 32, cols = 3, base = H - 96;
+    const types = a.map(r => r[0]), s = 26, R = 10.5, cols = 3, gap = 24, base = H - 96;
+    const off = s + R + 1 + gap / 2;  // cluster centre from band centre: 5 px between dots, 24 px between a type's two clusters
     const x = d3.scaleBand(types, [40, W - 40]).padding(0.12);
     const bN = Object.fromEntries(b.map(([t, p]) => [t, Math.round(p / 100 * n)]));
     const svg = d3.select(host).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
       .attr('aria-label', types.map((t, i) => `${t}: ${a[i][1]} of ${n} in 2016, ${b[i][1]}% in Hexad-12`).join('; '));
     const dots = [];
     types.forEach((t, ti) => {
-      const cx0 = x(t) + x.bandwidth() * 0.27, cx1 = x(t) + x.bandwidth() * 0.73;
+      const cx0 = x(t) + x.bandwidth() / 2 - off, cx1 = x(t) + x.bandwidth() / 2 + off;
       d3.range(a[ti][1]).forEach(i => dots.push({ t, set: 0, i, x: cx0 + ((i % cols) - 1) * s, y: base - 12 - Math.floor(i / cols) * s }));
       d3.range(bN[t]).forEach(i => dots.push({ t, set: 1, i, x: cx1 + ((i % cols) - 1) * s, y: base - 12 - Math.floor(i / cols) * s }));
     });
     const hot = d => d.t === highlight;
-    const c = svg.selectAll('circle').data(dots).join('circle').attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 13)
+    const c = svg.selectAll('circle').data(dots).join('circle').attr('cx', d => d.x).attr('cy', d => d.y).attr('r', R)
       .attr('fill', d => d.set ? (hot(d) ? 'var(--series-2)' : 'var(--series-1)') : 'none')
       .attr('stroke', d => d.set ? 'none' : (hot(d) ? 'var(--series-2)' : 'var(--muted)')).attr('stroke-width', 2);
     const lab = svg.selectAll('g.l').data(types).join('g').attr('class', 'l').attr('transform', t => `translate(${x(t) + x.bandwidth() / 2},${base + 34})`);
@@ -772,7 +773,7 @@ const HX = (() => {
     lab.append('text').attr('class', 'hx-muted').attr('text-anchor', 'middle').attr('y', 36).style('font-size', '25px')
       .text((t, i) => `${(a[i][1] / n * 100).toFixed(1)}% → ${b[i][1]}%`);
     function play() {
-      c.interrupt().attr('r', 0).transition().delay(d => reduced ? 0 : d.set * 1500 + d.i * 22).duration(350).ease(d3.easeBackOut).attr('r', 13);
+      c.interrupt().attr('r', 0).transition().delay(d => reduced ? 0 : d.set * 1500 + d.i * 22).duration(350).ease(d3.easeBackOut).attr('r', R);
     }
     return { play };
   }
