@@ -42,39 +42,45 @@
       gl_FragColor = vec4(mix(vC, vec3(1.), core * .45), (glow * .8 + core) * vA); }`;
   const LINE_FRAG = `varying vec3 vC; varying float vA; void main() { gl_FragColor = vec4(vC, vA); }`;
 
-  // ---------- Hero: one particle per citing paper spirals in and lands on the edges of a cube. Seen along its diagonal,
-  // the cube is a hexagon (the Hexad); then it turns in 3D and the flat hexagon reveals its depth, Escher-style.
+  // ---------- Hero: one particle per citing paper spirals in and lands on a hexagonal Möbius band, Escher-style. Face-on it
+  // reads as the Hexad; then the ring tilts and spins in 3D while its three half-twists roll around the band.
+  // Shared GLSL: band(s, w) maps a spot along the ring (s in 0..1) and across it (w in -1..1) to 3D.
+  const BAND = `uniform float uRoll, uWave;
+    vec2 hv(float k) { float a = 1.5707963 + k * 1.0471976; return vec2(cos(a), sin(a)); }
+    vec3 band(float s, float w) {
+      float f = fract(s) * 6., k = floor(f); vec2 c = mix(hv(k), hv(k + 1.), f - k);  // point on the hexagon
+      float ph = uRoll + 4.712389 * s + uWave * sin(12.566371 * s - uRoll * 2.);  // three half-twists, plus a travelling ripple
+      vec3 r = vec3(normalize(c), 0.);
+      return vec3(c, 0.) + (r * cos(ph) + vec3(0., 0., 1.) * sin(ph)) * w * .24;
+    }`;
   async function hero(canvas, data) {
     const T = await three(), host = canvas.parentElement;
     const R = makeRenderer(T, canvas, 2), scene = new T.Scene(), cam = new T.PerspectiveCamera(35, 1, 0.1, 100), DIST = 6;
     cam.position.set(0, 0, DIST);
     const ramp = d3.scaleLinear([2016, 2021, 2026], ['--brand-cyan', '--brand-pink', '--brand-magenta'].map(v => getComputedStyle(host).getPropertyValue(v).trim()))
       .interpolate(d3.interpolateRgb).clamp(true);
-    const rnd = d3.randomLcg(11), N = data.nodes.length, S = 1 / 1.633;  // half-size that gives the diagonal view a hexagon of radius 1
-    const V = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]].map(v => v.map(c => c * S));
-    const E = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
-    const K = [1, 1, 1].map(c => c / Math.sqrt(3));
+    const rnd = d3.randomLcg(11), N = data.nodes.length, ROWS = 4;
     const pos = new Float32Array(N * 3), st = new Float32Array(N * 3), col = new Float32Array(N * 3), misc = new Float32Array(N * 4);
     data.nodes.forEach(([, , y, c], i) => {
-      const f = i / N * 12, [ea, eb] = E[Math.floor(f)], u = f - Math.floor(f), A = V[ea], B = V[eb];
-      for (let k = 0; k < 3; k++) pos[i * 3 + k] = A[k] + (B[k] - A[k]) * u + (rnd() - 0.5) * 0.045;  // beams a little thick
-      // start: a wide disc facing the camera (perpendicular to the cube diagonal), spun in by the vortex
-      const th = rnd() * Math.PI * 2, rr = 1.6 + rnd() * 2.4, ux = [1, -1, 0].map(c => c / Math.SQRT2), uy = [K[1] * ux[2] - K[2] * ux[1], K[2] * ux[0] - K[0] * ux[2], K[0] * ux[1] - K[1] * ux[0]];
-      for (let k = 0; k < 3; k++) st[i * 3 + k] = (ux[k] * Math.cos(th) + uy[k] * Math.sin(th)) * rr + K[k] * (rnd() - 0.5) * 0.8;
+      // papers run around the ring in date order, in three rows across the band
+      pos.set([(Math.floor(i / ROWS) + rnd() * 0.6) / Math.ceil(N / ROWS), (i % ROWS) / (ROWS - 1) * 2 - 1 + (rnd() - 0.5) * 0.15, 0], i * 3);
+      const th = rnd() * Math.PI * 2, rr = 1.6 + rnd() * 2.4;  // start: a wide disc facing the camera, spun in by the vortex
+      st.set([Math.cos(th) * rr, Math.sin(th) * rr, (rnd() - 0.5) * 0.8], i * 3);
       const cc = d3.rgb(ramp(y)); col.set([cc.r / 255, cc.g / 255, cc.b / 255], i * 3);
       misc.set([i / N, (1.8 + Math.min(5.5, Math.sqrt(c) * 0.26)) * 4.4, rnd() * 6.283, 0.6 + rnd() * 0.8], i * 4);
     });
     const geo = new T.BufferGeometry();
     geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('aStart', new T.BufferAttribute(st, 3));
     geo.setAttribute('aCol', new T.BufferAttribute(col, 3)); geo.setAttribute('aMisc', new T.BufferAttribute(misc, 4));
-    const U = { uT: { value: 0 }, uTime: { value: 0 }, uPx: { value: 1 }, uDist: { value: DIST }, uScatter: { value: 0 }, uMouse: { value: new T.Vector3(9, 9, 0) }, uMouseOn: { value: 0 } };
+    const U = { uT: { value: 0 }, uTime: { value: 0 }, uPx: { value: 1 }, uDist: { value: DIST }, uScatter: { value: 0 }, uMouse: { value: new T.Vector3(9, 9, 0) }, uMouseOn: { value: 0 },
+      uRoll: { value: 0 }, uWave: { value: 0 } };
     const pts = points(T, geo, U, `attribute vec3 aStart; attribute vec3 aCol; attribute vec4 aMisc;
-      uniform float uT, uTime, uPx, uDist, uScatter, uMouseOn; uniform vec3 uMouse; varying vec3 vC; varying float vA;
-      vec3 spin(vec3 v, float a) { vec3 k = normalize(vec3(1.)); return v * cos(a) + cross(k, v) * sin(a) + k * dot(k, v) * (1. - cos(a)); }
+      uniform float uT, uTime, uPx, uDist, uScatter, uMouseOn; uniform vec3 uMouse; varying vec3 vC; varying float vA; ${BAND}
+      vec3 spin(vec3 v, float a) { return vec3(v.x * cos(a) - v.y * sin(a), v.x * sin(a) + v.y * cos(a), v.z); }
       void main() {
         float e = clamp((uT - aMisc.x * 1.3) / (1.6 * aMisc.w + .6), 0., 1.); e = 1. - pow(1. - e, 3.);
         e *= 1. - uScatter * (.55 + .45 * fract(aMisc.z * 7.13));  // scrolling down flings each dot back out at its own pace
-        vec3 p = spin(mix(aStart, position, e), (1. - e) * (1. - e) * 7.5);  // the vortex: dots swirl as they fall in
+        vec3 p = spin(mix(aStart, band(position.x, position.y), e), (1. - e) * (1. - e) * 7.5);  // the vortex: dots swirl as they fall in
         p += vec3(sin(uTime * .6 + aMisc.z), cos(uTime * .5 + aMisc.z * 1.3), sin(uTime * .4 + aMisc.z * .7)) * .012 * e;
         vec4 mv = modelViewMatrix * vec4(p, 1.);
         vec2 d = mv.xy - uMouse.xy; float dd = dot(d, d);
@@ -83,15 +89,17 @@
         gl_PointSize = aMisc.y * uPx * uDist / -mv.z;
         vC = aCol; vA = (.35 + .65 * e) * (1. - .45 * uScatter);
       }`);
-    // faint edge lines sharpen the cube once the dots have landed
-    const ep = new Float32Array(E.length * 6); E.forEach(([a, b], i) => ep.set(V[a].concat(V[b]), i * 6));
+    // faint rims sharpen the band once the dots have landed. With an odd number of half-twists the band has a single edge
+    // that runs round twice, so one loop over s in 0..2 draws it.
+    const EN = 360, ep = new Float32Array(EN * 3); for (let i = 0; i < EN; i++) ep.set([i / EN * 2, 1, 0], i * 3);
     const eg = new T.BufferGeometry(); eg.setAttribute('position', new T.BufferAttribute(ep, 3));
-    const EU = { uEdge: { value: 0 }, uC: { value: new T.Vector3(...cssRGB(host, '--brand-pink')) } };
-    const edges = new T.LineSegments(eg, new T.ShaderMaterial({ uniforms: EU, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fragmentShader: LINE_FRAG,
-      vertexShader: `uniform float uEdge; uniform vec3 uC; varying vec3 vC; varying float vA; void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); vC = uC; vA = uEdge; }` }));
+    const EU = { uEdge: { value: 0 }, uC: { value: new T.Vector3(...cssRGB(host, '--brand-pink')) }, uRoll: U.uRoll, uWave: U.uWave };
+    const edges = new T.LineLoop(eg, new T.ShaderMaterial({ uniforms: EU, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fragmentShader: LINE_FRAG,
+      vertexShader: `uniform float uEdge; uniform vec3 uC; varying vec3 vC; varying float vA; ${BAND}
+        void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(band(position.x, position.y), 1.); vC = uC; vA = uEdge; }` }));
     const g = new T.Group(); g.add(edges, pts); scene.add(g);
 
-    // Aurora: slow fbm noise in cyan and magenta behind the particles, strongest around the cube and faint behind the text.
+    // Aurora: slow fbm noise in cyan and magenta behind the particles, strongest around the ring and faint behind the text.
     const AU = { uTime: U.uTime, uScatter: U.uScatter, uC: { value: new T.Vector2(0.74, 0.5) }, uAsp: { value: 1 },
       uA: { value: new T.Vector3(...cssRGB(host, '--brand-cyan')) }, uB: { value: new T.Vector3(...cssRGB(host, '--brand-magenta')) } };
     const bgScene = new T.Scene(), bgCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -116,7 +124,7 @@
       const b = canvas.getBoundingClientRect(); W = b.width || 1; H = b.height || 1;
       R.setSize(W, H, false); cam.aspect = W / H; cam.updateProjectionMatrix();
       const perPx = 2 * Math.tan(cam.fov * D2R / 2) * DIST / H, wide = W > 900;
-      const cx = wide ? W * 0.74 : W / 2, cy = wide ? H * 0.5 : 150, Rp = wide ? Math.min(H * 0.34, W * 0.19) : Math.min(W * 0.26, 105);  // phones: the cube gets its own band above the text
+      const cx = wide ? W * 0.74 : W / 2, cy = wide ? H * 0.5 : 150, Rp = wide ? Math.min(H * 0.29, W * 0.16) : Math.min(W * 0.22, 88);  // phones: the ring gets its own band above the text
       g.position.set((cx - W / 2) * perPx, -(cy - H / 2) * perPx, 0); g.scale.setScalar(Rp * perPx);
       AU.uAsp.value = W / H; AU.uC.value.set(cx / W, 1 - cy / H);
       U.uPx.value = R.getPixelRatio() * (wide ? 1 : 0.5);
@@ -125,18 +133,18 @@
     let mOnT = 0, px = 0, py = 0, rx = 0, ry = 0, t0 = -1, scatter = 0;
     const mTarget = new T.Vector3(9, 9, 0);
     host.addEventListener('pointermove', e => { const b = canvas.getBoundingClientRect(); px = (e.clientX - b.left) / b.width * 2 - 1; py = -(e.clientY - b.top) / b.height * 2 + 1;
-      // pointer in view space at the cube's depth, for the push-aside effect
+      // pointer in view space at the ring's depth, for the push-aside effect
       const hh = Math.tan(cam.fov * D2R / 2) * DIST; mTarget.set(px * hh * cam.aspect, py * hh, 0); mOnT = 1; kick(); });
     host.addEventListener('pointerleave', () => { mOnT = 0; px = py = 0; kick(); });
-    const ISO_X = Math.atan(1 / Math.SQRT2), ISO_Y = -Math.PI / 4;
     const kick = animator(canvas, (time, dt) => {
       if (t0 < 0) t0 = time;
       const el = time - t0, k = reduced ? 1 : 1 - Math.exp(-dt * 4);
       U.uT.value = reduced ? 100 : el; U.uTime.value = reduced ? 0 : time; U.uScatter.value = scatter;
-      // hold the flat hexagon view until the dots land, then turn the cube in 3D
+      // hold the face-on hexagon until the dots land, then tilt and spin the ring while the twists roll round the band
       const u = reduced ? 0 : Math.max(0, el - 3.4), on = u > 0 ? Math.min(1, u / 2.5) : 0, ease = on * on * (3 - 2 * on);
       ry += (px * 0.25 - ry) * k; rx += (-py * 0.18 - rx) * k;
-      g.rotation.set(ISO_X + ease * 0.42 * Math.sin(u * 0.33) + rx + scatter * 0.6, ISO_Y + ease * u * 0.38 + ry, 0, 'XYZ');
+      U.uRoll.value = ease * u * 0.55; U.uWave.value = ease * 0.45;
+      g.rotation.set(-ease * (0.62 + 0.22 * Math.sin(u * 0.29)) + rx + scatter * 0.6, ease * 0.5 * Math.sin(u * 0.23) + ry, ease * u * 0.16, 'XYZ');
       EU.uEdge.value = 0.22 * Math.min(1, Math.max(0, (el - 2.6) / 1.2)) * (1 - scatter) + (reduced ? 0.22 : 0);
       U.uMouse.value.lerp(mTarget, reduced ? 1 : 1 - Math.exp(-dt * 12));  // the camera has no rotation, so view xy equals world xy
       U.uMouseOn.value += (mOnT - U.uMouseOn.value) * (reduced ? 1 : 1 - Math.exp(-dt * 6));
