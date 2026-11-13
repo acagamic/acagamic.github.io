@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en-CA" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10 years of the Hexad Scale · presenter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Wix+Madefor+Display:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hexad.css">
+<style>
+  html, body { height: 100%; }
+  body { margin: 0; display: grid; grid-template-columns: 1.6fr 1fr; grid-template-rows: auto 1fr auto; gap: 20px 28px; padding: 24px 28px; box-sizing: border-box; }
+  header { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 24px; }
+  header .pos { font: 800 40px var(--display); font-variant-numeric: tabular-nums; }
+  header .now { font: 700 26px var(--display); flex: 1; }
+  .notes { font-size: 28px; line-height: 1.5; overflow: auto; background: var(--panel); border: 1px solid var(--grid); border-radius: 16px; padding: 24px 28px; }
+  .notes.empty { color: var(--muted); font-size: 22px; }
+  aside { display: flex; flex-direction: column; gap: 18px; }
+  .card { background: var(--panel); border: 1px solid var(--grid); border-radius: 16px; padding: 18px 22px; }
+  .card small { display: block; color: var(--muted); font: 600 15px var(--sans); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .card b { font: 700 22px/1.3 var(--display); }
+  .big { font: 800 56px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .steps { color: var(--series-1); font: 700 20px var(--sans); }
+  footer { grid-column: 1 / -1; display: flex; gap: 12px; }
+  button { font: 700 20px var(--sans); color: var(--ink); background: var(--panel); border: 1px solid var(--grid); border-radius: 999px; padding: 14px 26px; cursor: pointer; }
+  button:hover { border-color: var(--brand-cyan); } button.primary { background: var(--series-1); border-color: var(--series-1); color: #fff; margin-left: auto; }
+  .warn { color: var(--series-3); font-size: 18px; }
+</style>
+</head>
+<body>
+<header><span class="pos" id="pos">–</span><span class="now" id="now">Waiting for the deck…</span><span class="steps" id="steps"></span></header>
+<div class="notes empty" id="notes">Open the deck (talk.html) in another window. Notes appear here.</div>
+<aside>
+  <div class="card"><small>Next slide</small><b id="next">–</b></div>
+  <div class="card"><small>Elapsed</small><span class="big" id="timer">0:00</span> <button id="reset" style="padding:6px 14px;font-size:15px;margin-left:10px">Reset</button></div>
+  <div class="card"><small>Pace for a 30-minute talk</small><b id="pace">–</b><span class="steps" id="slot" style="display:block;margin-top:6px"></span></div>
+  <div class="card"><small>Clock</small><span class="big" id="clock">–</span></div>
+  <p class="warn" id="warn" hidden>This browser cannot link windows. Use the deck’s keyboard instead.</p>
+</aside>
+<footer>
+  <button id="prev">← Back</button><button id="replay">Replay animation</button><button id="nextb" class="primary">Next →</button>
+</footer>
+<script>
+const $ = id => document.getElementById(id);
+const bc = 'BroadcastChannel' in window ? new BroadcastChannel('hexad-talk') : null;
+if (!bc) $('warn').hidden = false;
+const send = (cmd, i) => bc?.postMessage({ type: 'cmd', cmd, i });
+bc && (bc.onmessage = e => { const m = e.data; if (m.type !== 'state') return;
+  $('pos').textContent = `${m.i + 1} / ${m.n}`; $('now').textContent = m.title; $('next').textContent = m.next || 'End of deck';
+  $('steps').textContent = m.steps ? `click ${Math.min(m.step + 1, m.steps + 1)} of ${m.steps + 1}` : '';
+  $('notes').textContent = m.notes || 'No notes for this slide.'; $('notes').classList.toggle('empty', !m.notes);
+  plan = m; $('slot').textContent = m.secs ? `About ${m.secs} s on this slide; planned to finish it by ${fmt(m.endAt)}` : ''; });
+bc?.postMessage({ type: 'hello' });
+$('prev').onclick = () => send('prev'); $('nextb').onclick = () => send('next'); $('replay').onclick = () => send('replay');
+addEventListener('keydown', e => {
+  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); send('next'); }
+  else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); send('prev'); }
+  else if (e.key === 'r') send('replay');
+});
+let t0 = Date.now(), plan = null; $('reset').onclick = () => { t0 = Date.now(); };
+const fmt = sec => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
+setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); $('timer').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  $('clock').textContent = new Date().toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
+  // Ahead or behind the plan for the end of the current slide.
+  if (plan?.endAt) { const d = s - plan.endAt; $('pace').textContent = d > 15 ? `${fmt(d)} behind plan` : d < -plan.secs ? 'On this slide early' : 'On pace';
+    $('pace').style.color = d > 15 ? 'var(--series-2)' : 'var(--ink)'; } }, 500);
+</script>
+</body>
+</html>

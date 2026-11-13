@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10 years of the Hexad Scale</title>
+<meta name="description" content="Ten years of citations to the Gamification User Types Hexad Scale (CHI PLAY 2016), with an explorable citation network.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Wix+Madefor+Display:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hexad.css">
+<script>document.documentElement.classList.add('js');</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 16px; }
+  section { padding: 120px 0 8px; }
+  h2 { font-size: clamp(28px, 3.7vw, 48px); max-width: 24ch; }
+  .lede { font-size: 19px; max-width: 64ch; color: var(--muted); margin: 0 0 28px; }
+  .viz svg { width: 100%; height: auto; display: block; }
+
+  /* progress */
+  .progress { position: fixed; top: 0; left: 0; height: 3px; width: 100%; z-index: 20; transform-origin: 0 50%; transform: scaleX(0);
+    background: linear-gradient(90deg, var(--brand-cyan), var(--brand-pink), var(--brand-magenta)); }
+
+  /* hero stage */
+  .hero { min-height: 100svh; display: flex; align-items: center; overflow: hidden; background: var(--bg); color: var(--ink); }
+  .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+  .hero .wrap { position: relative; z-index: 2; width: 100%; pointer-events: none; }
+  .hero h1 { font-size: clamp(42px, 6vw, 84px); font-weight: 800; letter-spacing: -0.035em; max-width: 12ch; margin-bottom: 28px; }
+  .hero h1 .n { display: block; font-variant-numeric: tabular-nums; }
+  .hero p { font-size: clamp(17px, 1.6vw, 21px); max-width: 44ch; color: var(--muted); margin: 0 0 36px; }
+  .cue { pointer-events: auto; display: inline-flex; gap: 10px; align-items: center; color: var(--ink); font-weight: 600; text-decoration: none;
+    border: 1.5px solid var(--grid); border-radius: 12px; padding: 12px 22px; transition: border-color .3s, background .3s; }
+  .cue:hover { border-color: var(--brand-cyan); background: rgb(0 179 235 / .08); }
+  .cue svg { transition: transform .4s var(--ease-out); } .cue:hover svg { transform: translateY(3px); }
+  @media (max-width: 900px) { .hero { align-items: flex-start; padding: 290px 0 110px; } }
+
+  /* heading reveal: visible by default, masked only when JS runs */
+  .js .reveal h2 { clip-path: inset(0 0 100% 0); transform: translateY(0.35em); transition: clip-path 1s var(--ease-out), transform 1s var(--ease-out); }
+  .js .reveal.in h2 { clip-path: inset(0 0 -0.2em 0); transform: none; }
+  .js .reveal .lede, .js .reveal .viz, .js .reveal .legend, .js .reveal .langs, .js .reveal .steps, .js .reveal table { opacity: 0; transition: opacity .9s .25s var(--ease-out); }
+  .js .reveal.in .lede, .js .reveal.in .viz, .js .reveal.in .legend, .js .reveal.in .langs, .js .reveal.in .steps, .js .reveal.in table { opacity: 1; }
+
+  .ticker { font: 800 clamp(40px, 6vw, 72px)/1 var(--display); color: var(--grid); font-variant-numeric: tabular-nums; }
+
+  /* explorer stage */
+  .stage-band { background: var(--bg); color: var(--ink); padding: 110px 0 90px; margin-top: 120px; }
+  .stage-band section { padding: 0; }
+  .explorer { position: relative; height: min(86vh, 900px); border: 1px solid var(--grid); border-radius: 18px; overflow: hidden; margin-top: 8px;
+    background: radial-gradient(ellipse at 50% 50%, rgb(26 156 203 / .10), transparent 65%); }
+  #net { width: 100%; height: 100%; display: block; cursor: grab; touch-action: pan-y; }
+  .controls { position: absolute; top: 14px; left: 14px; right: 70px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; pointer-events: none; z-index: 2; }
+  .controls > * { pointer-events: auto; }
+  button, input[type=search] { font: 600 15px var(--sans); color: var(--ink); background: var(--panel); border: 1px solid var(--grid); border-radius: 10px; padding: 9px 16px; }
+  button { cursor: pointer; transition: border-color .25s, transform .25s var(--ease-out); }
+  button:hover { border-color: var(--brand-cyan); } button:active { transform: scale(.97); }
+  button:disabled { opacity: .55; cursor: progress; }
+  button[aria-pressed="true"] { border-color: var(--series-2); }
+  input[type=search] { width: min(320px, 100%); font-weight: 500; }
+  input::placeholder { color: var(--muted); }
+  .depth { font: 700 15px var(--sans); background: var(--panel); border: 1px solid var(--grid); border-radius: 10px; padding: 9px 16px; }
+  .panel { position: absolute; right: 14px; bottom: 14px; width: min(390px, calc(100% - 28px)); max-height: 60%; overflow: auto; background: var(--panel);
+    border: 1px solid var(--grid); border-radius: 16px; padding: 18px 20px; font-size: 15px; box-shadow: 0 18px 50px rgb(0 0 0 / .35); z-index: 2; }
+  .panel[hidden] { display: none; }
+  .panel .yr { font-weight: 700; color: var(--series-1); margin: 0; font-size: 14px; }
+  .panel h3 { font-size: 20px; margin: 4px 0 8px; }
+  .panel .meta { color: var(--muted); margin: 0 0 10px; }
+  .panel ol { padding-left: 20px; margin: 8px 0; color: var(--muted); font-size: 14px; }
+  .panel .acts { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  .help { font-size: 15px; color: var(--muted); margin-top: 12px; }
+
+  .langs { display: flex; flex-wrap: wrap; gap: 12px 28px; font: 700 clamp(22px, 2.6vw, 32px) var(--display); letter-spacing: -0.02em; }
+  .langs .en { color: var(--muted); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px; margin: 8px 0 32px; }
+  .facts b { display: block; font: 800 clamp(44px, 5vw, 64px)/1 var(--display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--text-2); }
+  .facts p { margin: 10px 0 0; color: var(--muted); font-size: 16px; }
+  .js .reveal .facts { opacity: 0; transition: opacity .9s .25s var(--ease-out); } .js .reveal.in .facts { opacity: 1; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px; }
+  .steps div { border-top: 3px solid var(--series-1); padding-top: 16px; }
+  .steps b { font: 800 34px var(--display); display: block; } .steps p { margin: 6px 0 0; color: var(--muted); font-size: 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); }
+  th, td { text-align: left; padding: 8px 10px 8px 0; } td.n, th.n { text-align: right; }
+  thead tr { border-bottom: 1px solid var(--ink); }
+  details { margin-top: 14px; color: var(--muted); } summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+  footer { padding: 90px 0 60px; color: var(--muted); font-size: 15px; }
+  .theme { position: fixed; top: 14px; right: 14px; z-index: 21; }
+  .team { display: grid; grid-template-columns: 1fr 0.8fr 1.2fr; gap: 28px; align-items: start; margin-top: 12px; }
+  .who { margin: 0; } .who dt { font: 600 13px var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 18px 0 4px; }
+  .who dt:first-child { margin-top: 0; } .who dd { margin: 0; font: 700 22px/1.3 var(--display); }
+  .ph { margin: 0; } .ph img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 14px; }
+  .ph:last-child img { aspect-ratio: 4 / 3.3; }
+  .ph figcaption { margin-top: 10px; font-size: 15px; color: var(--muted); } .ph figcaption b { display: block; color: var(--ink); font-weight: 700; }
+  @media (max-width: 860px) { .team { grid-template-columns: 1fr 1fr; } .who { grid-column: 1 / -1; } }
+  .chain3d { position: relative; height: 640px; border-radius: 18px; overflow: hidden; background: var(--bg); }
+  .chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px; }
+  .chips h3 { font: 700 15px var(--sans); margin: 0 0 12px; display: flex; gap: 8px; align-items: center; } .chips h3 i { width: 12px; height: 12px; border-radius: 50%; }
+  .chip { font: 700 24px/1.15 var(--display); margin: 0 0 12px; } .chip small { display: block; font: 500 14px var(--sans); color: var(--muted); margin-top: 2px; }
+  .g-validated .chip { color: var(--series-1); } .g-site .chip { display: inline-block; margin-right: 18px; color: var(--muted); }
+  .refbox { margin-top: 18px; } .refs { padding-left: 22px; font-size: 14px; line-height: 1.45; color: var(--muted); } .refs li { margin-bottom: 8px; }
+  .bars6 div { display: grid; grid-template-columns: 160px 1fr 70px; align-items: center; gap: 12px; margin: 8px 0; font-size: 17px; }
+  .bars6 span.b { height: 18px; border-radius: 0 5px 5px 0; background: var(--series-1); transform-origin: 0 50%; transform: scaleX(0); transition: transform 1s var(--ease-out); }
+  .bars6.go span.b { transform: scaleX(var(--v)); } .bars6 em { font-style: normal; font-weight: 700; text-align: right; }
+  .impact { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 36px; margin: 8px 0 24px; }
+  .impact h3 { font: 700 20px var(--display); color: var(--series-1); margin: 0 0 10px; } .impact .n { display: block; font: 800 64px/1 var(--display); margin-bottom: 8px; }
+  .impact ul { list-style: none; padding: 0; margin: 0; } .impact li { margin-bottom: 12px; font-size: 16px; } .impact li i { font-style: normal; color: var(--muted); font-size: 14px; }
+
+  /* scroll-scrubbed network: the canvas sticks while the page scrolls past */
+  .stage-band { padding-top: 0; }
+  .stage-band section#explore { padding-top: 90px; }
+  .scrolly { height: 560vh; position: relative; }
+  .sticky { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+  .sticky canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .cap { position: relative; z-index: 2; padding-top: 12vh; pointer-events: none; }
+  .cap h2 { max-width: 13ch; transition: opacity .4s; }
+  .cap .lede { max-width: 34ch; }
+  .cap .ticker { color: var(--muted); margin-top: 24px; }
+  @media (max-width: 900px) { .cap { padding-top: 7vh; } .cap h2 { font-size: 30px; } .cap .lede { font-size: 16px; max-width: 28ch; } }
+
+  /* Each section fills the screen and holds for a moment before the next one scrolls in. Taller sections stick once their bottom is in view. */
+  :root { --dwell: 45svh; }
+  .js main section { padding: 0; }
+  .js main section::after { content: ''; display: block; height: var(--dwell); }  /* a spacer, not padding: a sticky pin cannot travel into its parent's padding */
+  .js main section > .pin { position: sticky; top: var(--pin-top, 0px); min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: 76px 0 88px; }
+  @media (max-width: 900px) { :root { --dwell: 22svh; } .js main section > .pin { padding: 64px 0 80px; } }
+
+  /* three.js layers */
+  .n3-yr { position: absolute; left: 0; top: 0; z-index: 1; font: 600 13px var(--sans); color: var(--muted); pointer-events: none; will-change: transform; }
+  .co-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 28px; align-items: center; }
+  .co-grid.solo { grid-template-columns: 1fr; }
+  .globe { position: relative; height: min(560px, 62svh); border-radius: 18px; overflow: hidden; touch-action: pan-y; cursor: grab;
+    background: radial-gradient(circle at 50% 50%, rgb(26 156 203 / .12), transparent 70%), var(--bg); }
+  .globe:active { cursor: grabbing; }
+  .g3-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .g3-lab { position: absolute; left: 0; top: 0; font: 600 13px var(--sans); color: var(--ink); white-space: nowrap; pointer-events: none; transition: opacity .25s;
+    text-shadow: 0 0 6px var(--bg), 0 0 3px var(--bg); will-change: transform; }
+  .g3-lab b { color: var(--series-1); } .g3-home { color: var(--series-3); }
+  @media (max-width: 900px) { .co-grid { grid-template-columns: 1fr; } .globe { height: 380px; } }
+
+  .rp-cv { position: absolute; left: 0; top: 0; border-radius: 14px; pointer-events: none; opacity: 0; transition: opacity .2s; }
+  /* page 2: a slow zoom onto Gustavo at the lectern and back */
+  .zoomer { position: relative; overflow: hidden; border-radius: 14px; }
+  .zin { transform-origin: 95% 55%; animation: kb 11s ease-in-out infinite alternate; }
+  @keyframes kb { 0%, 10% { transform: scale(1); } 90%, 100% { transform: scale(2.4); } }
+  /* page 4: the hexagon fills the rest of the screen */
+  .js main section.split > .pin { display: grid; grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr); grid-template-rows: auto auto; align-content: center; column-gap: 40px; }
+  .split > .pin > h2 { grid-column: 1; align-self: end; } .split > .pin > .lede { grid-column: 1; align-self: start; }
+  .split > .pin > .viz { grid-column: 2; grid-row: 1 / 3; }
+  .viz.hexad svg { width: 100%; height: calc(100svh - 170px); max-height: 900px; }
+  @media (max-width: 900px) { .js main section.split > .pin { display: flex; } .viz.hexad svg { height: min(64svh, 560px); } }
+  /* explorer: full-screen overlay */
+  .explorer .corner { position: absolute; top: 14px; right: 14px; z-index: 3; width: 42px; height: 42px; padding: 0; display: grid; place-items: center; }
+  .explorer .corner[hidden] { display: none; }
+  .explorer.full { position: fixed; inset: 0; z-index: 80; height: auto; margin: 0; border: 0; border-radius: 0; background: var(--bg); }
+  .explorer.full #net { touch-action: none; }
+  /* family tree: a full-page scene that scroll drives */
+  .js main section.long::after { height: 320svh; }
+  .js main section.long > .pin, .js main section.dark > .pin, .js main section.thanks > .pin { width: 100vw; margin-left: calc(50% - 50vw); background: var(--bg); color: var(--ink); overflow: hidden; }
+  .js main section.long > .pin { height: 100svh; padding: 0; justify-content: flex-start; }
+  .long .chain3d { position: absolute; inset: 0; height: auto; border-radius: 0; background: none; }
+  .chain-cap { position: relative; z-index: 2; width: 100%; height: 100%; max-width: 1160px; margin: 0 auto; padding: 76px 16px 0; pointer-events: none; }
+  .chain-cap h2 { max-width: 24ch; font-size: clamp(28px, 3.4vw, 46px); }
+  .chain-cap .lede { max-width: 58ch; transition: opacity .7s var(--ease-out), transform .7s var(--ease-out); }
+  .chain-cap a { pointer-events: auto; }
+  #chain-l2 { position: absolute; left: 16px; top: 190px; max-width: 74ch; font-size: 17px; }  /* takes l1's place once l1 has faded */
+  .chain-cap .lede.off { opacity: 0; transform: translateY(14px); }
+  @media (max-width: 700px) { #chain-l1 { font-size: 15px; } #chain-l2 { top: auto; bottom: 84px; right: 16px; font-size: 13px; padding: 12px 14px; border-radius: 12px; background: rgb(10 37 48 / .9); } }
+  /* globe pop-up */
+  .g3-pop { position: absolute; inset: 16px; z-index: 4; display: flex; flex-direction: column; padding: 18px 20px 14px; border: 1px solid var(--grid); border-radius: 16px;
+    background: rgb(10 37 48 / .93); color: var(--ink); backdrop-filter: blur(6px); transform-origin: var(--ox, 50%) var(--oy, 50%); animation: pop .55s cubic-bezier(.2, 1.3, .4, 1) both; cursor: auto; }
+  .g3-pop.out { animation: pop-out .22s ease-in both; }
+  @keyframes pop { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: none; } }
+  @keyframes pop-out { to { opacity: 0; transform: scale(.85); } }
+  .g3-pop h3 { margin: 0 44px 12px 0; font: 800 24px/1.15 var(--display); } .g3-pop h3 small { display: block; margin-top: 4px; font: 600 13px var(--sans); color: var(--muted); }
+  .g3-pop ol { --k: 1; flex: 1; min-height: 0; overflow: hidden; margin: 0; padding: 0 0 0 1.5em; color: var(--muted); }
+  .g3-pop ol.scroll { overflow-y: auto; }
+  .g3-pop li { font-size: calc(var(--fs) * var(--k)); line-height: 1.22; margin: 0 0 .5em; animation: li-in .45s var(--ease-out) both; }
+  .g3-pop li a { color: var(--ink); font-weight: 600; text-decoration: none; } .g3-pop li a:hover { color: var(--series-1); text-decoration: underline; }
+  .g3-pop li small { display: block; font-size: .74em; margin-top: .15em; }
+  @keyframes li-in { from { opacity: 0; transform: translateY(12px); } }
+  .g3-pop .corner { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
+  /* languages link to their paper or translation */
+  .chip a { color: inherit; text-decoration: none; } .chip a:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+  .chip small a { color: var(--series-1); }
+  /* Hexad-12 universe behind the facts */
+  .dark .u3 { position: absolute; left: 0; right: 0; bottom: 0; height: 100svh; }  /* a tall pin sticks by its bottom, so the bottom screenful is what shows */
+  .u3-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .dark .inner { position: relative; z-index: 2; width: min(560px, calc(100% - 32px)); margin-left: max(16px, calc(50vw - 660px)); padding: 20px 24px; border-radius: 18px;
+    background: rgb(10 37 48 / .74); backdrop-filter: blur(8px); border: 1px solid rgb(255 255 255 / .06); }
+  .dark .facts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 16px; margin: 4px 0 16px; }
+  .dark h2 { max-width: 24ch; font-size: clamp(24px, 2.3vw, 34px); }
+  .dark .facts b { font-size: clamp(24px, 2.1vw, 32px); }
+  .dark .facts p { font-size: 12.5px; line-height: 1.35; margin-top: 6px; }
+  .js main section.dark > .pin { padding: 28px 0 92px; }
+  .dark .lede { font-size: 15px; line-height: 1.55; }
+  .dark .help { font-size: 12.5px; margin: 0; }
+  .u3 { user-select: none; -webkit-user-select: none; } .u3-cv { cursor: grab; touch-action: pan-y; } .u3-cv:active { cursor: grabbing; }
+  .u3-lab { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; white-space: nowrap; will-change: transform; }
+  .u3-item { font: 600 13px/1.3 var(--sans); color: #f2f5f7; background: rgb(10 37 48 / .88); border: 1px solid var(--c); border-radius: 10px; padding: 5px 10px; }
+  .u3-hub { font: 800 13px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--c); text-shadow: 0 0 8px #0a2530, 0 0 3px #0a2530; }
+  .u3-core { font: 800 16px var(--display); color: #fff; text-shadow: 0 0 10px #0a2530; }
+  @media (max-width: 900px) { .dark .u3 { inset: 0 0 auto 0; height: 440px; } .dark .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dark .inner { margin: 420px 16px 0; padding: 20px; } .u3-item { font-size: 11px; white-space: normal; width: max-content; max-width: 140px; } }
+  /* thank-you page */
+  .thanks #field2 { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .thanks .inner { position: relative; z-index: 1; width: 100%; max-width: 1160px; margin: 0 auto; padding: 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+  .thanks h2 { font-size: clamp(36px, 5vw, 72px); max-width: 12ch; }
+  .thanks .thanks-ph img { aspect-ratio: 1; width: min(100%, 64svh); margin-left: auto; }
+  @media (max-width: 900px) { .thanks .inner { grid-template-columns: 1fr; gap: 36px; } }
+  @media (prefers-reduced-motion: reduce) { .zin, .g3-pop, .g3-pop li { animation: none; } }
+  /* question form on the hero */
+  .ask { pointer-events: auto; display: grid; gap: 10px; max-width: 420px; margin-top: 32px; }
+  .ask label { font: 600 15px var(--sans); color: var(--ink); }
+  .ask textarea { font: 500 16px/1.45 var(--sans); color: var(--ink); background: rgb(15 48 61 / .78); border: 1px solid var(--grid); border-radius: 14px;
+    padding: 12px 14px; resize: vertical; min-height: 84px; backdrop-filter: blur(6px); }
+  .ask textarea::placeholder { color: var(--muted); }
+  .ask textarea:focus-visible { outline: 2px solid var(--brand-cyan); outline-offset: 1px; }
+  .ask .row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .ask button { background: var(--brand-cyan); color: #0a2530; border-color: transparent; }
+  .ask small { color: var(--muted); font-size: 13px; }
+
+  /* step navigator */
+  .stepper { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 22; display: flex; align-items: center; gap: 6px;
+    background: var(--panel); color: var(--ink); border: 1px solid var(--grid); border-radius: 14px; padding: 6px; box-shadow: 0 10px 30px rgb(10 37 48 / .18);
+    max-width: calc(100vw - 32px); }
+  .stepper button { width: 40px; height: 40px; padding: 0; display: grid; place-items: center; }
+  .s-lab { font: 600 14px var(--sans); padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: min(46ch, 60vw); }
+  .s-lab b { color: var(--series-1); margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<nav class="stepper" aria-label="Step through the visualizations">
+  <button id="s-prev" aria-label="Previous visualization"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <span class="s-lab" id="s-lab" aria-live="polite"></span>
+  <button id="s-next" aria-label="Next visualization"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</nav>
+<button class="theme" id="theme" aria-label="Switch between light and dark theme">Light or dark</button>
+
+<header class="hero stage grain" id="top">
+  <canvas id="hero" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <h1><span class="n" id="big">1,082</span> citations for a 24-item scale</h1>
+    <p>The Gamification User Types Hexad Scale received the CHI PLAY 2026 Lasting Impact Award, ten years after its debut. Each point here is one of the 594 papers that OpenAlex links to it, coloured from 2016 in cyan to 2026 in magenta.</p>
+    <a class="cue" href="#start">Follow the citations
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v11M3 8.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <form class="ask" id="ask">
+      <label for="ask-q">Ask Lennart a question about the Hexad scale</label>
+      <textarea id="ask-q" rows="3" maxlength="2000" required placeholder="Your question"></textarea>
+      <div class="row"><button type="submit">Email the question</button><small>Opens your email app with the question filled in.</small></div>
+    </form>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <section class="reveal" id="start">
+    <h2>We turned a conceptual gamification model into a scale</h2>
+    <div class="team">
+      <dl class="who">
+        <dt>HCI Games Group, University of Waterloo</dt><dd>Gustavo F. Tondello</dd><dd>Rina R. Wehbe</dd><dd>Lennart E. Nacke</dd>
+        <dt>AIT Austrian Institute of Technology</dt><dd>Lisa Diamond</dd><dd>Marc Busch</dd>
+        <dt>Gamified UK, designer of the Hexad framework</dt><dd>Andrzej Marczewski</dd>
+      </dl>
+      <figure class="ph"><img src="img/questionnaire-talk.webp" alt="A presenter in front of a screen showing the title The HEXAD Gamification User Types Questionnaire" loading="lazy"><figcaption><b>Before publication</b>We showed early work on the Hexad Questionnaire in a workshop</figcaption></figure>
+      <figure class="ph ph-zoom"><div class="zoomer"><div class="zin"><img src="img/chiplay2016-austin.webp" alt="Gustavo Tondello at the lectern beside a projected slide titled Gamification User Types Hexad Scale" loading="lazy"></div></div><figcaption><b>CHI PLAY 2016, Austin, Texas</b>Gustavo presents the Hexad scale</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="reveal" data-run="timeline">
+    <h2>We wrote the items first, tested them on 133 people, then cut weakest fits</h2>
+    <p class="lede">From a rating form in July 2015 to the CHI PLAY stage in October 2016. Six of the 30 items were cut: two that fit poorly (“I look out for my own interests” for Player and “I like to take changing things into my own hands” for Disruptor) and the weakest item of each other type.</p>
+    <div class="viz" id="v-tl"></div>
+  </section>
+
+  <section class="reveal split" data-run="hexagon">
+    <h2>24 items score six motivations, and one person can score high on several</h2>
+    <p class="lede">The six types appear one by one with what each wants. The dashed amber shape at the end is an example: one person’s scores, high on Free Spirit, Achiever, and Player at once.</p>
+    <div class="viz hexad" id="v-hex"></div>
+  </section>
+
+  <section class="reveal" data-run="retest">
+    <h2>Five types gave the same answers two weeks later. The Player type did not</h2>
+    <p class="lede">Of 133 people, 40 took the survey again two weeks later. A test–retest asks the same people the same questions twice. When their answers match two weeks apart, the scale is measuring something stable about them. Player matched least (.36). Its four questions also agreed least with each other, so its score was the shakiest, and the 2016 paper flagged it for improvement in future work.</p>
+    <div class="viz" id="v-rt"></div>
+  </section>
+
+  <section class="reveal" data-run="crowd">
+    <h2>One respondent in 133 scored highest as a Disruptor</h2>
+    <p class="lede">Each dot is one person, placed by their highest-scoring type. Disruptor scores averaged 14.9 of 28, while every other type averaged 20 to 22 (Table 5).</p>
+    <div class="viz" id="v-crowd"></div>
+  </section>
+
+  <section class="reveal" data-run="elements">
+    <h2>14 of 31 elements moved: 8 to a new type, 6 to none</h2>
+    <p class="lede">Each row is a game element and each column a user type. A filled cell means people who score high on that type also like that element; a stronger colour means a stronger link. Rows start in the groups the framework predicted. A few seconds after the chart appears, each row moves to the type it actually linked with: pink rows changed group, and the Philanthropist group empties out.</p>
+    <p><button id="b-regroup">Play again</button></p>
+    <div class="viz" id="v-hm"></div>
+  </section>
+
+  <section class="reveal" data-run="phil">
+    <h2>The most reliable scale matched none of its game elements</h2>
+    <p class="lede">The Philanthropist scale reached α = .893, the highest of the six, yet correlated at τ = .039 with its suggested elements. Kendall’s τ for each type, framework grouping to improved grouping; the improved grouping gained 9% overall (Tables 1 and 7).</p>
+    <div class="viz" id="v-t7"></div>
+  </section>
+
+  <section class="reveal" data-run="scholar">
+    <h2><span class="num" id="sch-n">1,082</span> citations on Google Scholar, and more every year</h2>
+    <p class="lede">Citations per year on Google Scholar, as of November 5, 2026. The 2026 bar is still growing.</p>
+    <div class="viz" id="v-sch"></div>
+  </section>
+
+  <section class="reveal" data-run="index">
+    <h2>After 2021, gamification papers doubled while Hexad scale citations stayed steady</h2>
+    <p class="lede">Each year’s count is divided by its 2021 count, so both lines meet at 100 in 2021. We picked 2021 because that is the year Hexad scale citations stopped growing. Before then, they grew faster than the field. Since then the field has doubled, but Hexad scale citations stayed near 75 a year. So the Hexad scale’s share fell from 5% to 2%. Likely reasons: citations now split across the 2019 validation and Hexad-12, the boom brought education and AI work that rarely personalizes, and COVID paused lab and classroom studies. OpenAlex, November 5, 2026.</p>
+    <div class="viz" id="v-idx"></div>
+  </section>
+
+  <section class="reveal" data-run="years1">
+    <h2>Direct citations climbed to about 75 a year by 2021 and stayed there</h2>
+    <p class="lede">Papers citing the Hexad scale paper each year, from OpenAlex. The 2026 bar runs to November 4.</p>
+    <div class="ticker" id="t-y1" aria-hidden="true"></div>
+    <div class="viz" id="v-y1"></div>
+  </section>
+
+  <section class="reveal" data-run="years2">
+    <h2>Papers that cite the Hexad scale were cited more every year through 2025</h2>
+    <p class="lede">6,870 papers cite at least one of the 594 papers that cite the Hexad scale paper. Papers that survey the field carry the Hexad scale into fields that never cite it directly: four of them alone bring 1,025 of these papers (15%), namely the special-issue editorial by Nacke &amp; Deterding (2017) and the reviews by Klock et al. (2020), Vermeir et al. (2020), and Bennani et al. (2021).</p>
+    <div class="legend"><span><i style="background:var(--series-1)"></i>cite the Hexad scale paper</span><span><i style="background:var(--series-2);opacity:.55"></i>cite those papers</span><span><i style="background:var(--brand-pink)"></i>arrive through these four papers (% labelled)</span></div>
+    <div class="viz" id="v-y2"></div>
+  </section>
+
+  <section class="reveal" data-run="milestones">
+    <h2>The most-cited follow-ups were cited hundreds of times themselves</h2>
+    <p class="lede">The 10 most-cited papers that cite the Hexad scale paper. Each bar splits by the year its citations arrived, from cyan in 2016 to magenta in 2026: a long magenta tail means the paper is still gaining. Hover a segment for the year; click a bar to open the paper.</p>
+    <div class="viz" id="v-ms"></div>
+  </section>
+</div>
+
+<div class="stage-band stage grain">
+  <div class="scrolly" id="scrolly">
+    <div class="sticky">
+      <canvas id="net-s" aria-hidden="true"></canvas>
+      <div class="wrap cap">
+        <h2 id="sc-h">594 papers cite the Hexad scale paper directly</h2>
+        <p class="lede" id="sc-p">Scroll to run the clock. Each dot is a paper, placed clockwise by publication date from 2016; bigger dots have more citations.</p>
+        <div class="ticker" id="sc-y" aria-live="off">2016</div>
+      </div>
+    </div>
+  </div>
+  <div class="wrap">
+    <section id="explore">
+      <h2>Explore the network as deep as it goes</h2>
+      <p class="lede">The Hexad scale paper sits in the centre. Cyan dots cite it, magenta dots cite those, and amber dots sit three or more steps out. Time runs clockwise from 2016. Click a dot to see the paper, then load the papers that cite it.</p>
+      <div class="explorer">
+        <canvas id="net" aria-label="Interactive radial citation network. Use the search box to find a paper by title or author."></canvas>
+        <div class="controls">
+          <input type="search" id="q" placeholder="Search title or author" aria-label="Search papers by title or author" list="qlist">
+          <datalist id="qlist"></datalist>
+          <button id="b-ring2" aria-pressed="true">Second ring</button>
+          <button id="b-play">Replay time</button>
+          <button id="b-dive">Dive nine deep</button>
+          <button id="b-reset">Reset view</button>
+          <span class="depth" id="depth">Deepest ring: 2</span>
+        </div>
+        <div class="panel" id="panel" hidden></div>
+        <button class="corner" id="b-max" aria-label="Open the network full screen"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 7V3h4M15 7V3h-4M3 11v4h4M15 11v4h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="corner" id="b-close" aria-label="Close the full-screen network" hidden><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 4l10 10M14 4 4 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </div>
+      <p class="help">Open the full-screen view with the corner button to zoom with scroll or pinch; drag to pan. Rings past the second load live from OpenAlex, 30 most-cited papers at a time.</p>
+    </section>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="long stage" id="chain-sec" data-run="chain">
+    <div class="viz chain3d" id="v-chain"></div>
+    <div class="chain-cap">
+      <h2>The Hexad scale’s family tree runs eight generations deep</h2>
+      <p class="lede" id="chain-l1">Like a family tree, each paper cites the one before it, its parent. Generation 1 cites the Hexad scale directly, and at each step we follow the most-cited child published in or after its parent’s year. The line plays on its own, and scrolling moves you along it or back: by generation 8, it reaches a 2026 study on AI.</p>
+      <p class="lede" id="chain-l2">The gold arc is not part of the tree. It marks the newest paper citing the Hexad scale directly, published November 3, 2026: Zhang, G. X., Altmeyer, M., &amp; Seaborn, K. (2026). Measuring what motivates maldaimonia in play with the Inventory on Maldaimonic Motivations in Player Experiences (IMPEX). <i>Proceedings of the ACM on Human-Computer Interaction, 10</i>(7), 1–29. <a href="https://doi.org/10.1145/3831291">doi.org/10.1145/3831291</a></p>
+    </div>
+  </section>
+
+  <section class="reveal" data-run="countries">
+    <h2>Authors in 65 countries cite the paper</h2>
+    <p class="lede">Citing papers with at least one author based in each country, top 15. Germany, Canada, and Brazil lead.</p>
+    <div class="co-grid">
+      <div class="viz globe stage" id="v-globe" role="img" aria-label="Globe with one spike per citing country; the bar chart beside it lists the top 15 counts"></div>
+      <div class="viz" id="v-co"></div>
+    </div>
+    <p class="help" id="globe-help">On the globe, spike height shows the count for all 65 countries, and the arcs start in Waterloo, home of the HCI Games Group. Drag the globe to turn it, and click a spike to list that country’s papers.</p>
+  </section>
+
+  <section class="reveal">
+    <h2>You can take the Hexad scale in 17 languages, and published studies have tested 7 of them</h2>
+    <p class="lede">Translation and validation are separate questions. Seven versions have a peer-reviewed validation, three adaptations report weaker fit or reliability problems, and seven are translations offered on the HCI Games Group website.</p>
+    <div class="chips" id="v-langs"></div>
+    <details class="refbox"><summary>Full references for the published versions</summary><ol class="refs" id="v-refs"></ol></details>
+  </section>
+
+  <section class="reveal" data-run="lineage">
+    <h2>We kept improving the scale. Then we made a short version with Jeanine Krath and Max Altmeyer</h2>
+    <p class="lede">Two threads run unbroken from the 2016 paper to Hexad-12. Jeanine Krath’s thread starts in 2021 with a study comparing player typologies with the Hexad scale and a review of theory in gamification research that 956 papers now cite, two generations below the Hexad scale paper in the descent chain. In 2023 she led the short form with Maximilian Altmeyer, Gustavo, and Lennart.</p>
+    <div class="viz" id="v-lin"></div>
+  </section>
+
+  <section class="reveal dark stage" data-run="hexfacts">
+    <div class="u3" id="v-u3"></div>
+    <div class="inner">
+    <h2>Hexad‑12 cut the questions in half and measured the six types better</h2>
+    <div class="facts">
+      <div><b data-to="12">12</b><p>items instead of 24, because long questionnaires raise dropout and screen fatigue inside bigger surveys</p></div>
+      <div><b data-to="882">882</b><p>responses used to choose the items through exploratory factor analysis</p></div>
+      <div><b data-to="1101">1,101</b><p>new responses used to confirm the six-factor structure</p></div>
+      <div><b data-to="23196">23,196</b><p>valid responses on the public Hexad-12 data page by October 26, 2026</p></div>
+    </div>
+    <p class="lede">Researchers can now add the Hexad scale to larger studies without weakening the measure. Krath, Altmeyer, Tondello, and Nacke (CHI 2023) report better model fit, reliability, and convergent and discriminant validity than the 24-item scale, and in their words Hexad-12 “resolves issues found in studies using the original Hexad scale.” Better fit in development samples does not prove fewer dropouts, and independent teams keep testing it: a <a href="https://doi.org/10.1007/s11469-024-01367-0">Hong Kong study</a> validated it with 1,610 young gamers, a <a href="https://doi.org/10.1016/j.chbr.2026.100970">German validation</a> recommended five dimensions after the Disruptor scale failed its criteria, and the Chinese 12-item form in that Hong Kong study shares only 10 of its items. <a href="https://doi.org/10.1145/3544548.3580968">Read the Hexad-12 paper</a>.</p>
+    <p class="help">Behind this text, the 12 Hexad-12 statements float in, each tied to its type and the six types tied around the scale. Drag the network to turn it.</p>
+    </div>
+  </section>
+
+  <section class="reveal" data-run="live1">
+    <h2>The Disruptor stayed the rarest type, in 2016 and across 23,502 Hexad‑12 tests</h2>
+    <p class="lede">Very few people have the Disruptor as their top type: 1 in 133 in 2016, and about 2 in 133 today. It also gets the lowest scores of all six types, which makes it hard to measure. People may not like to admit that they enjoy breaking rules, so they score those questions lower. A German study even dropped the Disruptor because its questions did not hold up. Outlined dots: the 133 people of 2016 by top type. Filled dots: Hexad-12 test shares (12,454 people with one top type) rescaled to 133 people.</p>
+    <div class="viz" id="v-live1"></div>
+  </section>
+
+  <section class="reveal" data-run="live2">
+    <h2>The older you get, the more you play with philanthropic tendencies</h2>
+    <p class="lede">Mean proportional Hexad-12 scores by age for the 18,423 test takers who shared their age; scores sum to 100% per person. The lines cross in the 21–29 band. Socioemotional selectivity theory offers a reason: as people sense less time ahead, they favour meaningful, prosocial goals over rewards (Carstensen, L. L., Isaacowitz, D. M., &amp; Charles, S. T., 1999, Taking time seriously: A theory of socioemotional selectivity, <i>American Psychologist, 54</i>(3), 165–181, <a href="https://doi.org/10.1037/0003-066X.54.3.165">doi.org/10.1037/0003-066X.54.3.165</a>). These are self-selected visitors to a public test, not a population sample. Source: live data at <a href="https://hexad.gamified.uk/data/">hexad.gamified.uk/data</a> (Andrzej Marczewski), retrieved November 4, 2026.</p>
+    <div class="viz" id="v-live2"></div>
+  </section>
+
+  <section class="reveal" data-run="profile">
+    <h2>Most people are a mix of types, so the Hexad scale works best as a six-score profile</h2>
+    <p class="lede">Everyone scores on all six motivations, and the top score often wins by a hair. Across 23,502 Hexad-12 tests the three highest shares sit within 0.3 points, and 47% of people tie on two or more types. A single label keeps one number and throws away five. Hexad scale scores sit “on a continuous scale” (Tondello et al., 2019), and the group followed that logic to a trait model: Tondello, G. F., Arrambide, K., Ribeiro, G., Cen, A. J., &amp; Nacke, L. E. (2019). “I don’t fit into a single type”: A trait model and scale of game playing preferences. <i>INTERACT 2019</i>. <a href="https://doi.org/10.1007/978-3-030-29384-0_23">doi.org/10.1007/978-3-030-29384-0_23</a></p>
+    <div class="bars6" id="bars6"></div>
+  </section>
+
+  <section class="reveal" data-run="impact">
+    <h2>The Hexad scale shows its impact in three places: new research, design choices, and effects on people</h2>
+    <div class="impact">
+      <div><h3>New research</h3><b class="n">1,082</b><p>citations on Google Scholar, 17 languages, 7 published checks of the scale, and 23,502 Hexad‑12 tests on the public site</p></div>
+      <div><h3>Design choices</h3><ul>
+        <li><b>Lernnavi:</b> answers from 1,246 pupils led to a decision to add team features <i>(<a href="https://doi.org/10.1016/j.chbr.2026.101011">Schultze et al., 2026</a>)</i></li>
+        <li><b>Xiphias:</b> answers shaped badges for a programming course <i>(<a href="https://alls.ateneo.edu/archives/5746">Ateneo Laboratory for the Learning Sciences, 2021</a>)</i></li>
+        <li><b>Ludilearn for Moodle:</b> picks game features for each learner from a Hexad‑12 quiz <i>(<a href="https://docs.moodle.org/503/en/ludilearn">MoodleDocs, 2025</a>)</i></li>
+        <li><b>Wiski:</b> let pupils choose for themselves after the scale felt like too much work <i>(<a href="https://jeroenooge.be/research/masters-thesis-personalising-motivational-strategies-and-gamification-techniques">Ooge, 2019</a>)</i></li></ul></div>
+      <div><h3>Effects on people</h3><ul>
+        <li><b>Fitness:</b> 40 people over 60 days; activity rose in the personalized groups and stayed flat in the others <i>(<a href="https://doi.org/10.2196/19968">Zhao et al., 2020</a>)</i></li>
+        <li><b>Science class:</b> a class of 17 scored higher on the final test than a class of 18 <i>(<a href="https://doi.org/10.3390/computers13120324">Zourmpakis et al., 2024</a>)</i></li>
+        <li><b>Sokoon:</b> depression and anxiety scores fell in a two-week pilot with 30 adults <i>(<a href="https://doi.org/10.1177/20552076241263317">Amer et al., 2024</a>)</i></li>
+        <li><b>Some found nothing:</b> Wiski saw no change in how much pupils practised <i>(<a href="https://jeroenooge.be/research/masters-thesis-personalising-motivational-strategies-and-gamification-techniques">Ooge, 2019</a>)</i></li></ul></div>
+    </div>
+    <p class="lede">Most of this evidence is small, and the Hexad scale usually arrives bundled with other changes, so they show it was used more than they show it helped. As gamification research moves on, the Hexad scale still gives studies a common measure of player motivation, so studies from different countries and years can be compared and pooled.</p>
+  </section>
+
+  <section class="reveal">
+    <h2>Each database counts a different number of citations</h2>
+    <p class="lede">The charts use OpenAlex because it records who cites whom, which a network needs. Google Scholar indexes more theses, preprints, and non-English venues.</p>
+    <table>
+      <thead><tr><th>Source</th><th class="n">Citations</th><th>Checked</th></tr></thead>
+      <tbody>
+        <tr><td>Google Scholar</td><td class="n">1,082</td><td>November 5, 2026</td></tr>
+        <tr><td>OpenAlex</td><td class="n" id="oa-n">594</td><td>November 4, 2026</td></tr>
+        <tr><td>Semantic Scholar</td><td class="n">558</td><td>October 26, 2026</td></tr>
+        <tr><td>Crossref</td><td class="n">423</td><td>October 26, 2026</td></tr>
+      </tbody>
+    </table>
+    <details><summary>Method</summary>
+      <p>Direct citers come from the OpenAlex filter <code>cites:W2530695086</code>, fetched year by year and checked against the OpenAlex total. The second ring is every work citing at least one direct citer, minus the direct citers themselves. Country counts use author affiliations recorded by OpenAlex. OpenAlex metadata contains errors, such as books dated before the papers they cite, so the descent chain skips any paper published before its parent. Study figures come from the published tables of Tondello et al. (2016) and summary statistics of its data; no individual responses appear on this page.</p>
+    </details>
+  </section>
+
+  <section class="reveal thanks stage" data-run="close">
+    <canvas id="field2" aria-hidden="true"></canvas>
+    <div class="inner">
+      <h2>Thank you, Gustavo, Rina, Lisa, Marc, and Andrzej</h2>
+      <figure class="ph thanks-ph"><img src="img/team-dinner.webp" alt="Nine people smile at the camera around a long restaurant table" loading="lazy"></figure>
+    </div>
+  </section>
+  <footer>
+    Tondello, G. F., Wehbe, R. R., Diamond, L., Busch, M., Marczewski, A., and Nacke, L. E. (2016). The Gamification User Types Hexad Scale. <i>Proceedings of CHI PLAY 2016</i>, 229–233. <a href="https://doi.org/10.1145/2967934.2968082">doi.org/10.1145/2967934.2968082</a>. Data: <a href="https://openalex.org">OpenAlex</a>. Questionnaire downloads: <a href="https://hcigames.com/user-types-hexad/">hcigames.com/user-types-hexad</a>.
+  </footer>
+</div>
+</main>
+
+<script src="viz.js"></script>
+<script src="chain3d.js"></script>
+<script src="hx3d.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+try { const t = localStorage.getItem('hx-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
+let net;
+$('theme').onclick = () => {
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches, cur = document.documentElement.dataset.theme || (dark ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('hx-theme', next); } catch {}
+  if (net) { net._pal = null; net.draw(); }
+};
+// Reading progress; scrolling down out of the hero scatters its particles, scrolling back up gathers them again.
+let hero = null;
+addEventListener('scroll', () => { const h = document.documentElement; $('progress').style.transform = `scaleX(${h.scrollTop / (h.scrollHeight - h.clientHeight || 1)})`;
+  hero?.scatter?.(scrollY / ($('top').offsetHeight || 1)); }, { passive: true });
+
+// Each section's content sits in a sticky pin; a pin taller than the screen sticks once its bottom is in view.
+const pins = [...document.querySelectorAll('main section')].map(sec => { const pin = document.createElement('div'); pin.className = 'pin'; pin.append(...sec.childNodes); sec.append(pin); return pin; });
+const pinTops = () => pins.forEach(pin => pin.style.setProperty('--pin-top', Math.min(0, innerHeight - pin.offsetHeight) + 'px'));
+const ro = new ResizeObserver(pinTops); pins.forEach(p => ro.observe(p)); addEventListener('resize', pinTops);
+
+// The question form opens the visitor's email app; the address is assembled here so it never sits in the page source.
+$('ask').addEventListener('submit', e => {
+  e.preventDefault();
+  const q = $('ask-q').value.trim(); if (!q) return;
+  location.href = `mailto:${['lennart', 'nacke.ca'].join('@')}?subject=${encodeURIComponent('Question about the Hexad scale')}&body=${encodeURIComponent(q)}`;
+});
+
+// Scrolling back up plays a chart backwards: its marks shrink to their baselines, last drawn first.
+const MARKS = 'rect, path, circle, line, text, polygon, polyline, ellipse';
+const rewindMarks = host => {
+  if (!host) return;
+  d3.select(host).selectAll('*').interrupt();
+  const els = [...host.querySelectorAll(MARKS)].filter(e => !e.closest('defs, clipPath, mask')), n = els.length || 1;
+  els.forEach((e, i) => {
+    if (!e.dataset.rw) { e.dataset.rw = 1; e.dataset.op = e.style.opacity; }
+    const d = Math.round((n - 1 - i) / n * 420);
+    e.style.transition = `opacity 260ms ease-in ${d}ms, transform 300ms cubic-bezier(.5, 0, .75, 0) ${d}ms`;
+    e.style.transformBox = 'fill-box';
+    if (!e.hasAttribute('transform') && !/^(text|line)$/.test(e.tagName)) {
+      let b = null; try { b = e.getBBox(); } catch {}
+      if (b) { const tall = b.height > b.width * 1.4, wide = b.width > b.height * 1.4;
+        e.style.transformOrigin = tall ? '50% 100%' : wide ? '0 50%' : '50% 50%'; e.style.transform = tall ? 'scaleY(0)' : wide ? 'scaleX(0)' : 'scale(0)'; }
+    }
+    e.style.opacity = '0';
+  });
+};
+const restoreMarks = host => host?.querySelectorAll('[data-rw]').forEach(e => {
+  ['transition', 'transform-box', 'transform-origin', 'transform'].forEach(k => e.style.removeProperty(k));
+  e.style.opacity = e.dataset.op; delete e.dataset.rw; delete e.dataset.op;
+});
+const timers = {}, later = (k, f, ms) => (timers[k] ??= []).push(setTimeout(f, ms)), cancel = k => { (timers[k] || []).forEach(clearTimeout); timers[k] = []; };
+const countDown = (el, dur = 600) => { const from = +el.dataset.to, s0 = performance.now(); el._cd = s0;
+  const f = now => { if (el._cd !== s0) return; const k = Math.min(1, (now - s0) / dur); el.textContent = HX.fmt(Math.round(from * (1 - k) ** 2)); if (k < 1) requestAnimationFrame(f); };
+  requestAnimationFrame(f); };
+
+Promise.all([HX.load(), HX.loadStudy(), HX.loadLive(), fetch('data/deck.json').then(r => r.json())]).then(([data, study, live, deck]) => {
+  // Photo ripples start on the first hover, so lazy images have loaded and no GPU context opens for photos nobody touches.
+  if (window.HX3D && matchMedia('(hover: hover)').matches) document.querySelectorAll('.ph').forEach(f => f.addEventListener('pointerenter', () => HX3D.ripple(f.querySelector('img')).catch(() => {}), { once: true }));
+  (window.HX3D ? HX3D.hero($('hero'), data) : Promise.reject())
+    .then(h => { hero = h; }, () => { hero = HX.heroField($('hero'), data); })
+    .then(() => hero?.scatter?.(scrollY / ($('top').offsetHeight || 1)));
+  HX.countUp($('big'), deck.scholar.total, 2400);
+  $('oa-n').textContent = HX.fmt(data.counts.openalex);
+  const flag = c => String.fromCodePoint(...[...c].map(ch => 127397 + ch.charCodeAt(0)));
+  // Languages: validated, mixed, and website-only groups, with full references in a disclosure.
+  const PDF = { Arabic: 'AR', Catalan: 'CA', Chinese: 'CN', German: 'DE', English: 'EN', Spanish: 'ES', French: 'FR', Hungarian: 'HU', Italian: 'IT', Korean: 'KR', Portuguese: 'PT', Swedish: 'SV' };
+  const langPdf = l => PDF[l] ? `https://hcigames.com/content/files/2025/04/Hexad-Survey-and-Instructions_${PDF[l]}.pdf` : null;
+  const langDoi = l => ((deck.langrefs[l] || [])[0]?.match(/https:\/\/doi\.org\/\S+/) || [])[0] || null;
+  const G = [['validated', 'Tested in a published study', 'var(--series-1)'], ['mixed', 'Tried, with mixed results', 'var(--series-3)'], ['site', 'Translated, not yet tested', 'var(--muted)']];
+  $('v-langs').innerHTML = G.map(([k, name, c]) => `<div class="g-${k}"><h3><i style="background:${c}"></i>${name}</h3>${deck.langs.filter(l => l[1] === k)
+    .map(l => { const paper = langDoi(l[0]), pdf = langPdf(l[0]), href = paper || pdf;
+      return `<div class="chip"><a href="${href}" target="_blank" rel="noopener"><span class="fl">${flag(l[3])}</span> ${l[0]}</a>${l[2] || (paper && pdf) ? `<small>${l[2] ? esc(l[2]) : ''}${paper && pdf ? `${l[2] ? ' · ' : ''}<a href="${pdf}" target="_blank" rel="noopener">translation PDF</a>` : ''}</small>` : ''}</div>`; }).join('')}</div>`).join('');
+  $('v-refs').innerHTML = [...new Set(Object.values(deck.langrefs).flat())].map(r => `<li>${esc(r)}</li>`).join('');
+  // Mean Hexad-12 profile of 23,502 tests, drawn as six bars.
+  $('bars6').innerHTML = [['Achiever', 18.47], ['Free Spirit', 18.19], ['Philanthropist', 18.16], ['Player', 17.67], ['Socialiser', 16.31], ['Disruptor', 11.21]]
+    .map(([n, v]) => `<div><span>${n}</span><span class="b" style="--v:${v / 20}"></span><em>${v}%</em></div>`).join('');
+  const H12 = [['Philanthropist', 'It makes me happy if I am able to help others'], ['Philanthropist', 'The well-being of others is important to me'],
+    ['Socialiser', 'I like being part of a team'], ['Socialiser', 'I enjoy group activities'], ['Achiever', 'I like mastering difficult tasks'],
+    ['Achiever', 'I enjoy emerging victorious out of difficult circumstances'], ['Player', 'Rewards are a great way to motivate me'],
+    ['Player', 'If the reward is sufficient, I will put in the effort'], ['Free Spirit', 'It is important to me to follow my own path'],
+    ['Free Spirit', 'Being independent is important to me'], ['Disruptor', 'I see myself as a rebel'], ['Disruptor', 'I dislike following rules']];
+  // Globe click: a pop-up grows from the spike and lists the country's papers, most cited first. Each title is smaller than the last,
+  // and when the list outgrows the box the whole list zooms out a step; past the smallest size, it scrolls.
+  let papersByCountry = null, popRun = 0;
+  const countryPop = async (code, n) => {
+    const host = $('v-globe'), run = ++popRun;
+    papersByCountry ??= await fetch('data/country-papers.json').then(r => r.json()).catch(() => ({}));
+    if (run !== popRun) return;
+    host.querySelector('.g3-pop')?.remove();
+    const list = papersByCountry[code] || [], pop = document.createElement('div');
+    pop.className = 'g3-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', `Papers from ${HX.country(code)}`);
+    pop.innerHTML = `<h3>${flag(code)} ${esc(HX.country(code))}<small>${n} citing paper${n === 1 ? '' : 's'} with an author there, most cited first</small></h3><ol></ol>
+      <button class="corner" aria-label="Close the list"><svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 4l10 10M14 4 4 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`;
+    host.appendChild(pop);
+    const ol = pop.querySelector('ol'), close = () => { popRun++; pop.classList.add('out'); setTimeout(() => pop.remove(), 220); };
+    pop.querySelector('.corner').onclick = close;
+    pop.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    pop.querySelector('.corner').focus({ preventScroll: true });
+    let k = 1;
+    for (let i = 0; i < list.length; i++) {
+      if (run !== popRun) return;
+      const [t, y, c, doi] = list[i], li = document.createElement('li');
+      li.style.setProperty('--fs', Math.max(12, 30 * Math.pow(0.84, i)).toFixed(1) + 'px');
+      li.innerHTML = `${doi ? `<a href="https://doi.org/${esc(doi)}" target="_blank" rel="noopener">${esc(t)}</a>` : `<span>${esc(t)}</span>`}<small>${y} · ${HX.fmt(c)} citation${c === 1 ? '' : 's'}</small>`;
+      ol.appendChild(li);
+      while (ol.scrollHeight > ol.clientHeight + 1 && k > 0.62) { k *= 0.94; ol.style.setProperty('--k', k.toFixed(3)); }
+      if (ol.scrollHeight > ol.clientHeight + 1) ol.classList.add('scroll');
+      if (!HX.reduced) await new Promise(r => setTimeout(r, i < 6 ? 160 : 70));
+    }
+  };
+  const SHARE = { hexad: [19, 36, 46, 65, 76, 76, 78, 78, 68], gamif: [957, 1119, 1315, 1462, 1546, 1616, 1959, 2537, 3374] };
+  const ix = a => a.map(v => Math.round(v / a[4] * 100));
+  const ORIGIN = [['2015-07', 'Gustavo and Rina rate possible items'], ['2015-08', 'Questionnaire version 1'], ['2016-01', 'Study planned'],
+    ['2016-03', '133 people take the survey'], ['2016-04', '40 retake it; 30 items cut to 24'], ['2016-10', 'Presented at CHI PLAY 2016', 1]];
+  const DESC = { Philanthropist: 'Wants purpose. Gives and helps others without expecting a reward.', Socialiser: 'Wants to belong. Interacts with others and builds social connections.',
+    'Free Spirit': 'Wants freedom. Explores and creates on their own terms.', Achiever: 'Wants mastery. Learns, improves, and masters challenges.',
+    Player: 'Wants rewards. Does what it takes to earn points, prizes, and status.', Disruptor: 'Wants change. Pushes the system, for better or for worse.' };
+
+  const top = [...data.nodes].sort((a, b) => b[3] - a[3]).slice(0, 10);
+  const chain3d = window.HXChain3D && (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })()
+    ? HXChain3D.create($('v-chain'), data.chain, { who: 'Zhang, Altmeyer, & Seaborn', year: 2026, cites: 0, date: 'November 3, 2026', title: 'Measuring What Motivates Maldaimonia in Play with the Inventory on Maldaimonic Motivations in Player Experiences (IMPEX)' }, { offsetY: innerWidth < 700 ? 0.02 : 0.16, zoomOut: 1.22 })
+    : null;
+  if (!chain3d) { $('chain-sec').classList.remove('long', 'stage'); $('chain-sec').classList.add('reveal'); }
+  const charts = {
+    timeline: HX.timeline($('v-tl'), ORIGIN, { W: 1400, H: 600, stagger: 260 }),
+    hexagon: (() => { const h = HX.hexagon($('v-hex'), { W: 1000, H: 860, R: 320, profile: [0.62, 0.5, 0.92, 0.88, 0.8, 0.28], desc: DESC });
+      // On the page the six type cards step on their own, then the example profile grows.
+      return { play: () => { cancel('hex'); h.play(); [0, 1, 2, 3, 4, 5].forEach(i => later('hex', () => h.show(i), 1800 + i * 2300)); later('hex', () => h.grow(), 1800 + 6 * 2300); },
+        rewind: () => { cancel('hex'); rewindMarks($('v-hex')); } }; })(),
+    retest: { play: (f => () => (f ??= HX.retest($('v-rt')))())() },
+    crowd: HX.crowd($('v-crowd'), study.dominant, { W: 1400, H: 470 }),
+    elements: (() => { const hm = HX.heatmap($('v-hm'), study.elements, study.types, { W: 1400, rowH: 24 }); let t;
+      // Cells fade in over about 3 s, then the rows regroup on their own.
+      return { play: () => { hm.play(); clearTimeout(t); t = setTimeout(() => hm.regroup(), HX.reduced ? 0 : 4500); }, rewind: () => { clearTimeout(t); rewindMarks($('v-hm')); } }; })(),
+    phil: HX.dumbbell($('v-t7'), study.table7.rows, { W: 1100, rowH: 60, domain: [0, 0.5] }),
+    scholar: HX.yearBars($('v-sch'), { years: deck.scholar.years.map(([y, n]) => [y, n, 0]) }, { W: 1400, H: 520, stagger: 260, ramp: true }),
+    index: HX.lines($('v-idx'), ['2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'], { 'Hexad scale citations': ix(SHARE.hexad), 'Gamification papers': ix(SHARE.gamif) },
+      { W: 1400, H: 520, domain: [0, 230], unit: '' }),
+    years1: HX.yearBars($('v-y1'), data, { ticker: $('t-y1') }),
+    years2: HX.reviewBars($('v-y2'), deck.reviewYears.map(([y, a, v]) => [y, (data.years.find(r => r[0] === y) || [0, 0])[1], a, v]), { W: 1400, H: 520 }),
+    milestones: HX.timeBars($('v-ms'), top, { W: 1640, rowH: 92, lw: 330, label: r => `${r[4]} (${r[2]})`, total: r => r[3], years: r => r[9], sub: r => `${r[1]} · doi.org/${r[6]}` }),
+    chain: chain3d ? null : HX.chain($('v-chain'), data, { W: 1100, H: 640 }),
+    countries: (() => { const bars = HX.hbars($('v-co'), data.countries.slice(0, 15), { W: 1000, rowH: 64, lw: 300, fs: 26, bar: 0.62, label: r => `${HX.country(r[0])}  ${flag(r[0])}` });
+      let gl = null, want = null;
+      (window.HX3D ? fetch('data/land.json').then(r => r.json()).then(land => HX3D.globe($('v-globe'), data.countries, land, { name: HX.country, tip: HX.tooltip, onPick: countryPop })) : Promise.reject())
+        .then(g => { gl = g; if (want) gl[want](); }, () => { $('v-globe').remove(); $('globe-help').remove(); document.querySelector('.co-grid').classList.add('solo'); });
+      return { play: () => { want = 'play'; bars.play(); gl?.play(); }, rewind: () => { want = 'rewind'; rewindMarks($('v-co')); gl?.rewind(); } }; })(),
+    lineage: HX.lineage($('v-lin'), { W: 1400 }),
+    live1: HX.crowdCompare($('v-live1'), study.dominant, live.singleType.rows, { W: 1400, H: 520 }),
+    live2: HX.lines($('v-live2'), live.age.bands, { Philanthropist: live.age.Philanthropist, Player: live.age.Player }, { W: 1300, H: 520, domain: [15, 20], note: j => ` · ${HX.fmt(live.age.n[j])} people` }),
+    profile: { play: () => { cancel('pro'); const b = $('bars6'); b.classList.remove('go'); later('pro', () => b.classList.add('go'), 300); },
+      rewind: () => { cancel('pro'); $('bars6').classList.remove('go'); } },
+    hexfacts: (() => { let u = null, want = null;
+      (window.HX3D ? HX3D.universe($('v-u3'), H12, ['Philanthropist', 'Socialiser', 'Free Spirit', 'Achiever', 'Player', 'Disruptor']) : Promise.reject())
+        .then(x => { u = x; if (want) u[want](); }, () => {});
+      return { play: () => { want = 'play'; u?.play(); cancel('facts'); document.querySelectorAll('.facts [data-to]').forEach((el, i) => later('facts', () => { el._cd = 0; HX.countUp(el, +el.dataset.to, 1600); }, i * 220)); },
+        rewind: () => { want = 'rewind'; u?.rewind(); cancel('facts'); document.querySelectorAll('.facts [data-to]').forEach(el => countDown(el)); } }; })(),
+    close: (() => { const f = HX.heroField($('field2'), data, { paused: true, around: document.querySelector('.thanks-ph img') }); return { play: () => f.replay(), rewind: () => f.reset() }; })(),
+  };
+  $('b-regroup').onclick = () => charts.elements.play();
+  d3.select('#v-ms').selectAll('g.b').style('cursor', 'pointer').on('click', (ev, r) => r[6] && open('https://doi.org/' + r[6], '_blank'));
+
+  // Scroll triggers: a section plays forward when its top crosses 65% of the screen on the way down,
+  // and plays backwards when it drops below that line on the way back up.
+  const reveals = [...document.querySelectorAll(".reveal")], armed = new Map();
+  const trigger = () => {
+    const line = innerHeight * 0.65;
+    reveals.forEach(sec => {
+      const on = sec.getBoundingClientRect().top < line;
+      if (on === !!armed.get(sec)) return;
+      armed.set(sec, on);
+      const c = charts[sec.dataset.run], host = sec.querySelector('.viz');
+      if (on) { sec.classList.add('in'); restoreMarks(host); c?.play(); }
+      else { sec.classList.remove('in'); if (c) c.rewind ? c.rewind() : rewindMarks(host); }
+    });
+  };
+  addEventListener('scroll', () => requestAnimationFrame(trigger), { passive: true }); addEventListener('resize', trigger); trigger();
+
+  // Network explorer
+  const panel = $('panel');
+  const show = n => {
+    if (!n) { panel.hidden = true; return; }
+    const ring = n.deg === 0 ? 'the centre' : `ring ${n.deg}`;
+    const path = net.pathTo(n).slice(1, -1);
+    const known = n.deg === 1 ? n.kids.length : n.expanded ? `${n.kids.length} shown of ${HX.fmt(n.total)}` : null;
+    panel.hidden = false;
+    panel.innerHTML = `<p class="yr">${n.y ?? ''} · ${ring}</p><h3>${esc(n.t)}</h3>
+      <p class="meta">${esc(n.a || '')}${n.v ? ' · ' + esc(n.v) : ''}<br>${HX.fmt(n.c)} citations${known !== null ? ` · ${known} on this map cite it` : ''}</p>
+      ${path.length ? `<div>Path to the Hexad scale paper:</div><ol>${path.reverse().map(p => `<li>${esc(p.a || '')} ${p.y}: ${esc((p.t || '').slice(0, 70))}</li>`).join('')}</ol>` : ''}
+      <div class="acts">${n.deg >= 2 && !n.expanded ? '<button id="b-exp">Load papers citing this</button>' : ''}
+      ${n.doi ? `<a href="https://doi.org/${esc(n.doi)}" target="_blank" rel="noopener">Open DOI</a>` : `<a href="https://openalex.org/${esc(n.id)}" target="_blank" rel="noopener">Open in OpenAlex</a>`}</div>`;
+    const b = $('b-exp');
+    if (b) b.onclick = async () => {
+      b.disabled = true; b.textContent = 'Loading…';
+      try { const m = await net.expand(n); show(n); if (!m) panel.insertAdjacentHTML('beforeend', '<p class="meta">No new citing papers found.</p>'); }
+      catch (err) { b.disabled = false; b.textContent = 'Retry'; panel.insertAdjacentHTML('beforeend', `<p class="meta">Could not reach OpenAlex: ${esc(err.message)}</p>`); }
+    };
+  };
+  net = new HX.Net($('net'), data, {
+    onSelect: show,
+    onHover: (n, ev) => HX.tooltip(n ? `<b>${esc((n.t || '').slice(0, 110))}</b><br>${esc(n.a || '')} ${n.y ?? ''} · ${HX.fmt(n.c)} citations` : null, ev),
+    onDepth: d => $('depth').textContent = `Deepest ring: ${d}`,
+  });
+  $('b-ring2').onclick = e => { const on = e.target.getAttribute('aria-pressed') !== 'true'; e.target.setAttribute('aria-pressed', on); net.setRing2(on); };
+  $('b-play').onclick = async () => { net.focus = null; net.T = 2016; net.setRing2(false); await net.fit(600); await net.reveal({ dur: 8000 }); await net.reveal({ dur: 6000, ring2: true }); };
+  $('b-reset').onclick = () => { net.focus = null; show(null); net.fit(); };
+  $('b-dive').onclick = async e => {
+    const b = e.target; b.disabled = true; b.textContent = 'Diving…';
+    try { const start = net.focus && net.focus.deg >= 1 ? net.focus : net.d1.reduce((a, n) => n.c > a.c ? n : a); net.focus = start; show(start); await net.zoomTo(start, 1.6, 900); const end = await net.dive(start, 9);
+      panel.insertAdjacentHTML('beforeend', `<p class="meta">${end.deg >= 9 ? 'Nine rings deep.' : 'The line ends here: no later paper cites this one yet.'}</p>`); }
+    catch (err) { panel.hidden = false; panel.insertAdjacentHTML('beforeend', `<p class="meta">Could not reach OpenAlex: ${esc(err.message)}</p>`); }
+    b.disabled = false; b.textContent = 'Dive nine deep';
+  };
+  // Scroll scrubbing: progress through the tall section drives the year reveal, then ring 2, then the zoom-out.
+  // The 3D scene tilts to show ring 2 on its own layer; without WebGL the flat 2D map runs instead.
+  const sc = $('scrolly'), shift = () => innerWidth > 900 ? 0.16 : 0;
+  let view = null;
+  const flat = () => { const netS = new HX.Net($('net-s'), data, { interactive: false });
+    netS.shiftX = shift(); netS.setRing2(false); netS.T = 2016;
+    return { scrub: (a, b) => { netS.ring2 = b > 0; netS.T = 2016 + a * 11; netS.T2 = 2016 + b * 11; netS.fit(0, 470 + 330 * b); } }; };
+  (window.HX3D ? HX3D.network($('net-s'), data, { shift }) : Promise.reject()).catch(flat).then(v => { view = v; scrub(); });
+  const scrub = () => {
+    const r = sc.getBoundingClientRect(), span = sc.offsetHeight - innerHeight, p = Math.min(1, Math.max(0, -r.top / span));
+    // ring 1 runs the clock, ring 2 tilts and winds into a galaxy, then the camera flies into it
+    const a = Math.min(1, p / 0.32), b = Math.min(1, Math.max(0, (p - 0.36) / 0.28)), c = Math.min(1, Math.max(0, (p - 0.66) / 0.34));
+    view?.scrub(a, b, c);
+    $('sc-y').textContent = Math.min(2026, Math.floor(2016 + (b > 0 ? b : a) * 11));
+    const two = p >= 0.35;
+    $('sc-h').textContent = two ? 'Those papers were cited by 6,870 more papers' : '594 papers cite the Hexad scale paper directly';
+    $('sc-p').textContent = two ? (c > 0.05 ? 'Keep scrolling to fly into it. Every point of light is a paper; the bright core is the Hexad scale paper.' : 'Magenta dots cite a paper that cites the Hexad scale paper. That outer ring kept growing every year through 2025.')
+      : 'Scroll to run the clock. Each dot is a paper, placed clockwise by publication date from 2016; bigger dots have more citations.';
+  };
+  addEventListener('scroll', () => requestAnimationFrame(scrub), { passive: true }); addEventListener('resize', scrub); scrub();
+
+  // Explorer overlay: embedded, the map ignores wheel and touch so the page scrolls past it; full screen, it takes them.
+  const ex = document.querySelector('.explorer');
+  // The pinned section traps position: fixed under the theme toggle and stepper, so the overlay moves to <body> while open;
+  // an empty div of the same height holds its place so the page does not jump.
+  const stand = document.createElement('div');
+  const full = on => {
+    if (on === ex.classList.contains('full')) return;
+    if (on) { stand.style.cssText = `height:${ex.offsetHeight}px;margin-top:8px`; ex.replaceWith(stand); document.body.append(ex); }
+    else stand.replaceWith(ex);
+    ex.classList.toggle('full', on); net.free = on; $('b-max').hidden = on; $('b-close').hidden = !on;
+    document.documentElement.style.overflow = on ? 'hidden' : '';
+    (on ? $('b-close') : $('b-max')).focus({ preventScroll: true });
+    requestAnimationFrame(() => net.fit(on ? 600 : 0));
+  };
+  net.free = false;
+  $('b-max').onclick = () => full(true); $('b-close').onclick = () => full(false);
+  addEventListener('keydown', e => { if (e.key === 'Escape' && ex.classList.contains('full')) full(false); });
+
+  // Family tree: once the section fills the screen the scene plays on its own, and scrolling still scrubs it.
+  // Scroll moves the clock by the distance scrolled; scrolling back rewinds and pauses the autoplay until you scroll forward.
+  if (chain3d) {
+    const cs = $('chain-sec'), T_END = chain3d.duration + 1.2, l1 = $('chain-l1'), l2 = $('chain-l2');
+    let clock = 0, cur = -1, raf = 0, lastS = null, back = false, last = 0;
+    const frac = () => { const r = cs.getBoundingClientRect(); return { r, s: Math.min(1, Math.max(0, -r.top / (cs.offsetHeight - innerHeight))) }; };
+    const tick = now => { raf = 0; const dt = last ? Math.min(0.05, (now - last) / 1000) : 0; last = now;
+      const { r } = frac(), inView = r.top <= innerHeight * 0.25 && r.bottom > innerHeight * 0.5;
+      const leaving = back && r.top > innerHeight * 0.25 && r.top < innerHeight;  // scrolled back up out of the section: rewind
+      if (inView && !back && !HX.reduced) clock = Math.min(T_END, clock + dt);
+      if (leaving) clock = Math.max(0, clock - dt * 3);
+      cur = cur < 0 || HX.reduced ? clock : cur + (clock - cur) * 0.14;
+      chain3d.seek(cur);
+      l1.classList.toggle('off', cur > 7.5); l2.classList.toggle('off', cur < chain3d.marks.newest);
+      if ((inView && clock < T_END && !back) || (leaving && clock > 0) || Math.abs(clock - cur) > 0.002) raf = requestAnimationFrame(tick); else last = 0; };
+    const chainScroll = () => { const { r, s } = frac();
+      if (r.top > innerHeight) { clock = 0; back = false; }  // below the fold: wait at the start
+      else if (r.bottom < 0) clock = T_END;  // scrolled past: show the end
+      else if (lastS !== null && s !== lastS) { back = s < lastS; clock = Math.min(T_END, Math.max(0, clock + (s - lastS) * T_END)); }
+      lastS = s; if (!raf) raf = requestAnimationFrame(tick); };
+    addEventListener('scroll', chainScroll, { passive: true }); addEventListener('resize', chainScroll); chainScroll();
+  }
+
+  // Step navigator: every visualization is one step; the scroll scene contributes two.
+  const steps = [{ el: $('top'), label: 'Start' }];
+  document.querySelectorAll('main section').forEach(sec => {
+    if (sec.id === 'explore') {
+      steps.push({ el: sc, at: 0.3, label: 'Ring 1: papers citing the Hexad scale' }, { el: sc, at: 0.62, label: 'Ring 2: papers citing those' });
+    }
+    steps.push({ el: sec, label: sec.querySelector('h2').textContent, run: sec.dataset.run });
+  });
+  const topOf = s => { const pin = s.el.querySelector(':scope > .pin');
+    return s.el.getBoundingClientRect().top + scrollY + (s.at != null ? s.at * (s.el.offsetHeight - innerHeight) : pin ? Math.max(0, pin.offsetHeight - innerHeight) : 0); };
+  const current = () => { let c = 0; steps.forEach((s, i) => { const r = s.el.getBoundingClientRect();
+    if (r.top + (s.at != null ? s.at * (s.el.offsetHeight - innerHeight) : 0) <= innerHeight * 0.35) c = i; }); return c; };
+  const label = () => { const i = current(); $('s-lab').innerHTML = `<b>${i + 1} / ${steps.length}</b>${esc(steps[i].label)}`; $('s-prev').disabled = i === 0; $('s-next').disabled = i === steps.length - 1; };
+  const goStep = d => {
+    const s = steps[Math.max(0, Math.min(steps.length - 1, current() + d))];
+    scrollTo({ top: topOf(s), behavior: HX.reduced ? 'auto' : 'smooth' });  // the scroll triggers play or rewind each chart on the way
+  };
+  $('s-prev').onclick = () => goStep(-1); $('s-next').onclick = () => goStep(1);
+  addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); goStep(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); goStep(-1); }
+  });
+  addEventListener('scroll', () => requestAnimationFrame(label), { passive: true }); label();
+
+  $('qlist').innerHTML = net.d1.slice().sort((a, b) => b.c - a.c).slice(0, 300).map(n => `<option value="${esc(n.t)}">`).join('');
+  $('q').addEventListener('change', e => {
+    const q = e.target.value.toLowerCase().trim(); if (!q) return;
+    const n = net.all.filter(n => net.visible(n) && ((n.t || '').toLowerCase().includes(q) || (n.a || '').toLowerCase().includes(q))).sort((a, b) => a.deg - b.deg || b.c - a.c)[0];
+    if (n) { net.focus = n; show(n); net.zoomTo(n, 3, 1200); }
+  });
+});
+</script>
+</body>
+</html>
