@@ -70,6 +70,10 @@ cv:
         end_date: 2004
 
     Awards:
+      - title: Lasting Impact Award, ACM CHI PLAY 2026, for "The Gamification User Types Hexad Scale" (2016)
+        url: https://doi.org/10.1145/2967934.2968082
+        date: 2026-11
+        awarder: ACM SIGCHI
       - title: '<img class="award-icon" src="/assets/img/publication_preview/best-paper.svg" alt="">Best Paper Award, ACM DIS 2026, for "Rushed by Discomfort, Trapped by Immersion"'
         url: https://doi.org/10.1145/3800645.3812990
         date: 2026-06
